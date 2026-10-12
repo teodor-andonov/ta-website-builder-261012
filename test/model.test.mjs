@@ -31,7 +31,7 @@ test('builds real project and post routes but not drafts',()=>{
 test('shared template edits update all project pages',()=>{
   const d=copy();
   d.templates.find(t=>t.id==='project-detail').blocks.unshift({id:'test-marker',type:'text',text:'TEST EDIT IN TEMPLATE',style:'caption'});
-  const pages=collectPages(d).filter(p=>p.route.startsWith('/work/'));
+  const pages=collectPages(d).filter(p=>p.route.startsWith('/work/') && p.route!=='/work/');
   assert.ok(pages.length>=2);
   assert.ok(pages.every(p=>p.html.includes('TEST EDIT IN TEMPLATE')));
 });
@@ -43,19 +43,15 @@ test('HTML injection in records is escaped',()=>{
   assert.ok(!page.html.includes('<img src=x onerror=alert(1)>'));
 });
 
-test('public pages do not link to unpublished indexes or studio',()=>{
+test('public navigation includes three live indexes but excludes the draft Studio page',()=>{
   const pages=collectPages(copy());
   const post=pages.find(p=>p.route==='/posts/designing-with-code/');
   assert.ok(post);
-  assert.ok(!post.html.includes('href="/"'));
-  assert.ok(!post.html.includes('href="/work/"'));
-  assert.ok(!post.html.includes('href="/posts/"'));
+  for(const href of ['/', '/work/', '/posts/'])assert.ok(post.html.includes(`href="${href}"`));
   assert.ok(!post.html.includes('href="/studio/"'));
-  const d=copy();
-  d.pages.find(p=>p.id==='home').status='Published';
-  d.pages.find(p=>p.id==='work').status='Published';
-  const live=collectPages(d).find(p=>p.route==='/posts/designing-with-code/');
-  assert.ok(live.html.includes('href="/"'));
-  assert.ok(live.html.includes('href="/work/"'));
-  assert.ok(!live.html.includes('href="/posts/"'));
+  for(const route of ['/', '/work/', '/posts/'])assert.ok(pages.some(p=>p.route===route));
+  assert.ok(!pages.some(p=>p.route==='/studio/'));
+  const d=copy();d.pages.find(p=>p.id==='work').status='Draft';
+  const hidden=collectPages(d).find(p=>p.route==='/posts/designing-with-code/');
+  assert.ok(!hidden.html.includes('href="/work/"'));
 });
