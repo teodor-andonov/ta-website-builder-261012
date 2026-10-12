@@ -1,0 +1,38 @@
+/* Public website only. The desktop Content Studio UI is not changed. */
+:root { --site-max: 1600px; }
+body.published-site { background:#fff; margin:0; color:#292c28; }
+.published-site .webpage { max-width:var(--site-max); margin:0 auto; border:0; box-shadow:none; min-height:100vh; display:flex; flex-direction:column; }
+.published-site .web-nav { min-height:80px; height:auto; padding:20px clamp(24px,4.8vw,75px); border-bottom:1px solid #eceee8; gap:32px; }
+.published-site .web-logo { font-size:25px; }
+.published-site .web-links { display:flex; align-items:center; flex-wrap:wrap; gap:clamp(18px,3vw,42px); color:#7d827c; font:12px/1.4 var(--mono); letter-spacing:.02em; }
+.published-site .web-links a { padding:5px 0; border-bottom:1px solid transparent; }
+.published-site .web-links a:hover,.published-site .web-links a.is-active { color:#272b27; border-color:currentColor; }
+.published-site .web-content { flex:1; width:100%; padding:clamp(35px,6vw,96px) clamp(24px,5vw,80px) 110px; }
+.published-site .web-content > .block { margin-bottom:clamp(28px,3vw,55px); }
+.published-site .b-text.display { font-size:clamp(42px,6vw,92px); line-height:1.04; letter-spacing:-.065em; white-space:pre-line; font-weight:520; }
+.published-site .b-text.heading { font-size:clamp(23px,2.8vw,42px); line-height:1.1; font-weight:560; }
+.published-site .b-text.body { font-size:clamp(15px,1.15vw,18px); line-height:1.65; max-width:60ch; white-space:pre-line; }
+.published-site .b-text.eyebrow { font-size:11px; letter-spacing:.11em; }
+.published-site .b-card { gap:clamp(20px,4vw,70px); padding:clamp(24px,4vw,65px); }
+.published-site .b-card .b-text.display { font-size:clamp(38px,5.3vw,78px); }
+.published-site .b-query.grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(25px,3vw,45px); }
+.published-site .b-query.list { gap:0; }
+.published-site .b-query.list .q-entry { padding:24px 0; }
+.published-site .q-entry { display:block; color:inherit; text-decoration:none; transition:opacity .15s; }
+.published-site .q-entry:focus-visible,.published-site .web-links a:focus-visible,.published-site .web-logo:focus-visible { outline:2px solid #5261a5; outline-offset:4px; }
+.published-site .q-image { aspect-ratio:1.42; }
+.published-site .web-footer { padding:28px clamp(24px,5vw,80px); font-size:11px; margin-top:auto; }
+.published-site .b-action { margin:12px 0; }
+.published-site .skip-link { position:absolute; top:-100px; left:20px; z-index:10; background:#fff; padding:10px 15px; }
+.published-site .skip-link:focus { top:10px; }
+.published-site .not-found-title { font-size:clamp(42px,8vw,90px); margin:24px 0; letter-spacing:-.05em; }
+@media(max-width:750px) {
+  .published-site .web-nav { padding:19px 20px; gap:18px; flex-wrap:wrap; }
+  .published-site .web-links { gap:17px; font-size:10px; }
+  .published-site .web-content { padding:38px 20px 70px; }
+  .published-site .b-card.split,.published-site .b-card.grid,.published-site .b-card.three { grid-template-columns:1fr; }
+  .published-site .b-query.grid,.published-site .b-query.three { grid-template-columns:1fr; }
+  .published-site .b-text.display { font-size:clamp(38px,11vw,65px); }
+  .published-site .b-card { padding:22px; }
+  .published-site .web-footer { padding:22px 20px; }
+}
