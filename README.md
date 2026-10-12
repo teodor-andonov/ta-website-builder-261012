@@ -4,7 +4,7 @@ A small, JSON-first website editor and static-site builder for the TA architectu
 
 ## Start (Node.js 20+)
 
-No packages to install:
+No packages to install (desktop-only authoring editor):
 
 ```sh
 npm run dev
@@ -41,7 +41,7 @@ node scripts/smoke-check.mjs
 | `content/site.json` | All editable structured content (one JSON file for now) |
 | `src/server.mjs` | Loopback-only Node server, GET/PUT `/api/data` |
 | `src/model.mjs` | Structural validation for edits/builds |
-| `src/render.mjs` | Static block/page renderer |
+| `src/render.mjs` | **Shared** browser/Node block, template and website renderer |
 | `src/build.mjs` | Static HTML generator |
 | `assets/demo/*.svg` | Demo asset files, not production artwork |
 | `dist/` | Generated output (not versioned) |
@@ -49,10 +49,10 @@ node scripts/smoke-check.mjs
 ## Current scope / limitations
 
 - Browser editing is **local-only**. The writable server intentionally binds to `127.0.0.1`; it is **never** deployed with the static site. No logins or cloud storage required.
-- The editor's existing in-browser preview renderer is preserved; the static renderer implements the same block vocabulary but is a separate module. **Consolidating these into one shared renderer is a priority before production**; preview/output parity is not yet guaranteed for every block or CSS feature.
+- Editor previews and static publishing now import the **same** `src/render.mjs` module. Design mode adds selection hooks without changing the rendered content. Parity tests cover representative Project, Post and bespoke Page output. See `docs/M2_SHARED_RENDERER.md`.
 - This is a prototype, not a production CMS. No live deployment, real content approval, automatic backups, or robust concurrent editing yet. Multiple tabs can overwrite each other's changes. Keep Git commits as checkpoints.
 - Export JSON still works. Image imports in the legacy editor may embed image data in JSON; production media ingestion and separate file-backed assets need their own workflow.
-- Example source marks all bespoke Pages as Draft, so only non-draft collection records are currently built. The `dist` output includes sample content, not approved portfolio text.
+- Example source marks all bespoke Pages as Draft; the editor and public site now both hide unpublished destinations from preview menus/collection feeds, and only non-draft records are built. The `dist` output includes sample content, not approved portfolio text.
 - The local API validates structure/IDs/slugs and atomically replaces the JSON file. It is not a general file manager and does not expose arbitrary filesystem paths.
 
 See `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/IMPLEMENTATION_PLAN.md` for the long-term direction.
