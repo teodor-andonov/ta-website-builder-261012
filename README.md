@@ -56,3 +56,25 @@ node scripts/smoke-check.mjs
 - The local API validates structure/IDs/slugs and atomically replaces the JSON file. It is not a general file manager and does not expose arbitrary filesystem paths.
 
 See `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/IMPLEMENTATION_PLAN.md` for the long-term direction.
+
+## Real image assets (M3)
+
+The desktop Content Studio Image library now uploads **PNG, JPEG, WebP and GIF** images (up to 12 MB per file) through the local server.
+
+- Upload using **Image library → Upload image**. Each image is stored as `assets/uploads/<opaque-id>.<ext>` and served from `/assets/uploads/...`.
+- The single `content/site.json` file stores an asset ID, file reference, original filename, MIME type, size, alt text, caption, credit, tags and custom properties. **No base64 blobs**.
+- Assign an uploaded asset to a Project/Post cover in the existing record editor. Shared previews and the static site use the exact same file reference.
+- `npm run build` copies the uploaded files into `dist/assets/uploads/` along with demo assets.
+- Save or version-control **both `content/site.json` and `assets/uploads/`**. Export JSON alone is *not* an image backup. Uploaded binaries are not automatically pushed to GitHub; commit them when you sync your project.
+- The current workflow preserves uploaded files when metadata is removed (to avoid accidental data loss). Remove unreferenced files manually after checking their use.
+- SVGs are deliberately not supported for file upload yet (script security). Existing curated demo SVGs and externally hosted images are unaffected.
+- For automated tests the local server and build accept `TA_DATA_ROOT` as an isolated content/assets directory; the build also accepts `TA_OUTPUT_DIR`. Normally neither is needed.
+
+### Verify
+
+```sh
+npm test
+npm run build
+```
+
+The asset integration test confirms successful image creation, invalid/oversized upload rejection, metadata round-trip, project cover rendering, and published binary copying.
