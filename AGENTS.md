@@ -26,3 +26,16 @@ Evolve the existing visual editor (see `prototype-v2/index.html`) into a real lo
 Edit sample Post `designing-with-code` → save to a real JSON file → reload → preview reflects it → build `dist/posts/designing-with-code/index.html`. Also build project `dist/work/balkan-house/index.html`. A shared template edit must affect more than one generated page.
 
 See `docs/IMPLEMENTATION_PLAN.md` for sequencing.
+
+## Supported viewport and visual QA
+- **Content Studio is desktop-only.** Focus on desktop interaction and visual quality; do not implement or test mobile editor variants unless explicitly requested.
+- The **public website** remains responsive on mobile; desktop-only applies to the authoring app, not the site.
+- For remote UI reviews, run desktop browser tests and share a compact set of screenshots and findings **directly in the chat**. No screenshot archives in GitHub and no recordings by default.
+- Baseline desktop viewports: 1600×1000, plus 1280×800 when relevant.
+
+## Pull request and merge standards
+- Develop each substantial change on a focused branch. Keep `main` stable.
+- Before merging: inspect the actual diff, run tests and production build, verify major interactions, check for secrets and unsafe filesystem/network changes, and document important limitations.
+- Use GitHub Actions CI as the repeatable baseline; do not label absent or pending checks as passing.
+- Favor squash merges for cohesive changes and link related issues. Merge only after findings affecting correctness/security/data loss are resolved.
+- Where possible, provide honest screenshots of the browser-tested result directly in the conversation. Avoid overclaiming that tests fully cover the interface.
