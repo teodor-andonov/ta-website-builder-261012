@@ -80,7 +80,7 @@ test('real image upload, metadata edits and published output survive reload', {t
     let errors='';for await (const data of build.stderr)errors+=data;
     const exit=await new Promise(res=>build.once('exit',res));
     assert.equal(exit,0,errors);
-    assert.match(output,/Built 7 static pages/);
+    assert.match(output,/Built 10 static pages/);
     const published=await readFile(path.join(buildDir,'work/balkan-house/index.html'),'utf8');
     assert.ok(published.includes(asset.src));
     assert.deepEqual(await readFile(path.join(buildDir,asset.src)),png);
