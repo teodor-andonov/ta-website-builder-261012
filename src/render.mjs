@@ -110,36 +110,48 @@ function renderBlock(block,context,data,options,depth) {
   }
   return `<div class="block${selected}"${attrs}>${content}</div>`;
 }
-/** Same website shell for in-editor previews and generated public pages. */
-export function renderSiteFrame(content,data,{design=false}={}) {
-  const published=new Set(data.pages.filter(p=>p.status==='Published').map(p=>p.slug.replace(/\/$/,'')||'/'));
-  const homepage=published.has('/');
-  const logo=homepage?'<a class="web-logo" href="/" data-site-route="/">TA<span style="font-weight:300">/</span></a>':'<span class="web-logo">TA<span style="font-weight:300">/</span></span>';
-  const links=[['Index','/'],['Work','/work/'],['Journal','/posts/']]
-    .filter(([,href])=>published.has(href.replace(/\/$/,'')||'/'))
-    .map(([label,href])=>`<a href="${href}" data-site-route="${href.replace(/\/$/,'')||'/'}">${label}</a>`).join('');
-  return `<div class="webpage ${design?'design':'view'}"><nav class="web-nav">${logo}<div class="web-links">${links}</div></nav><main class="web-content">${content}</main><footer class="web-footer"><span>TA / DESIGN & RESEARCH</span><span>© ${new Date().getUTCFullYear()}</span></footer></div>`;
+/** Map a record or bespoke page to its URL without duplicating the renderer. */
+export function resolvePreviewRoute(data,blocks,context=null) {
+  if(context)for(const collection of data.collections){
+    const record=collection.records.find(r=>r===context || r.id===context.id);
+    if(record)return recordPath(collection,record);
+  }
+  return normalizeRoute(data.pages.find(p=>p.blocks===blocks)?.slug || '/');
 }
-/** Allows direct parity assertions with the editor without requiring a browser to render. */
+export const normalizeRoute = route => route==='/' ? '/' : `${String(route||'/').replace(/\/+$/,'')}/`;
+function publishedRoutes(data){return new Set(data.pages.filter(p=>p.status==='Published').map(p=>normalizeRoute(p.slug)));}
+/** Shared site shell. Navigation is authored in JSON; drafts are hidden. */
+export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
+  const published=publishedRoutes(data);
+  const here=normalizeRoute(route);
+  const section=here==='/'?'/':here.startsWith('/work/')?'/work/':here.startsWith('/posts/')?'/posts/':here;
+  const nav=(data.site.navigation || [{label:'Home',href:'/'},{label:'Work',href:'/work/'},{label:'Journal',href:'/posts/'}]).filter(link=>published.has(normalizeRoute(link.href)));
+  const logo=published.has('/')?'<a class="web-logo" href="/" aria-label="TA — Home" data-site-route="/">TA<span style="font-weight:300">/</span></a>':'<span class="web-logo">TA<span style="font-weight:300">/</span></span>';
+  const links=nav.map(link=>{
+    const href=normalizeRoute(link.href),active=href===section;
+    return `<a href="${escapeHtml(href)}" data-site-route="${escapeHtml(href)}"${active?' class="is-active" aria-current="page"':''}>${escapeHtml(link.label)}</a>`;
+  }).join('');
+  return `<div class="webpage ${design?'design':'view'}"><a class="skip-link" href="#main-content">Skip to content</a><nav class="web-nav" aria-label="Main navigation">${logo}<div class="web-links">${links}</div></nav><main id="main-content" class="web-content">${content}</main><footer class="web-footer"><span>${escapeHtml(data.site.name)}</span><span>© ${new Date().getUTCFullYear()}</span></footer></div>`;
+}
 export function renderPagePreview(data,blocks,context=null,options={}) {
-  return renderSiteFrame(renderBlocks(blocks,context,data,options),data,options);
+  return renderSiteFrame(renderBlocks(blocks,context,data,options),data,{...options,route:options.route||resolvePreviewRoute(data,blocks,context)});
 }
-export function renderDocument(data,{title,blocks,context=null}) {
-  const heading=escapeHtml(title||data.site.name);
-  const name=escapeHtml(data.site.name);
+export function renderDocument(data,{title,blocks,context=null,route}) {
+  const heading=escapeHtml(title||data.site.name),name=escapeHtml(data.site.name);
   const description=escapeHtml(context?.summary||data.site.description||'');
-  const page=renderPagePreview(data,blocks,context);
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${heading} — ${name}</title><meta name="description" content="${description}"><link rel="stylesheet" href="/site.css"></head><body class="published-site">${page}</body></html>`;
+  const page=renderPagePreview(data,blocks,context,{route:route||resolvePreviewRoute(data,blocks,context)});
+  // Sample content isn't approved for live indexing yet.
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${heading} — ${name}</title><meta name="description" content="${description}"><meta name="robots" content="noindex, nofollow"><link rel="stylesheet" href="/site.css"></head><body class="published-site">${page}</body></html>`;
 }
 export function collectPages(data) {
   const pages=[];
   for(const page of data.pages) if(page.status==='Published')
-    pages.push({route:page.slug,html:renderDocument(data,{title:page.title,blocks:page.blocks})});
+    pages.push({route:normalizeRoute(page.slug),html:renderDocument(data,{title:page.title,blocks:page.blocks,route:normalizeRoute(page.slug)})});
   for(const collection of data.collections)for(const record of collection.records){
     if(record.status==='Draft')continue;
     const template=templateFor(data,collection,record);
     if(!template)throw Error(`Missing template for ${collection.id}/${record.slug}`);
-    pages.push({route:recordPath(collection,record),html:renderDocument(data,{title:record.title,blocks:template.blocks,context:record})});
+    pages.push({route:recordPath(collection,record),html:renderDocument(data,{title:record.title,blocks:template.blocks,context:record,route:recordPath(collection,record)})});
   }
   return pages;
 }

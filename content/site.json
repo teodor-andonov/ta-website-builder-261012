@@ -2,7 +2,25 @@
   "version": 2,
   "site": {
     "name": "TA / Design & Research",
-    "description": "Architecture, computation and research."
+    "description": "Architecture, computation and research.",
+    "navigation": [
+      {
+        "label": "Home",
+        "href": "/"
+      },
+      {
+        "label": "Work",
+        "href": "/work/"
+      },
+      {
+        "label": "Journal",
+        "href": "/posts/"
+      },
+      {
+        "label": "Studio",
+        "href": "/studio/"
+      }
+    ]
   },
   "collections": [
     {
@@ -564,7 +582,7 @@
       "id": "home",
       "title": "Home",
       "slug": "/",
-      "status": "Draft",
+      "status": "Published",
       "blocks": [
         {
           "id": "b_kzdema",
@@ -652,7 +670,7 @@
       "id": "work",
       "title": "Work",
       "slug": "/work",
-      "status": "Draft",
+      "status": "Published",
       "blocks": [
         {
           "id": "b_rfoptf",
@@ -688,7 +706,7 @@
       "id": "journal",
       "title": "Journal",
       "slug": "/posts",
-      "status": "Draft",
+      "status": "Published",
       "blocks": [
         {
           "id": "b_h4y8s6",

@@ -8,6 +8,17 @@ export function validate(data) {
   if (data.version !== 2) fail('Unsupported data version (expected 2)');
   const safeId = value => typeof value === 'string' && /^[a-zA-Z0-9_-]+$/.test(value);
   const safeSlug = value => typeof value === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+  if (data.site.navigation !== undefined) {
+    if (!Array.isArray(data.site.navigation) || data.site.navigation.length > 12) fail('Invalid site navigation list');
+    const navPaths = new Set();
+    for (const link of data.site.navigation) {
+      if (!link || typeof link.label !== 'string' || !link.label.trim() || link.label.length > 50) fail('Invalid navigation label');
+      if (typeof link.href !== 'string' || !/^\/(?:[a-z0-9-]+(?:\/[a-z0-9-]+)*)?\/?$/.test(link.href)) fail('Invalid navigation route');
+      const route=link.href==='/'?'/':link.href.replace(/\/$/,'');
+      if(navPaths.has(route))fail(`Duplicate navigation route: ${route}`);
+      navPaths.add(route);
+    }
+  }
   const seenRoutes = new Set();
   const claimRoute = (route) => {
     if (seenRoutes.has(route)) fail(`Duplicate route: ${route}`);
