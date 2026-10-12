@@ -20,6 +20,9 @@ npm run build
 
 Generated HTML, CSS and demo SVG assets appear in **`dist/`**, including:
 
+- `dist/index.html` — Home
+- `dist/work/index.html` — Work collection index
+- `dist/posts/index.html` — Journal collection index
 - `dist/posts/designing-with-code/index.html`
 - `dist/work/balkan-house/index.html`
 
@@ -51,30 +54,14 @@ node scripts/smoke-check.mjs
 - Browser editing is **local-only**. The writable server intentionally binds to `127.0.0.1`; it is **never** deployed with the static site. No logins or cloud storage required.
 - Editor previews and static publishing now import the **same** `src/render.mjs` module. Design mode adds selection hooks without changing the rendered content. Parity tests cover representative Project, Post and bespoke Page output. See `docs/M2_SHARED_RENDERER.md`.
 - This is a prototype, not a production CMS. No live deployment, real content approval, automatic backups, or robust concurrent editing yet. Multiple tabs can overwrite each other's changes. Keep Git commits as checkpoints.
-- Export JSON still works. Image imports in the legacy editor may embed image data in JSON; production media ingestion and separate file-backed assets need their own workflow.
-- Example source marks all bespoke Pages as Draft; the editor and public site now both hide unpublished destinations from preview menus/collection feeds, and only non-draft records are built. The `dist` output includes sample content, not approved portfolio text.
+- Export JSON still works. Image uploads use real files in `assets/uploads/` with JSON metadata (M3); remember to commit both the JSON and image files when transferring between computers.
+- The Home, Work and Journal sample pages now publish; Studio is still Draft. Navigation is defined in `content/site.json` as `site.navigation` and automatically hides draft destinations. **All sample content is placeholder material**, not approved public portfolio copy. Generated pages use a `noindex` meta tag until real copy is approved.
 - The local API validates structure/IDs/slugs and atomically replaces the JSON file. It is not a general file manager and does not expose arbitrary filesystem paths.
 
 See `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/IMPLEMENTATION_PLAN.md` for the long-term direction.
 
-## Real image assets (M3)
+## M4 — public-site skeleton
 
-The desktop Content Studio Image library now uploads **PNG, JPEG, WebP and GIF** images (up to 12 MB per file) through the local server.
+The three bespoke JSON pages (Home, Work and Journal) are now published alongside the existing Project and Post detail routes. The shared renderer adds JSON-controlled navigation, active-section indication, skip-to-content and direct detail-page links. A public-only stylesheet in `src/public.css` scales layouts for desktop and mobile without changing the desktop-only editor.
 
-- Upload using **Image library → Upload image**. Each image is stored as `assets/uploads/<opaque-id>.<ext>` and served from `/assets/uploads/...`.
-- The single `content/site.json` file stores an asset ID, file reference, original filename, MIME type, size, alt text, caption, credit, tags and custom properties. **No base64 blobs**.
-- Assign an uploaded asset to a Project/Post cover in the existing record editor. Shared previews and the static site use the exact same file reference.
-- `npm run build` copies the uploaded files into `dist/assets/uploads/` along with demo assets.
-- Save or version-control **both `content/site.json` and `assets/uploads/`**. Export JSON alone is *not* an image backup. Uploaded binaries are not automatically pushed to GitHub; commit them when you sync your project.
-- The current workflow preserves uploaded files when metadata is removed (to avoid accidental data loss). Remove unreferenced files manually after checking their use.
-- SVGs are deliberately not supported for file upload yet (script security). Existing curated demo SVGs and externally hosted images are unaffected.
-- For automated tests the local server and build accept `TA_DATA_ROOT` as an isolated content/assets directory; the build also accepts `TA_OUTPUT_DIR`. Normally neither is needed.
-
-### Verify
-
-```sh
-npm test
-npm run build
-```
-
-The asset integration test confirms successful image creation, invalid/oversized upload rejection, metadata round-trip, project cover rendering, and published binary copying.
+All **10 sample pages** and `dist/404.html` are generated with `npm run build`. No hosting/deployment is enabled; internal links assume the website is served from a domain root. If you later use GitHub Pages under a repository subpath, configure a custom domain or add a base-path transform before launch. Sample content is flagged `noindex, nofollow` pending editorial approval. See `docs/M4_PUBLIC_SITE.md`.
