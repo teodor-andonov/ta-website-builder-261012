@@ -42,3 +42,20 @@ test('HTML injection in records is escaped',()=>{
   assert.ok(page.html.includes('&lt;img src=x onerror=alert(1)&gt;'));
   assert.ok(!page.html.includes('<img src=x onerror=alert(1)>'));
 });
+
+test('public pages do not link to unpublished indexes or studio',()=>{
+  const pages=collectPages(copy());
+  const post=pages.find(p=>p.route==='/posts/designing-with-code/');
+  assert.ok(post);
+  assert.ok(!post.html.includes('href="/"'));
+  assert.ok(!post.html.includes('href="/work/"'));
+  assert.ok(!post.html.includes('href="/posts/"'));
+  assert.ok(!post.html.includes('href="/studio/"'));
+  const d=copy();
+  d.pages.find(p=>p.id==='home').status='Published';
+  d.pages.find(p=>p.id==='work').status='Published';
+  const live=collectPages(d).find(p=>p.route==='/posts/designing-with-code/');
+  assert.ok(live.html.includes('href="/"'));
+  assert.ok(live.html.includes('href="/work/"'));
+  assert.ok(!live.html.includes('href="/posts/"'));
+});
