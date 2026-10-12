@@ -1,26 +1,34 @@
-// Static renderer for the Prototype 02 block vocabulary. No DOM, database, or runtime dependencies.
-// The editor currently uses its original embedded renderer; parity is tested while it is extracted.
-const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/**
+ * Shared, DOM-independent HTML renderer for both the studio and the static website.
+ * ES module served unchanged to the browser by the local Node dev server.
+ * The `design` flag ONLY adds editor selection attributes; it never changes content.
+ */
+export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const displayValue = value => Array.isArray(value) ? value.join(', ') : value ?? '';
 const safeToken = value => /^[a-zA-Z0-9_-]+$/.test(value ?? '') ? value : '';
 export const recordPath = (collection, record) => `${collection.base}/${record.slug}/`;
 export function templateFor(data, collection, record) {
-  const id=collection.formatTemplates?.[record?.[collection.formatField]] || collection.defaultTemplate;
-  return data.templates.find(template=>template.id===id);
+  const id = collection?.formatTemplates?.[record?.[collection?.formatField]] || collection?.defaultTemplate;
+  return data.templates.find(template => template.id === id);
 }
-function bind(value, context, data) {
-  return String(value ?? '').replace(/\{\{\s*([^{}]+)\s*\}\}/g, (_, raw)=> {
-    const name=raw.trim();
-    if (name==='site.name') return data.site.name;
-    if (name==='collection.name') return data.collections.find(c=>c.records.includes(context))?.name ?? '';
+export function bind(value, context, data) {
+  return String(value ?? '').replace(/\{\{\s*([^{}]+)\s*\}\}/g, (_, raw) => {
+    const name = raw.trim();
+    if (name === 'site.name') return data.site.name;
+    if (name === 'collection.name') return data.collections.find(c=>c.records.includes(context))?.name ?? '';
     return String(displayValue(context?.[name]));
   });
 }
-const inline = text => escapeHtml(text)
+function safeHref(value) {
+  const href=String(value||'');
+  return /^(https?:\/\/|mailto:|\/(?!\/)|#)/i.test(href) && !/[\u0000-\u001f]/.test(href) ? href : '#';
+}
+const inline = input => escapeHtml(input)
   .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
   .replace(/\*([^*]+)\*/g,'<em>$1</em>')
-  .replace(/`([^`]+)`/g,'<code>$1</code>');
-function richText(input) {
+  .replace(/`([^`]+)`/g,'<code>$1</code>')
+  .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,(_,label,url)=>`<a href="${escapeHtml(safeHref(url.replaceAll('&amp;','&')))}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`);
+export function richText(input) {
   const lines=String(input??'').split(/\r?\n/);
   let out='',inList=false;
   for(const line of lines) {
@@ -38,18 +46,14 @@ function richText(input) {
   }
   return out+(inList?'</ul>':'');
 }
-function assetFor(data, id) {return data.assets.find(asset=>asset.id===id);}
-function assetSrc(asset) {
+export function assetSrc(asset) {
   if(!asset || typeof asset.src!=='string')return '';
   if(/^demo:[a-z0-9-]+$/.test(asset.src))return `/assets/demo/${asset.src.slice(5)}.svg`;
   if(/^https?:\/\//i.test(asset.src))return asset.src;
   if(/^\/(?!\/)[a-zA-Z0-9_./-]+$/.test(asset.src) && !asset.src.split('/').includes('..'))return asset.src;
   return '';
 }
-function safeHref(value) {
-  return (/^(https?:\/\/|mailto:|\/(?!\/)|#)/i.test(value||''))?String(value):'#';
-}
-function queryEntries(block, data) {
+function queryEntries(block,data) {
   const collection=data.collections.find(c=>c.id===block.collection);
   if(!collection)return [];
   let rows=collection.records.filter(r=>r.status!=='Draft');
@@ -59,63 +63,75 @@ function queryEntries(block, data) {
   if(block.sort==='newest')rows.sort((a,b)=>String(b.date||b.year||'').localeCompare(String(a.date||a.year||'')));
   return rows.slice(0,Math.max(1,Math.min(200,Number(block.count)||4))).map(r=>({collection,record:r}));
 }
-export function renderBlocks(blocks, context, data, depth=0) {
+// Used by both browser studio and Node build. options: {design, selectedId}
+export function renderBlocks(blocks, context, data, options={}, depth=0) {
   if(depth>10 || !Array.isArray(blocks))return '';
-  return blocks.map(block=>renderBlock(block,context,data,depth)).join('');
+  return blocks.map(block=>renderBlock(block,context,data,options,depth)).join('');
 }
-function renderBlock(block, context, data, depth) {
-  if(!block || typeof block!=='object')return '';
-  let result='';
+function renderBlock(block,context,data,options,depth) {
+  if(!block||typeof block!=='object')return '';
+  const design=Boolean(options.design);
+  const selected=design&&options.selectedId===block.id?' chosen':'';
+  const attrs=design?` data-node-id="${escapeHtml(block.id)}" data-kind="${escapeHtml(block.type)}"`:'';
+  let content='';
   switch(block.type){
-    case 'text': result=`<div class="b-text ${safeToken(block.style||'body')}">${escapeHtml(bind(block.text,context,data))}</div>`;break;
-    case 'rich': result=`<div class="rich">${richText(bind(block.source,context,data))}</div>`;break;
-    case 'divider': result='<div class="b-divider"></div>';break;
+    case 'text': content=`<div class="b-text ${safeToken(block.style||'body')}">${escapeHtml(bind(block.text,context,data))||'<span class="muted">Empty text</span>'}</div>`;break;
+    case 'rich': content=`<div class="rich">${richText(bind(block.source,context,data))||'<p class="muted">Empty body</p>'}</div>`;break;
+    case 'divider': content='<div class="b-divider"></div>';break;
     case 'image': {
-      const asset=assetFor(data,bind(block.source,context,data));
+      const asset=data.assets.find(a=>a.id===bind(block.source,context,data));
       const src=assetSrc(asset);
-      result=`<figure class="b-figure">${src?`<img class="b-image ${block.fit==='contain'?'contain':''}" src="${escapeHtml(src)}" alt="${escapeHtml(asset?.alt||'')}">`:'<div class="placeholder">NO IMAGE</div>'}${block.caption&&asset?.caption?`<figcaption>${escapeHtml(asset.caption)}</figcaption>`:''}</figure>`;
+      content=`<figure class="b-figure">${src?`<img class="b-image ${block.fit==='contain'?'contain':''}" src="${escapeHtml(src)}" alt="${escapeHtml(asset?.alt||'')}">`:'<div class="placeholder">NO IMAGE / CHOOSE AN ASSET</div>'}${block.caption&&asset?.caption?`<figcaption>${escapeHtml(asset.caption)}</figcaption>`:''}</figure>`;
       break;
     }
     case 'card': {
       const padding=block.padding==='none'?'padding:0;min-height:0':block.padding==='small'?'padding:12px':'';
-      result=`<div class="b-card ${safeToken(block.layout||'stack')} ${safeToken(block.tone||'clear')}" style="${padding}">${renderBlocks(block.children,context,data,depth+1)}</div>`;
+      content=`<div class="b-card ${safeToken(block.layout||'stack')} ${safeToken(block.tone||'clear')}" style="${padding}">${renderBlocks(block.children,context,data,options,depth+1)||'<div class="placeholder">Empty card · add child</div>'}</div>`;
       break;
     }
     case 'component': {
       const component=data.components.find(c=>c.id===block.component);
-      result=component?`<div class="reusable">${renderBlocks(component.blocks,context,data,depth+1)}</div>`:'';
+      // Nested component blocks are displayed but not individually selectable in this scope.
+      content=component?`<div class="reusable">${renderBlocks(component.blocks,context,data,{...options,design:false},depth+1)}</div>`:`<div class="placeholder">Missing component: ${escapeHtml(block.component)}</div>`;
       break;
     }
     case 'query': {
       const component=data.components.find(c=>c.id===block.component);
       const entries=queryEntries(block,data);
-      result=`<div class="b-query ${safeToken(block.layout||'grid')}">${entries.map(({collection,record})=>`<a class="q-entry" href="${escapeHtml(recordPath(collection,record))}">${component?renderBlocks(component.blocks,record,data,depth+1):`<div class="q-name">${escapeHtml(record.title)}</div>`}</a>`).join('')}</div>`;
+      content=`<div class="b-query ${safeToken(block.layout||'grid')}">${entries.map(({collection,record})=>`<a class="q-entry" href="${escapeHtml(recordPath(collection,record))}" data-open-generated="${escapeHtml(record.id)}" data-for-collection="${escapeHtml(collection.id)}">${component?renderBlocks(component.blocks,record,data,{...options,design:false},depth+1):`<div class="q-name">${escapeHtml(record.title)}</div><div class="q-meta">${escapeHtml(record.format||record.category||'')}</div>`}</a>`).join('')||'<div class="placeholder">No records match this query</div>'}</div>`;
       break;
     }
     case 'button': {
       const href=safeHref(bind(block.href||'#',context,data));
-      result=`<a class="b-action" href="${escapeHtml(href)}"${/^https?:\/\//i.test(href)?' target="_blank" rel="noopener noreferrer"':''}>${escapeHtml(bind(block.text||'Explore ↗',context,data))}</a>`;
+      content=`<a class="b-action" href="${escapeHtml(href)}"${/^https?:\/\//i.test(href)?' target="_blank" rel="noopener noreferrer"':''}>${escapeHtml(bind(block.text||'Explore ↗',context,data))}</a>`;
       break;
     }
-    default: result='';
+    default: content='<div class="placeholder">Unknown block</div>';
   }
-  return `<div class="block">${result}</div>`;
+  return `<div class="block${selected}"${attrs}>${content}</div>`;
 }
-export function renderDocument(data, {title,blocks,context=null}) {
-  const heading=escapeHtml(title || data.site.name);
-  const website=escapeHtml(data.site.name);
-  const description=escapeHtml(context?.summary||data.site.description||'');
-  const page=renderBlocks(blocks,context,data);
-  // Only link to actually generated page routes. Draft pages must remain unpublished.
+/** Same website shell for in-editor previews and generated public pages. */
+export function renderSiteFrame(content,data,{design=false}={}) {
   const published=new Set(data.pages.filter(p=>p.status==='Published').map(p=>p.slug.replace(/\/$/,'')||'/'));
-  const home=published.has('/');
-  const logo=home?'<a class="web-logo" href="/">TA<span style="font-weight:300">/</span></a>':'<span class="web-logo">TA<span style="font-weight:300">/</span></span>';
+  const homepage=published.has('/');
+  const logo=homepage?'<a class="web-logo" href="/" data-site-route="/">TA<span style="font-weight:300">/</span></a>':'<span class="web-logo">TA<span style="font-weight:300">/</span></span>';
   const links=[['Index','/'],['Work','/work/'],['Journal','/posts/']]
     .filter(([,href])=>published.has(href.replace(/\/$/,'')||'/'))
-    .map(([label,href])=>`<a href="${href}">${label}</a>`).join('');
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${heading} — ${website}</title><meta name="description" content="${description}"><link rel="stylesheet" href="/site.css"></head><body class="published-site"><div class="webpage view"><nav class="web-nav">${logo}<div class="web-links">${links}</div></nav><main class="web-content">${page}</main><footer class="web-footer"><span>TA / DESIGN & RESEARCH</span><span>© ${new Date().getUTCFullYear()}</span></footer></div></body></html>`;
+    .map(([label,href])=>`<a href="${href}" data-site-route="${href.replace(/\/$/,'')||'/'}">${label}</a>`).join('');
+  return `<div class="webpage ${design?'design':'view'}"><nav class="web-nav">${logo}<div class="web-links">${links}</div></nav><main class="web-content">${content}</main><footer class="web-footer"><span>TA / DESIGN & RESEARCH</span><span>© ${new Date().getUTCFullYear()}</span></footer></div>`;
 }
-export function collectPages(data){
+/** Allows direct parity assertions with the editor without requiring a browser to render. */
+export function renderPagePreview(data,blocks,context=null,options={}) {
+  return renderSiteFrame(renderBlocks(blocks,context,data,options),data,options);
+}
+export function renderDocument(data,{title,blocks,context=null}) {
+  const heading=escapeHtml(title||data.site.name);
+  const name=escapeHtml(data.site.name);
+  const description=escapeHtml(context?.summary||data.site.description||'');
+  const page=renderPagePreview(data,blocks,context);
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${heading} — ${name}</title><meta name="description" content="${description}"><link rel="stylesheet" href="/site.css"></head><body class="published-site">${page}</body></html>`;
+}
+export function collectPages(data) {
   const pages=[];
   for(const page of data.pages) if(page.status==='Published')
     pages.push({route:page.slug,html:renderDocument(data,{title:page.title,blocks:page.blocks})});
