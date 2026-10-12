@@ -26,3 +26,11 @@ Evolve the existing visual editor (see `prototype-v2/index.html`) into a real lo
 Edit sample Post `designing-with-code` → save to a real JSON file → reload → preview reflects it → build `dist/posts/designing-with-code/index.html`. Also build project `dist/work/balkan-house/index.html`. A shared template edit must affect more than one generated page.
 
 See `docs/IMPLEMENTATION_PLAN.md` for sequencing.
+
+## Supported viewport and visual QA
+- The **authoring/editor application is desktop-only**. Prioritize desktop layout, interactions and ergonomics. No dedicated mobile editor design, mobile breakpoint optimization or mobile testing unless requested. Existing responsive CSS can remain until it needs refactoring.
+- Desktop screenshot baselines: primary **1600×1000**, secondary **1280×800**. Capture other sizes only when a specific issue warrants it.
+- This restriction **does not apply to the public website**: published pages should still work on mobile.
+- During remote development, keep verification to screenshots (not video) unless requested.
+- For each pass, create a timestamped `YYMMDDHHmm` folder in the **ChatGPT File Library** under `/agent-tests/`, with screenshots and a concise test report. Add a matching GitHub report under `agent-tests/<timestamp>/README.md` and share the **folder** rather than embedding images in the chat.
+- Preserve evidence from each run; do not relabel old screenshots as a new test pass.
