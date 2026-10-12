@@ -1,0 +1,32 @@
+name: Validate Content Studio
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Unit and model tests
+        run: npm test
+      - name: Syntax-check preserved standalone prototype
+        run: node scripts/smoke-check.mjs
+      - name: Build static public pages
+        run: npm run build
+      - name: Assert example pages exist
+        run: |
+          test -f dist/posts/designing-with-code/index.html
+          test -f dist/work/balkan-house/index.html
+          test -f dist/site.css
