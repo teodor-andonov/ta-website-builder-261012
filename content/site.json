@@ -1,0 +1,834 @@
+{
+  "version": 2,
+  "site": {
+    "name": "TA / Design & Research",
+    "description": "Architecture, computation and research."
+  },
+  "collections": [
+    {
+      "id": "projects",
+      "name": "Projects",
+      "base": "/work",
+      "defaultTemplate": "project-detail",
+      "fields": [
+        {
+          "key": "title",
+          "label": "Title",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "slug",
+          "label": "Slug",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "year",
+          "label": "Year",
+          "type": "number",
+          "options": ""
+        },
+        {
+          "key": "category",
+          "label": "Category",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "status",
+          "label": "Status",
+          "type": "select",
+          "options": "In progress,Complete,Research,Concept"
+        },
+        {
+          "key": "summary",
+          "label": "Summary",
+          "type": "textarea",
+          "options": ""
+        },
+        {
+          "key": "cover",
+          "label": "Cover image",
+          "type": "asset",
+          "options": ""
+        },
+        {
+          "key": "featured",
+          "label": "Featured",
+          "type": "boolean",
+          "options": ""
+        },
+        {
+          "key": "tags",
+          "label": "Tags",
+          "type": "tags",
+          "options": ""
+        },
+        {
+          "key": "body",
+          "label": "Body",
+          "type": "textarea",
+          "options": ""
+        }
+      ],
+      "records": [
+        {
+          "id": "p-balkan",
+          "title": "Balkan House",
+          "slug": "balkan-house",
+          "year": 2026,
+          "category": "Architecture",
+          "status": "In progress",
+          "summary": "A configurable residential system exploring precise components and adaptable arrangements.",
+          "cover": "house",
+          "featured": true,
+          "tags": [
+            "Architecture",
+            "Systems"
+          ],
+          "body": "## A repeatable housing system\n\nA design investigation into adaptable residential typologies, parametric rules and efficient construction."
+        },
+        {
+          "id": "p-facade",
+          "title": "Responsive Envelope",
+          "slug": "responsive-envelope",
+          "year": 2025,
+          "category": "Façade / Research",
+          "status": "Research",
+          "summary": "Exploring aperture, environmental performance and geometric expression.",
+          "cover": "facade",
+          "featured": true,
+          "tags": [
+            "Façades",
+            "Research"
+          ],
+          "body": "## The envelope as an active system\n\nAn ongoing study of performative architectural skins."
+        },
+        {
+          "id": "p-typology",
+          "title": "Typology Studies",
+          "slug": "typology-studies",
+          "year": 2026,
+          "category": "Computation",
+          "status": "Concept",
+          "summary": "A growing collection of spatial and computational patterns.",
+          "cover": "glyph",
+          "featured": false,
+          "tags": [
+            "Computation",
+            "Research"
+          ],
+          "body": "A library of repeatable geometric ideas."
+        },
+        {
+          "id": "p-fields",
+          "title": "Field Conditions",
+          "slug": "field-conditions",
+          "year": 2026,
+          "category": "Visual Research",
+          "status": "Research",
+          "summary": "Iterative studies in local density, diffusion and modular fields.",
+          "cover": "field",
+          "featured": true,
+          "tags": [
+            "Graphics",
+            "Research"
+          ],
+          "body": "From discrete modules to a continuous visual field."
+        }
+      ]
+    },
+    {
+      "id": "posts",
+      "name": "Posts",
+      "base": "/posts",
+      "defaultTemplate": "post-article",
+      "formatField": "format",
+      "formatTemplates": {
+        "Note": "post-note",
+        "News": "post-news",
+        "Article": "post-article"
+      },
+      "fields": [
+        {
+          "key": "title",
+          "label": "Title",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "slug",
+          "label": "Slug",
+          "type": "text",
+          "options": ""
+        },
+        {
+          "key": "format",
+          "label": "Format",
+          "type": "select",
+          "options": "Note,News,Article"
+        },
+        {
+          "key": "date",
+          "label": "Date",
+          "type": "date",
+          "options": ""
+        },
+        {
+          "key": "status",
+          "label": "Status",
+          "type": "select",
+          "options": "Draft,Published"
+        },
+        {
+          "key": "summary",
+          "label": "Summary",
+          "type": "textarea",
+          "options": ""
+        },
+        {
+          "key": "body",
+          "label": "Body",
+          "type": "textarea",
+          "options": ""
+        },
+        {
+          "key": "cover",
+          "label": "Cover image",
+          "type": "asset",
+          "options": ""
+        },
+        {
+          "key": "tags",
+          "label": "Tags",
+          "type": "tags",
+          "options": ""
+        },
+        {
+          "key": "featured",
+          "label": "Featured",
+          "type": "boolean",
+          "options": ""
+        }
+      ],
+      "records": [
+        {
+          "id": "post-one",
+          "title": "On designing with code",
+          "slug": "designing-with-code",
+          "format": "Note",
+          "date": "2026-10-10",
+          "status": "Published",
+          "summary": "A small observation on computational workflows.",
+          "body": "A model is more useful when its logic is as legible as its geometry. The interesting part is not just automating shapes—it is making design decisions inspectable.",
+          "cover": "",
+          "tags": [
+            "Computation",
+            "Process"
+          ],
+          "featured": true
+        },
+        {
+          "id": "post-two",
+          "title": "Introducing our visual research archive",
+          "slug": "visual-research-archive",
+          "format": "News",
+          "date": "2026-10-06",
+          "status": "Published",
+          "summary": "A home for ongoing studies, experiments and fragments.",
+          "body": "We are assembling a growing archive of geometric experiments, tools and material research. More soon.",
+          "cover": "glyph",
+          "tags": [
+            "Studio",
+            "News"
+          ],
+          "featured": true
+        },
+        {
+          "id": "post-three",
+          "title": "Geometry as a design language",
+          "slug": "geometry-as-language",
+          "format": "Article",
+          "date": "2026-09-28",
+          "status": "Published",
+          "summary": "Why computational systems matter beyond form-making.",
+          "body": "## Beyond the image\n\nComputational design is not simply a way to produce complex shapes. It is a way to describe relationships, dependencies and constraints.\n\n## A readable design process\n\nWhen the model can explain itself, we gain a new kind of design material: one that can be interrogated, adapted and shared.\n\n- Geometry\n- Metadata\n- Relationships\n- Operations\n\nEach becomes part of a continuous working system.",
+          "cover": "facade",
+          "tags": [
+            "Research",
+            "Computation"
+          ],
+          "featured": true
+        },
+        {
+          "id": "post-four",
+          "title": "A field of soft modules",
+          "slug": "soft-modules",
+          "format": "Note",
+          "date": "2026-09-21",
+          "status": "Draft",
+          "summary": "An experiment with diffusion and repetition.",
+          "body": "Can softness emerge from the proximity of hard-edged modular objects?",
+          "cover": "field",
+          "tags": [
+            "Visual",
+            "Brand"
+          ],
+          "featured": false
+        }
+      ]
+    }
+  ],
+  "templates": [
+    {
+      "id": "project-detail",
+      "name": "Project detail",
+      "collection": "projects",
+      "description": "One generated page per project",
+      "blocks": [
+        {
+          "id": "b_qbnj5k",
+          "type": "text",
+          "text": "{{category}} / {{year}}",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_upm545",
+          "type": "text",
+          "text": "{{title}}",
+          "style": "display"
+        },
+        {
+          "id": "b_gxh01p",
+          "type": "image",
+          "source": "{{cover}}",
+          "fit": "cover",
+          "caption": false
+        },
+        {
+          "id": "b_2b58cu",
+          "type": "card",
+          "children": [
+            {
+              "id": "b_sp80n4",
+              "type": "text",
+              "text": "OVERVIEW",
+              "style": "eyebrow"
+            },
+            {
+              "id": "b_z0pg4y",
+              "type": "text",
+              "text": "{{summary}}",
+              "style": "body"
+            }
+          ],
+          "layout": "split",
+          "tone": "soft",
+          "padding": "large"
+        },
+        {
+          "id": "b_yspl5b",
+          "type": "rich",
+          "source": "{{body}}"
+        },
+        {
+          "id": "b_acon1s",
+          "type": "component",
+          "component": "contact-cta"
+        }
+      ]
+    },
+    {
+      "id": "post-note",
+      "name": "Short note",
+      "collection": "posts",
+      "description": "Compact text-first notes",
+      "blocks": [
+        {
+          "id": "b_wn05nk",
+          "type": "text",
+          "text": "NOTE / {{date}}",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_ny315d",
+          "type": "text",
+          "text": "{{title}}",
+          "style": "heading"
+        },
+        {
+          "id": "b_bx35j2",
+          "type": "rich",
+          "source": "{{body}}"
+        },
+        {
+          "id": "b_20sthq",
+          "type": "text",
+          "text": "{{tags}}",
+          "style": "caption"
+        }
+      ]
+    },
+    {
+      "id": "post-news",
+      "name": "News item",
+      "collection": "posts",
+      "description": "Announcements and updates",
+      "blocks": [
+        {
+          "id": "b_519luw",
+          "type": "text",
+          "text": "NEWS / {{date}}",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_5yzsw2",
+          "type": "text",
+          "text": "{{title}}",
+          "style": "display"
+        },
+        {
+          "id": "b_iiu8fp",
+          "type": "text",
+          "text": "{{summary}}",
+          "style": "body"
+        },
+        {
+          "id": "b_s0rn9z",
+          "type": "image",
+          "source": "{{cover}}",
+          "fit": "cover",
+          "caption": false
+        },
+        {
+          "id": "b_x59tme",
+          "type": "rich",
+          "source": "{{body}}"
+        }
+      ]
+    },
+    {
+      "id": "post-article",
+      "name": "Long article",
+      "collection": "posts",
+      "description": "Research and long-form writing",
+      "blocks": [
+        {
+          "id": "b_nwqf9l",
+          "type": "text",
+          "text": "ARTICLE / {{date}}",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_fzbbp0",
+          "type": "text",
+          "text": "{{title}}",
+          "style": "display"
+        },
+        {
+          "id": "b_jgpli0",
+          "type": "text",
+          "text": "{{summary}}",
+          "style": "body"
+        },
+        {
+          "id": "b_2d5h29",
+          "type": "image",
+          "source": "{{cover}}",
+          "fit": "cover",
+          "caption": false
+        },
+        {
+          "id": "b_3ddoqh",
+          "type": "rich",
+          "source": "{{body}}"
+        },
+        {
+          "id": "b_9khlww",
+          "type": "text",
+          "text": "{{tags}}",
+          "style": "caption"
+        }
+      ]
+    }
+  ],
+  "components": [
+    {
+      "id": "contact-cta",
+      "name": "Contact CTA",
+      "description": "Reusable call-to-action",
+      "blocks": [
+        {
+          "id": "b_esmfl4",
+          "type": "card",
+          "children": [
+            {
+              "id": "b_kjufyt",
+              "type": "text",
+              "text": "HAVE A PROJECT IN MIND?",
+              "style": "eyebrow"
+            },
+            {
+              "id": "b_g0vd1t",
+              "type": "text",
+              "text": "Let’s make something useful.",
+              "style": "heading"
+            },
+            {
+              "id": "b_1f0qjq",
+              "type": "button",
+              "text": "Start a conversation ↗",
+              "href": "mailto:hello@example.com"
+            }
+          ],
+          "layout": "split",
+          "tone": "dark",
+          "padding": "large"
+        }
+      ]
+    },
+    {
+      "id": "section-heading",
+      "name": "Section heading",
+      "description": "Eyebrow and large section title",
+      "blocks": [
+        {
+          "id": "b_b7z5il",
+          "type": "text",
+          "text": "SELECTED WORK",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_3utnuw",
+          "type": "text",
+          "text": "Explorations and experiments.",
+          "style": "heading"
+        }
+      ]
+    },
+    {
+      "id": "project-tile",
+      "name": "Project tile",
+      "description": "Record-powered project card",
+      "blocks": [
+        {
+          "id": "b_b4dn5b",
+          "type": "image",
+          "source": "{{cover}}",
+          "fit": "cover",
+          "caption": false
+        },
+        {
+          "id": "b_46i46m",
+          "type": "text",
+          "text": "{{category}} / {{year}}",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_jesowg",
+          "type": "text",
+          "text": "{{title}}",
+          "style": "body"
+        }
+      ]
+    },
+    {
+      "id": "post-row",
+      "name": "Post row",
+      "description": "Record-powered editorial listing",
+      "blocks": [
+        {
+          "id": "b_33jo72",
+          "type": "text",
+          "text": "{{format}} / {{date}}",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_36vqgt",
+          "type": "text",
+          "text": "{{title}}",
+          "style": "heading"
+        },
+        {
+          "id": "b_6uk7yv",
+          "type": "text",
+          "text": "{{summary}}",
+          "style": "caption"
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "slug": "/",
+      "status": "Draft",
+      "blocks": [
+        {
+          "id": "b_kzdema",
+          "type": "card",
+          "children": [
+            {
+              "id": "b_vdbnpm",
+              "type": "card",
+              "children": [
+                {
+                  "id": "b_5743q3",
+                  "type": "text",
+                  "text": "TA / DESIGN & RESEARCH",
+                  "style": "eyebrow"
+                },
+                {
+                  "id": "b_x1yy0p",
+                  "type": "text",
+                  "text": "Architecture,\ncomputation\n& everything\nin between.",
+                  "style": "display"
+                },
+                {
+                  "id": "b_iu0i4e",
+                  "type": "text",
+                  "text": "A design practice exploring geometry, technology and the built environment.",
+                  "style": "body"
+                }
+              ],
+              "layout": "stack",
+              "tone": "clear",
+              "padding": "none"
+            },
+            {
+              "id": "b_lra1dw",
+              "type": "image",
+              "source": "field",
+              "fit": "cover",
+              "caption": false
+            }
+          ],
+          "layout": "split",
+          "tone": "soft",
+          "padding": "large"
+        },
+        {
+          "id": "b_gfcx3b",
+          "type": "text",
+          "text": "01 / SELECTED WORK",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_s8i02c",
+          "type": "query",
+          "collection": "projects",
+          "layout": "grid",
+          "count": 4,
+          "component": "project-tile",
+          "filter": "featured",
+          "sort": "newest"
+        },
+        {
+          "id": "b_5mwy53",
+          "type": "text",
+          "text": "02 / JOURNAL",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_tx7qx0",
+          "type": "query",
+          "collection": "posts",
+          "layout": "list",
+          "count": 3,
+          "component": "post-row",
+          "filter": "published",
+          "sort": "newest"
+        },
+        {
+          "id": "b_14tqqx",
+          "type": "component",
+          "component": "contact-cta"
+        }
+      ]
+    },
+    {
+      "id": "work",
+      "title": "Work",
+      "slug": "/work",
+      "status": "Draft",
+      "blocks": [
+        {
+          "id": "b_rfoptf",
+          "type": "text",
+          "text": "TA / ARCHIVE",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_6o0c4y",
+          "type": "text",
+          "text": "Selected work.",
+          "style": "display"
+        },
+        {
+          "id": "b_bseqsf",
+          "type": "text",
+          "text": "Architecture, prototypes, experiments and ongoing research.",
+          "style": "body"
+        },
+        {
+          "id": "b_73h0n0",
+          "type": "query",
+          "collection": "projects",
+          "layout": "grid",
+          "count": 12,
+          "component": "project-tile",
+          "filter": "all",
+          "sort": "newest"
+        }
+      ]
+    },
+    {
+      "id": "journal",
+      "title": "Journal",
+      "slug": "/posts",
+      "status": "Draft",
+      "blocks": [
+        {
+          "id": "b_h4y8s6",
+          "type": "text",
+          "text": "TA / WRITING",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_fal1dt",
+          "type": "text",
+          "text": "Notes, news & research.",
+          "style": "display"
+        },
+        {
+          "id": "b_njlbt9",
+          "type": "text",
+          "text": "A living feed of short observations, studio news and longer articles.",
+          "style": "body"
+        },
+        {
+          "id": "b_nue5t9",
+          "type": "query",
+          "collection": "posts",
+          "layout": "list",
+          "count": 30,
+          "component": "post-row",
+          "filter": "published",
+          "sort": "newest"
+        }
+      ]
+    },
+    {
+      "id": "studio",
+      "title": "Studio",
+      "slug": "/studio",
+      "status": "Draft",
+      "blocks": [
+        {
+          "id": "b_glxz39",
+          "type": "text",
+          "text": "DESIGN / COMPUTATION / RESEARCH",
+          "style": "eyebrow"
+        },
+        {
+          "id": "b_55634f",
+          "type": "text",
+          "text": "Working between\ndesign and code.",
+          "style": "display"
+        },
+        {
+          "id": "b_rjajsx",
+          "type": "card",
+          "children": [
+            {
+              "id": "b_6d7zx0",
+              "type": "text",
+              "text": "A small independent practice building useful tools, architectural systems and meaningful work.",
+              "style": "body"
+            },
+            {
+              "id": "b_xxsfoi",
+              "type": "image",
+              "source": "glyph",
+              "fit": "cover",
+              "caption": false
+            }
+          ],
+          "layout": "split",
+          "tone": "soft",
+          "padding": "large"
+        },
+        {
+          "id": "b_60ijye",
+          "type": "component",
+          "component": "contact-cta"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "field",
+      "name": "Diffuse field / 01",
+      "src": "demo:field",
+      "alt": "Abstract monochrome modular field",
+      "caption": "Diffusion study / 01",
+      "credit": "TA Design",
+      "tags": [
+        "Brand",
+        "Abstract"
+      ],
+      "properties": {
+        "family": "B / Soft field",
+        "licence": "Original"
+      }
+    },
+    {
+      "id": "house",
+      "name": "Housing study / 01",
+      "src": "demo:house",
+      "alt": "Modular architectural study",
+      "caption": "Balkan House system study",
+      "credit": "TA Design",
+      "tags": [
+        "Architecture",
+        "Project"
+      ],
+      "properties": {
+        "project": "Balkan House"
+      }
+    },
+    {
+      "id": "facade",
+      "name": "Facade pattern / 01",
+      "src": "demo:facade",
+      "alt": "Rhythmic façade fins",
+      "caption": "Façade performance study",
+      "credit": "TA Design",
+      "tags": [
+        "Research",
+        "Geometry"
+      ],
+      "properties": {
+        "stage": "Concept"
+      }
+    },
+    {
+      "id": "glyph",
+      "name": "Glyph system / 01",
+      "src": "demo:glyph",
+      "alt": "Rounded geometric modules",
+      "caption": "TA glyph exploration",
+      "credit": "TA Design",
+      "tags": [
+        "Brand",
+        "Vector"
+      ],
+      "properties": {
+        "family": "A / Glyphs"
+      }
+    }
+  ]
+}

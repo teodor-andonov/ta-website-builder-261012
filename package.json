@@ -1,0 +1,14 @@
+{
+  "name": "ta-website-builder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "build": "node src/build.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
