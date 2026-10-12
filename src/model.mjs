@@ -42,6 +42,10 @@ export function validate(data) {
       claimRoute(`${collection.base}/${record.slug}`);
     }
   }
+  for (const asset of data.assets) {
+    if(typeof asset.src!=='string')fail(`Invalid asset source: ${asset.id}`);
+    if(/^data:/i.test(asset.src))fail(`Invalid asset source: embedded data URIs are not supported (${asset.id})`);
+  }
   for (const template of data.templates) if (!Array.isArray(template.blocks)) fail(`Invalid template ${template.id}`);
   for (const component of data.components) if (!Array.isArray(component.blocks)) fail(`Invalid component ${component.id}`);
   const templateIds = new Set(data.templates.map(t=>t.id));
