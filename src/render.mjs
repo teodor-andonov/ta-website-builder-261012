@@ -106,7 +106,14 @@ export function renderDocument(data, {title,blocks,context=null}) {
   const website=escapeHtml(data.site.name);
   const description=escapeHtml(context?.summary||data.site.description||'');
   const page=renderBlocks(blocks,context,data);
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${heading} — ${website}</title><meta name="description" content="${description}"><link rel="stylesheet" href="/site.css"></head><body class="published-site"><div class="webpage view"><nav class="web-nav"><a class="web-logo" href="/">TA<span style="font-weight:300">/</span></a><div class="web-links"><a href="/">Index</a><a href="/work/">Work</a><a href="/posts/">Journal</a><a href="/studio/">Studio</a></div></nav><main class="web-content">${page}</main><footer class="web-footer"><span>TA / DESIGN & RESEARCH</span><span>© ${new Date().getUTCFullYear()}</span></footer></div></body></html>`;
+  // Only link to actually generated page routes. Draft pages must remain unpublished.
+  const published=new Set(data.pages.filter(p=>p.status==='Published').map(p=>p.slug.replace(/\/$/,'')||'/'));
+  const home=published.has('/');
+  const logo=home?'<a class="web-logo" href="/">TA<span style="font-weight:300">/</span></a>':'<span class="web-logo">TA<span style="font-weight:300">/</span></span>';
+  const links=[['Index','/'],['Work','/work/'],['Journal','/posts/']]
+    .filter(([,href])=>published.has(href.replace(/\/$/,'')||'/'))
+    .map(([label,href])=>`<a href="${href}">${label}</a>`).join('');
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${heading} — ${website}</title><meta name="description" content="${description}"><link rel="stylesheet" href="/site.css"></head><body class="published-site"><div class="webpage view"><nav class="web-nav">${logo}<div class="web-links">${links}</div></nav><main class="web-content">${page}</main><footer class="web-footer"><span>TA / DESIGN & RESEARCH</span><span>© ${new Date().getUTCFullYear()}</span></footer></div></body></html>`;
 }
 export function collectPages(data){
   const pages=[];
