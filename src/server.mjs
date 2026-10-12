@@ -51,15 +51,6 @@ const server = http.createServer(async (req,res)=>{
       try{return respond(res,200,await readFile(file),'image/svg+xml; charset=utf-8');}
       catch(err){if(err.code==='ENOENT')return respond(res,404,JSON.stringify({error:'Not found'}));throw err;}
     }
-    // Use the same ESM renderer in the browser and the Node static builder.
-    if(req.method==='GET' && pathname==='/src/render.mjs')
-      return respond(res,200,await readFile(path.join(root,'src','render.mjs')),'text/javascript; charset=utf-8');
-    // Strictly allowlisted demo SVGs only; never accept filesystem paths from clients.
-    if(req.method==='GET' && /^\/assets\/demo\/[a-z0-9-]+\.svg$/.test(pathname)) {
-      const file=path.join(root,'assets','demo',path.posix.basename(pathname));
-      try{return respond(res,200,await readFile(file),'image/svg+xml; charset=utf-8');}
-      catch(err){if(err.code==='ENOENT')return respond(res,404,JSON.stringify({error:'Not found'}));throw err;}
-    }
     if (pathname==='/api/data' && req.method==='GET') {
       const content=await readFile(contentFile,'utf8');
       validate(JSON.parse(content));
