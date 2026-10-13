@@ -92,8 +92,30 @@ function seed(){return {version:2,site:{name:'TA / Design & Research',descriptio
  {id:'facade',name:'Facade pattern / 01',src:'demo:facade',alt:'Rhythmic façade fins',caption:'Façade performance study',credit:'TA Design',tags:['Research','Geometry'],properties:{stage:'Concept'}},
  {id:'glyph',name:'Glyph system / 01',src:'demo:glyph',alt:'Rounded geometric modules',caption:'TA glyph exploration',credit:'TA Design',tags:['Brand','Vector'],properties:{family:'A / Glyphs'}}]
  };}
-function normalize(d){if(!d||!Array.isArray(d.collections)||!Array.isArray(d.pages)||!Array.isArray(d.templates)||!Array.isArray(d.components)||!Array.isArray(d.assets))throw Error('Expected collections, pages, templates, components and assets arrays (Prototype 02 format).');d.collections.forEach(c=>{c.fields||=[];c.records||=[];c.base||='/'+c.id;c.formatTemplates||={}});d.pages.forEach(p=>p.blocks||=[]);d.templates.forEach(t=>t.blocks||=[]);d.components.forEach(t=>t.blocks||=[]);d.assets.forEach(a=>{if(/^data:/i.test(a.src||''))throw Error('Embedded base64 images cannot be imported; upload the original image files instead.');a.tags||=[];a.properties||={}});d.site||={name:'Studio website'};return d;}
-let db=seed()
+function normalize(d){if(!d||!Array.isArray(d.collections)||!Array.isArray(d.pages)||!Array.isArray(d.templates)||!Array.isArray(d.components)||!Array.isArray(d.assets))throw Error('Expected collections, pages, templates, components and assets arrays (Prototype 02 format).');d.collections.forEach(c=>{c.fields||=[];c.records||=[];c.base||='/'+c.id;c.formatTemplates||={}});d.pages.forEach(p=>p.blocks||=[]);d.templates.forEach(t=>t.blocks||=[]);d.components.forEach(t=>t.blocks||=[]);d.assets.forEach(a=>{if(/^data:/i.test(a.src||''))throw Error('Embedded base64 images cannot be imported; upload the original image files instead.');a.tags||=[];a.properties||={}});d.site||={name:'Studio website'};
+ d.site.design||={unitDivisor:100,cardBorders:false};
+ d.site.design.frame||={header:{constrainHeight:true,heightFactor:.06},footer:{constrainHeight:true,heightFactor:.05}};
+ function upgradeBlocks(blocks){
+   for(const b of blocks){
+     if(b.type!=='card')continue;
+     b.columns=Number.isInteger(b.columns)&&b.columns>0?b.columns:({split:2,grid:2,three:3})[b.layout]||1;
+     b.rows=Number.isInteger(b.rows)&&b.rows>0?b.rows:Math.max(1,Math.ceil((b.children||[]).length/b.columns));
+     b.gap||='regular';
+     b.padding=b.padding==='large'?'regular':b.padding==='small'?'compact':b.padding||'regular';
+     b.background||=b.tone==='dark'?'black':b.tone==='soft'?'grey-100':b.tone==='white'?'white':'transparent';
+     b.border=Boolean(b.border);b.constrainHeight=Boolean(b.constrainHeight);
+     b.heightFactor=Number(b.heightFactor)||.5;
+     (b.children||[]).forEach((child,i)=>{if(!child.area)child.area={x1:i%b.columns+1,y1:Math.floor(i/b.columns)+1,x2:i%b.columns+2,y2:Math.floor(i/b.columns)+2}});
+     upgradeBlocks(b.children||[]);
+     delete b.layout;delete b.tone;
+   }
+ }
+ for(const scope of [...d.pages,...d.templates,...d.components]){
+   scope.blocks=(scope.blocks||[]).map(b=>b.type==='card'?b:card([b],'stack','clear','none'));
+   upgradeBlocks(scope.blocks);
+ }
+ return d;}
+let db=normalize(seed())
 let ui={section:'dashboard',collection:'projects',record:'p-balkan',page:'home',template:'project-detail',component:'contact-cta',asset:'field',mode:'table',node:null,search:'',format:'all',tableLayout:'table',sample:'p-balkan',jsonMessage:'',notice:'',draftSection:null};
 let jsonDirty=false;
 const coll=()=>db.collections.find(c=>c.id===ui.collection);
@@ -241,7 +263,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'new-component':createModal('component');break;
  case'new-field':createModal('field');break;
  case'new-record':{let c=coll();let n=c.records.length+1,r={id:uid('r')};for(let f of c.fields){r[f.key]=f.type==='boolean'?false:f.type==='tags'?[]:'';}r.title=`Untitled ${n}`;r.slug='untitled-'+n;if(c.id==='posts'){r.format='Note';r.status='Draft';r.date=new Date().toISOString().slice(0,10)}c.records.unshift(r);persist();openRecord(r.id,c.id);ui.mode='fields';renderAll();break}
- case'confirm-create':{let kind=btn.dataset.kind,name=String($('#modalName')?.value||'').trim();if(!name){$('#modalName')?.focus();return}if(kind==='page'){let p={id:uid('p'),title:name,slug:'/'+slug(name),status:'Draft',blocks:[tb(name,'display')]};db.pages.push(p);closeModal();persist();choose('page',p.id)}else if(kind==='collection'){let id=slug(name);if(db.collections.some(c=>c.id===id)){alert('Collection name already exists');return}let t={id:uid('tpl'),name:name.replace(/s$/,'')+' detail',collection:id,description:'Generated content page',blocks:[tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}]};db.templates.push(t);db.collections.push({id,name,base:'/'+id,defaultTemplate:t.id,fields:[F('title','Title'),F('slug','Slug'),F('status','Status','select','Draft,Published'),F('summary','Summary','textarea'),F('body','Body','textarea')],records:[]});closeModal();persist();choose('collection',id)}else if(kind==='component'){let x={id:uid('cmp'),name,description:'Reusable content component',blocks:[tb('New component','heading')]};db.components.push(x);closeModal();persist();choose('component',x.id)}else if(kind==='template'){let x={id:uid('tpl'),name,collection:$('#modalCollection').value,description:'Custom generated page template',blocks:[tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}]};db.templates.push(x);closeModal();persist();choose('template',x.id)}else if(kind==='field'){let c=coll(),key=slug(name).replaceAll('-','_');if(c.fields.some(f=>f.key===key)){alert('A property with this key already exists');return}c.fields.push(F(key,name,$('#modalType').value,$('#modalOptions').value));c.records.forEach(r=>r[key]=$('#modalType').value==='boolean'?false:$('#modalType').value==='tags'?[]:'');closeModal();persist();renderAll()}break}
+ case'confirm-create':{let kind=btn.dataset.kind,name=String($('#modalName')?.value||'').trim();if(!name){$('#modalName')?.focus();return}if(kind==='page'){let p={id:uid('p'),title:name,slug:'/'+slug(name),status:'Draft',blocks:[card([tb(name,'display')],'stack','clear','none')]};db.pages.push(p);closeModal();persist();choose('page',p.id)}else if(kind==='collection'){let id=slug(name);if(db.collections.some(c=>c.id===id)){alert('Collection name already exists');return}let t={id:uid('tpl'),name:name.replace(/s$/,'')+' detail',collection:id,description:'Generated content page',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};db.templates.push(t);db.collections.push({id,name,base:'/'+id,defaultTemplate:t.id,fields:[F('title','Title'),F('slug','Slug'),F('status','Status','select','Draft,Published'),F('summary','Summary','textarea'),F('body','Body','textarea')],records:[]});closeModal();persist();choose('collection',id)}else if(kind==='component'){let x={id:uid('cmp'),name,description:'Reusable content component',blocks:[card([tb('New component','heading')],'stack','clear','none')]};db.components.push(x);closeModal();persist();choose('component',x.id)}else if(kind==='template'){let x={id:uid('tpl'),name,collection:$('#modalCollection').value,description:'Custom generated page template',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};db.templates.push(x);closeModal();persist();choose('template',x.id)}else if(kind==='field'){let c=coll(),key=slug(name).replaceAll('-','_');if(c.fields.some(f=>f.key===key)){alert('A property with this key already exists');return}c.fields.push(F(key,name,$('#modalType').value,$('#modalOptions').value));c.records.forEach(r=>r[key]=$('#modalType').value==='boolean'?false:$('#modalType').value==='tags'?[]:'');closeModal();persist();renderAll()}break}
  case'modal-close':closeModal();break;
  case'open-record':openRecord(id,ui.collection);break;
  case'edit-template':if(id)choose('template',id);break;
@@ -330,7 +352,7 @@ document.addEventListener('input',event=>{let el=event.target;if(el.id==='record
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeModal();$('#inspector').classList.remove('show');$('#sidebar').classList.remove('show')}if(event.key==='Enter'&&(event.target.id==='recordSearch'||event.target.id==='assetSearch')){event.target.blur();renderWork()}});
 function recById(cid,rid){return db.collections.find(c=>c.id===cid)?.records.find(r=>r.id===rid)}
 $('#exportBtn').addEventListener('click',exportJSON);$('#importBtn').addEventListener('click',()=>$('#importFile').click());$('#menuBtn').addEventListener('click',()=>$('#sidebar').classList.toggle('show'));$('#inspectToggle').addEventListener('click',()=>$('#inspector').classList.toggle('show'));$('#inspectClose').addEventListener('click',()=>$('#inspector').classList.remove('show'));
-window.__TA_STUDIO__={getData:()=>clone(db),reset:()=>{db=seed();persist();choose('dashboard')},navigate:choose};
+window.__TA_STUDIO__={getData:()=>clone(db),reset:()=>{db=normalize(seed());persist();choose('dashboard')},navigate:choose};
 try {
  const response=await fetch('/api/data',{cache:'no-store'});
  if(!response.ok)throw Error('Loading content failed ('+response.status+')');
