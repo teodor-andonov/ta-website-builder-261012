@@ -30,3 +30,9 @@ jobs:
           test -f dist/posts/designing-with-code/index.html
           test -f dist/work/balkan-house/index.html
           test -f dist/site.css
+      - name: Verify GitHub Pages project-path build
+        env:
+          TA_BASE_PATH: /ta-website-builder-261012/
+        run: |
+          npm run build
+          node scripts/check-pages-dist.mjs

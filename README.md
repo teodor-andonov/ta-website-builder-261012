@@ -65,3 +65,19 @@ See `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/IMPLEMENTATION_PLAN.md` for the l
 The three bespoke JSON pages (Home, Work and Journal) are now published alongside the existing Project and Post detail routes. The shared renderer adds JSON-controlled navigation, active-section indication, skip-to-content and direct detail-page links. A public-only stylesheet in `src/public.css` scales layouts for desktop and mobile without changing the desktop-only editor.
 
 All **10 sample pages** and `dist/404.html` are generated with `npm run build`. No hosting/deployment is enabled; internal links assume the website is served from a domain root. If you later use GitHub Pages under a repository subpath, configure a custom domain or add a base-path transform before launch. Sample content is flagged `noindex, nofollow` pending editorial approval. See `docs/M4_PUBLIC_SITE.md`.
+## M5 — GitHub Pages staging site
+
+After the repository is made public and **Settings → Pages → Build and deployment → GitHub Actions** is enabled, merges to `main` trigger `.github/workflows/deploy-pages.yml` to build and publish **only `dist/`** to:
+
+https://teodor-andonov.github.io/ta-website-builder-261012/
+
+The editor, local write API, `content/site.json` source and development code are **not** in the deployed site. Root-domain builds remain the default (`npm run build`); GitHub Pages uses `TA_BASE_PATH=/ta-website-builder-261012/` at build time to rewrite root-relative HTML/CSS links. This also allows moving to Hostinger with `TA_BASE_PATH=/` later.
+
+To validate the Pages build locally:
+
+```sh
+TA_BASE_PATH=/ta-website-builder-261012/ npm run build
+TA_BASE_PATH=/ta-website-builder-261012/ node scripts/check-pages-dist.mjs
+```
+
+The generated public pages deliberately retain `noindex, nofollow` because all published sample content and imagery are **unapproved demonstration material**. Public access does not mean official launch. The repository being public makes its complete committed source and history visible.
