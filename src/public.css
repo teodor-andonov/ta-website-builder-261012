@@ -20,7 +20,7 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .webpage *{box-sizing:border-box}
 :is(.published-site,.editor-shell) .grid-card{display:grid;min-width:0;min-height:0;align-items:stretch;align-content:stretch}
 :is(.published-site,.editor-shell) .b-card.grid-card{
-  border:1px solid transparent;border-radius:var(--ta-radius);
+  border:0;border-radius:var(--ta-radius);
   gap:2cqw;padding:2cqw;min-height:0;min-width:0;
 }
 :is(.published-site,.editor-shell) .grid-card>.block{
@@ -43,8 +43,14 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .b-card.bg-grey-300{background:var(--ta-grey-300)}
 :is(.published-site,.editor-shell) .b-card.bg-grey-600{background:var(--ta-grey-600);color:#fff}
 :is(.published-site,.editor-shell) .b-card.bg-black{background:var(--ta-black);color:#fff}
+/* Outline never enters the CSS box model. currentColor adapts to dark/light Cards.
+   Drawing inward keeps the line visible on clipped nested Card edges. */
 :is(.published-site,.editor-shell) .b-card.has-border,
-:is(.published-site,.editor-shell) .show-card-borders .b-card.grid-card{border-color:#d0d0d0}
+:is(.published-site,.editor-shell) .show-card-borders .b-card,
+:is(.published-site,.editor-shell) .webpage.show-card-borders{
+  outline:1px solid color-mix(in srgb, currentColor 20%, transparent);
+  outline-offset:-1px;
+}
 :is(.published-site,.editor-shell) .b-card.grid-card>.block{margin:0}
 :is(.published-site,.editor-shell) .block{min-width:0}
 :is(.published-site,.editor-shell) .b-text{overflow-wrap:anywhere;white-space:pre-line}
