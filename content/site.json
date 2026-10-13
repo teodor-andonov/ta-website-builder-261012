@@ -1324,8 +1324,8 @@
           "gap": "regular",
           "background": "grey-100",
           "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5
+          "constrainHeight": true,
+          "heightFactor": 0.48
         },
         {
           "id": "m6-intro",
