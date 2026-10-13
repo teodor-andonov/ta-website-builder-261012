@@ -81,3 +81,9 @@ TA_BASE_PATH=/ta-website-builder-261012/ node scripts/check-pages-dist.mjs
 ```
 
 The generated public pages deliberately retain `noindex, nofollow` because all published sample content and imagery are **unapproved demonstration material**. Public access does not mean official launch. The repository being public makes its complete committed source and history visible.
+
+## M7 — print-native modular composition
+
+The newer design contract deliberately replaces adaptive columns with a fixed, page-width-scaled presentation system. Every Card declares equal divisions (`columns`, `rows`) and positions children in explicit grid rectangles (`area:{x1,y1,x2,y2}`). Page, header, sections and footer follow the Card grammar. Constrain-height toggles use `heightFactor` = height / Card width for proportional printed-board sections, otherwise height follows content. All design measurements use `u = page width / 100`, and the palette is strictly grayscale. See `docs/M7_PRINT_GRID.md`.
+
+This means public mobile pages **do not rearrange** their grids; they scale like a zoomable printed composition. This deliberate choice supersedes earlier responsive-layout roadmap notes. The desktop editor exposes equal grid divisions and child areas.
