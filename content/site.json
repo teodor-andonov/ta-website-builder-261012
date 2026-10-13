@@ -32,7 +32,7 @@
         "grey600": "#666666",
         "black": "#111111"
       },
-      "cardBorders": false,
+      "cardBorders": true,
       "frame": {
         "header": {
           "constrainHeight": true,
