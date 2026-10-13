@@ -1,0 +1,44 @@
+name: Design preview screenshots
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build website for local preview
+        run: npm run build
+      - name: Capture desktop and narrow-page views in headless Chrome
+        run: |
+          set -euo pipefail
+          mkdir -p screenshots
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist >/tmp/ta-preview.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for i in 1 2 3 4 5 6 7 8; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --disable-dev-shm-usage --virtual-time-budget=1500 --window-size=1600,3000 --screenshot="$PWD/screenshots/01-home-desktop.png" http://127.0.0.1:4173/
+          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --disable-dev-shm-usage --virtual-time-budget=1500 --window-size=1440,2100 --screenshot="$PWD/screenshots/02-work-desktop.png" http://127.0.0.1:4173/work/
+          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --disable-dev-shm-usage --virtual-time-budget=1500 --window-size=1440,1700 --screenshot="$PWD/screenshots/03-journal-desktop.png" http://127.0.0.1:4173/posts/
+          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --disable-dev-shm-usage --virtual-time-budget=1500 --window-size=440,1800 --screenshot="$PWD/screenshots/04-home-narrow.png" http://127.0.0.1:4173/
+          test -s screenshots/01-home-desktop.png
+          test -s screenshots/02-work-desktop.png
+          test -s screenshots/03-journal-desktop.png
+          test -s screenshots/04-home-narrow.png
+      - name: Store screenshot previews (not in repo)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ta-design-preview
+          path: screenshots/*.png
+          if-no-files-found: error
+          retention-days: 7
