@@ -246,6 +246,7 @@ body.published-site{margin:0;background:var(--ta-paper);color:var(--ta-ink)}
   :is(.published-site,.editor-shell) .web-footer{padding:23px 16px}
   :is(.published-site,.editor-shell) .variant-hero>.b-card{padding:24px 22px}
   :is(.published-site,.editor-shell) .variant-hero-copy .b-text.display{font-size:clamp(32px,9cqw,45px)}
+  :is(.published-site,.editor-shell) .variant-work-grid .b-query.grid,
   :is(.published-site,.editor-shell) .b-query.grid{grid-template-columns:1fr}
   :is(.published-site,.editor-shell) .web-links{font-size:10px;gap:20px}
 }
