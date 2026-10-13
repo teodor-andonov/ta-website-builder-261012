@@ -11,7 +11,7 @@ Confirmed intent: one presentation/print-like fixed composition rendered consist
 - **Page unit** 1u = page width / 100 via 1cqw. All layout spacing, typographic sizes, padding, radii and heights are based on page width.
 - Card backgrounds: `transparent,white,grey-100,grey-200,grey-300,grey-600,black`. No saturated colors.
 - Gaps and padding: `none(0u), compact(1u), regular(2u), generous(3u)`; choose deliberately and consistently.
-- Optional `border` per Card. Site-wide `site.design.cardBorders` enables subtle borders for every Card, including transparent grouping Cards.
+- Optional `border` field per Card (legacy JSON name) now **renders as CSS `outline`**, not a layout border. The site-wide `site.design.cardBorders` is currently **on** and enables outlines on all Cards (including the master Page, navigation, footer and transparent grouping Cards). The `outline` is `1px solid color-mix(in srgb, currentColor 20%, transparent)` with a `-1px` offset: it takes no layout space, and adapts automatically to light text on dark Cards. The JSON property names remain for backward compatibility.
 
 ## Authoring
 The desktop Studio inspector edits the selected Card's grid divisions, background, gap, padding, border, height toggle/factor. A child shows x1,y1,x2,y2 fields. New Card children receive the next free cell, extending row count if needed. Decreasing rows/columns that would strand a child is blocked. The root Add action wraps atomic objects in a 1×1 section Card.
