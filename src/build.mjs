@@ -10,13 +10,11 @@ const output=process.env.TA_OUTPUT_DIR?path.resolve(process.env.TA_OUTPUT_DIR):p
 const basePath=normalizeBasePath(process.env.TA_BASE_PATH || '/');
 const data=validate(JSON.parse(await readFile(path.join(dataRoot,'content','site.json'),'utf8')));
 const pages=collectPages(data);
-const html=await readFile(path.join(root,'studio','index.html'),'utf8');
-const css=html.match(/<style>([\s\S]*?)<\/style>/i)?.[1];
-if(!css)throw Error('Missing prototype CSS');
+// Published CSS is independent of legacy editor chrome. Only strict grayscale print styles ship.
 // Validation happens before cleanup of prior dist output.
 await rm(output,{recursive:true,force:true});
 await mkdir(output,{recursive:true});
-await writeFile(path.join(output,'site.css'),prefixCssPaths(css+'\n'+await readFile(path.join(root,'src','public.css'),'utf8'),basePath));
+await writeFile(path.join(output,'site.css'),prefixCssPaths(await readFile(path.join(root,'src','public.css'),'utf8'),basePath));
 await cp(path.join(dataRoot,'assets'),path.join(output,'assets'),{recursive:true});
 for(const page of pages){
   const safeRoute=page.route==='/'?'':page.route.replace(/^\/+|\/+$/g,'');

@@ -6,6 +6,21 @@
 export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const displayValue = value => Array.isArray(value) ? value.join(', ') : value ?? '';
 const safeToken = value => /^[a-zA-Z0-9_-]+$/.test(value ?? '') ? value : '';
+
+const safePositiveInt = (v, fallback=1) => Number.isInteger(Number(v)) && Number(v)>=1 && Number(v)<=64 ? Number(v) : fallback;
+const safeFactor = v => Number.isFinite(Number(v)) && Number(v)>0 && Number(v)<=4 ? Number(v) : 0.5;
+const safeArea = (area, columns, rows) => {
+  if(!area || typeof area!=='object')return '';
+  const {x1,y1,x2,y2}=area;
+  if(![x1,y1,x2,y2].every(Number.isInteger) || x1<1 || y1<1 || x2<=x1 || y2<=y1 || x2>columns+1 || y2>rows+1)return '';
+  return `grid-column:${x1}/${x2};grid-row:${y1}/${y2};`;
+};
+const backgrounds=new Set(['transparent','white','grey-100','grey-200','grey-300','grey-600','black']);
+export function cardGridStyle(block){
+  const columns=safePositiveInt(block.columns,1),rows=safePositiveInt(block.rows,Math.max(1,Math.ceil((block.children||[]).length/columns)));
+  return `grid-template-columns:repeat(${columns},minmax(0,1fr));grid-template-rows:repeat(${rows},${block.constrainHeight?'minmax(0,1fr)':'minmax(min-content,1fr)'});${block.constrainHeight?`aspect-ratio:1 / ${safeFactor(block.heightFactor)};`:''}`;
+}
+
 export const recordPath = (collection, record) => `${collection.base}/${record.slug}/`;
 export function templateFor(data, collection, record) {
   const id = collection?.formatTemplates?.[record?.[collection?.formatField]] || collection?.defaultTemplate;
@@ -85,8 +100,10 @@ function renderBlock(block,context,data,options,depth) {
       break;
     }
     case 'card': {
-      const padding=block.padding==='none'?'padding:0;min-height:0':block.padding==='small'?'padding:12px':'';
-      content=`<div class="b-card ${safeToken(block.layout||'stack')} ${safeToken(block.tone||'clear')}" style="${padding}">${renderBlocks(block.children,context,data,options,depth+1)||'<div class="placeholder">Empty card · add child</div>'}</div>`;
+      const tone=backgrounds.has(block.background)?block.background:'transparent';
+      const padding=['none','compact','regular','generous'].includes(block.padding)?block.padding:'regular';
+      const gap=['none','compact','regular','generous'].includes(block.gap)?block.gap:'regular';
+      content=`<div class="b-card grid-card bg-${tone} pad-${padding} gap-${gap}${block.border?' has-border':''}" style="${cardGridStyle(block)}">${renderBlocks(block.children,context,data,{...options,parentColumns:safePositiveInt(block.columns,1),parentRows:safePositiveInt(block.rows,Math.max(1,Math.ceil((block.children||[]).length/safePositiveInt(block.columns,1))))},depth+1)||'<div class="placeholder">Empty card · add child</div>'}</div>`;
       break;
     }
     case 'component': {
@@ -108,7 +125,9 @@ function renderBlock(block,context,data,options,depth) {
     }
     default: content='<div class="placeholder">Unknown block</div>';
   }
-  return `<div class="block${block.variant?' variant-'+safeToken(block.variant):''}${selected}"${attrs}>${content}</div>`;
+  const parentCols=safePositiveInt(options.parentColumns,1),parentRows=safePositiveInt(options.parentRows,1);
+  const area=safeArea(block.area,parentCols,parentRows);
+  return `<div class="block${block.variant?' variant-'+safeToken(block.variant):''}${selected}"${attrs}${area?` style="${area}"`:''}>${content}</div>`;
 }
 /** Map a record or bespoke page to its URL without duplicating the renderer. */
 export function resolvePreviewRoute(data,blocks,context=null) {
@@ -127,11 +146,16 @@ export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
   const section=here==='/'?'/':here.startsWith('/work/')?'/work/':here.startsWith('/posts/')?'/posts/':here;
   const nav=(data.site.navigation || [{label:'Home',href:'/'},{label:'Work',href:'/work/'},{label:'Journal',href:'/posts/'}]).filter(link=>published.has(normalizeRoute(link.href)));
   const logo=published.has('/')?'<a class="web-logo" href="/" aria-label="TA — Home" data-site-route="/">TA<span style="font-weight:300">/</span></a>':'<span class="web-logo">TA<span style="font-weight:300">/</span></span>';
+  const frameHeight = name => {
+    const settings=data.site?.design?.frame?.[name];
+    return settings?.constrainHeight && Number.isFinite(settings.heightFactor) && settings.heightFactor>0 && settings.heightFactor<=4
+      ? ` style="aspect-ratio:1 / ${settings.heightFactor};"` : '';
+  };
   const links=nav.map(link=>{
     const href=normalizeRoute(link.href),active=href===section;
     return `<a href="${escapeHtml(href)}" data-site-route="${escapeHtml(href)}"${active?' class="is-active" aria-current="page"':''}>${escapeHtml(link.label)}</a>`;
   }).join('');
-  return `<div class="webpage ${design?'design':'view'}"><a class="skip-link" href="#main-content">Skip to content</a><nav class="web-nav" aria-label="Main navigation">${logo}<div class="web-links">${links}</div></nav><main id="main-content" class="web-content">${content}</main><footer class="web-footer"><span>${escapeHtml(data.site.name)}</span><span>© ${new Date().getUTCFullYear()}</span></footer></div>`;
+  return `<div class="webpage ${design?'design':'view'}${data.site?.design?.cardBorders?' show-card-borders':''}"><a class="skip-link" href="#main-content">Skip to content</a><nav class="web-nav b-card grid-card semantic-header bg-transparent"${frameHeight('header')} aria-label="Main navigation">${logo}<div class="web-links">${links}</div></nav><main id="main-content" class="web-content b-card semantic-page bg-transparent">${content}</main><footer class="web-footer b-card grid-card semantic-footer bg-transparent"${frameHeight('footer')}><span>${escapeHtml(data.site.name)}</span><span>© ${new Date().getUTCFullYear()}</span></footer></div>`;
 }
 export function renderPagePreview(data,blocks,context=null,options={}) {
   return renderSiteFrame(renderBlocks(blocks,context,data,options),data,{...options,route:options.route||resolvePreviewRoute(data,blocks,context)});

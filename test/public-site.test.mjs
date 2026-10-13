@@ -66,6 +66,6 @@ test('static build emits root and indexes, stylesheet, fallback and no editor',a
       assert.ok((await stat(path.join(tmp,name))).isFile(),name);
     }
     await assert.rejects(stat(path.join(tmp,'studio/index.html')));
-    assert.match(await readFile(path.join(tmp,'site.css'),'utf8'),/M6 — TA Soft Precision/);
+    assert.match(await readFile(path.join(tmp,'site.css'),'utf8'),/M7 \/ Print-native Card system/);
   }finally{await rm(tmp,{recursive:true,force:true});}
 });

@@ -20,7 +20,30 @@
         "label": "Studio",
         "href": "/studio/"
       }
-    ]
+    ],
+    "design": {
+      "unitDivisor": 100,
+      "palette": {
+        "paper": "#ffffff",
+        "ink": "#141414",
+        "grey100": "#f2f2f2",
+        "grey200": "#e3e3e3",
+        "grey300": "#bcbcbc",
+        "grey600": "#666666",
+        "black": "#111111"
+      },
+      "cardBorders": true,
+      "frame": {
+        "header": {
+          "constrainHeight": true,
+          "heightFactor": 0.06
+        },
+        "footer": {
+          "constrainHeight": true,
+          "heightFactor": 0.05
+        }
+      }
+    }
   },
   "collections": [
     {
@@ -306,23 +329,83 @@
       "description": "One generated page per project",
       "blocks": [
         {
-          "id": "b_qbnj5k",
-          "type": "text",
-          "text": "{{category}} / {{year}}",
-          "style": "eyebrow"
+          "id": "m7_project-detail_0",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_qbnj5k",
+              "type": "text",
+              "text": "{{category}} / {{year}}",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_upm545",
-          "type": "text",
-          "text": "{{title}}",
-          "style": "display"
+          "id": "m7_project-detail_1",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_upm545",
+              "type": "text",
+              "text": "{{title}}",
+              "style": "display",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_gxh01p",
-          "type": "image",
-          "source": "{{cover}}",
-          "fit": "cover",
-          "caption": false
+          "id": "m7_project-detail_2",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_gxh01p",
+              "type": "image",
+              "source": "{{cover}}",
+              "fit": "cover",
+              "caption": false,
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
           "id": "b_2b58cu",
@@ -332,28 +415,85 @@
               "id": "b_sp80n4",
               "type": "text",
               "text": "OVERVIEW",
-              "style": "eyebrow"
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
             },
             {
               "id": "b_z0pg4y",
               "type": "text",
               "text": "{{summary}}",
-              "style": "body"
+              "style": "body",
+              "area": {
+                "x1": 2,
+                "y1": 1,
+                "x2": 3,
+                "y2": 2
+              }
             }
           ],
-          "layout": "split",
-          "tone": "soft",
-          "padding": "large"
+          "padding": "regular",
+          "columns": 2,
+          "rows": 1,
+          "gap": "regular",
+          "background": "grey-100",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5
         },
         {
-          "id": "b_yspl5b",
-          "type": "rich",
-          "source": "{{body}}"
+          "id": "m7_project-detail_4",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_yspl5b",
+              "type": "rich",
+              "source": "{{body}}",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_acon1s",
-          "type": "component",
-          "component": "contact-cta"
+          "id": "m7_project-detail_5",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_acon1s",
+              "type": "component",
+              "component": "contact-cta",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         }
       ]
     },
@@ -364,27 +504,107 @@
       "description": "Compact text-first notes",
       "blocks": [
         {
-          "id": "b_wn05nk",
-          "type": "text",
-          "text": "NOTE / {{date}}",
-          "style": "eyebrow"
+          "id": "m7_post-note_0",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_wn05nk",
+              "type": "text",
+              "text": "NOTE / {{date}}",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_ny315d",
-          "type": "text",
-          "text": "{{title}}",
-          "style": "heading"
+          "id": "m7_post-note_1",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_ny315d",
+              "type": "text",
+              "text": "{{title}}",
+              "style": "heading",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_bx35j2",
-          "type": "rich",
-          "source": "{{body}}"
+          "id": "m7_post-note_2",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_bx35j2",
+              "type": "rich",
+              "source": "{{body}}",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_20sthq",
-          "type": "text",
-          "text": "{{tags}}",
-          "style": "caption"
+          "id": "m7_post-note_3",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_20sthq",
+              "type": "text",
+              "text": "{{tags}}",
+              "style": "caption",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         }
       ]
     },
@@ -395,34 +615,134 @@
       "description": "Announcements and updates",
       "blocks": [
         {
-          "id": "b_519luw",
-          "type": "text",
-          "text": "NEWS / {{date}}",
-          "style": "eyebrow"
+          "id": "m7_post-news_0",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_519luw",
+              "type": "text",
+              "text": "NEWS / {{date}}",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_5yzsw2",
-          "type": "text",
-          "text": "{{title}}",
-          "style": "display"
+          "id": "m7_post-news_1",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_5yzsw2",
+              "type": "text",
+              "text": "{{title}}",
+              "style": "display",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_iiu8fp",
-          "type": "text",
-          "text": "{{summary}}",
-          "style": "body"
+          "id": "m7_post-news_2",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_iiu8fp",
+              "type": "text",
+              "text": "{{summary}}",
+              "style": "body",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_s0rn9z",
-          "type": "image",
-          "source": "{{cover}}",
-          "fit": "cover",
-          "caption": false
+          "id": "m7_post-news_3",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_s0rn9z",
+              "type": "image",
+              "source": "{{cover}}",
+              "fit": "cover",
+              "caption": false,
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_x59tme",
-          "type": "rich",
-          "source": "{{body}}"
+          "id": "m7_post-news_4",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_x59tme",
+              "type": "rich",
+              "source": "{{body}}",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         }
       ]
     },
@@ -433,40 +753,160 @@
       "description": "Research and long-form writing",
       "blocks": [
         {
-          "id": "b_nwqf9l",
-          "type": "text",
-          "text": "ARTICLE / {{date}}",
-          "style": "eyebrow"
+          "id": "m7_post-article_0",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_nwqf9l",
+              "type": "text",
+              "text": "ARTICLE / {{date}}",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_fzbbp0",
-          "type": "text",
-          "text": "{{title}}",
-          "style": "display"
+          "id": "m7_post-article_1",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_fzbbp0",
+              "type": "text",
+              "text": "{{title}}",
+              "style": "display",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_jgpli0",
-          "type": "text",
-          "text": "{{summary}}",
-          "style": "body"
+          "id": "m7_post-article_2",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_jgpli0",
+              "type": "text",
+              "text": "{{summary}}",
+              "style": "body",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_2d5h29",
-          "type": "image",
-          "source": "{{cover}}",
-          "fit": "cover",
-          "caption": false
+          "id": "m7_post-article_3",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_2d5h29",
+              "type": "image",
+              "source": "{{cover}}",
+              "fit": "cover",
+              "caption": false,
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_3ddoqh",
-          "type": "rich",
-          "source": "{{body}}"
+          "id": "m7_post-article_4",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_3ddoqh",
+              "type": "rich",
+              "source": "{{body}}",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_9khlww",
-          "type": "text",
-          "text": "{{tags}}",
-          "style": "caption"
+          "id": "m7_post-article_5",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_9khlww",
+              "type": "text",
+              "text": "{{tags}}",
+              "style": "caption",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         }
       ]
     }
@@ -485,24 +925,47 @@
               "id": "b_kjufyt",
               "type": "text",
               "text": "HAVE A PROJECT IN MIND?",
-              "style": "eyebrow"
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
             },
             {
               "id": "b_g0vd1t",
               "type": "text",
               "text": "Let’s make something useful.",
-              "style": "heading"
+              "style": "heading",
+              "area": {
+                "x1": 2,
+                "y1": 1,
+                "x2": 3,
+                "y2": 2
+              }
             },
             {
               "id": "b_1f0qjq",
               "type": "button",
               "text": "Start a conversation ↗",
-              "href": "mailto:hello@example.com"
+              "href": "mailto:hello@example.com",
+              "area": {
+                "x1": 1,
+                "y1": 2,
+                "x2": 2,
+                "y2": 3
+              }
             }
           ],
-          "layout": "split",
-          "tone": "dark",
-          "padding": "large"
+          "padding": "regular",
+          "columns": 2,
+          "rows": 2,
+          "gap": "regular",
+          "background": "black",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5
         }
       ]
     },
@@ -512,16 +975,56 @@
       "description": "Eyebrow and large section title",
       "blocks": [
         {
-          "id": "b_b7z5il",
-          "type": "text",
-          "text": "SELECTED WORK",
-          "style": "eyebrow"
+          "id": "m7_section-heading_0",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_b7z5il",
+              "type": "text",
+              "text": "SELECTED WORK",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_3utnuw",
-          "type": "text",
-          "text": "Explorations and experiments.",
-          "style": "heading"
+          "id": "m7_section-heading_1",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_3utnuw",
+              "type": "text",
+              "text": "Explorations and experiments.",
+              "style": "heading",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         }
       ]
     },
@@ -531,23 +1034,83 @@
       "description": "Record-powered project card",
       "blocks": [
         {
-          "id": "b_b4dn5b",
-          "type": "image",
-          "source": "{{cover}}",
-          "fit": "cover",
-          "caption": false
+          "id": "m7_project-tile_0",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_b4dn5b",
+              "type": "image",
+              "source": "{{cover}}",
+              "fit": "cover",
+              "caption": false,
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_46i46m",
-          "type": "text",
-          "text": "{{category}} / {{year}}",
-          "style": "eyebrow"
+          "id": "m7_project-tile_1",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_46i46m",
+              "type": "text",
+              "text": "{{category}} / {{year}}",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_jesowg",
-          "type": "text",
-          "text": "{{title}}",
-          "style": "body"
+          "id": "m7_project-tile_2",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_jesowg",
+              "type": "text",
+              "text": "{{title}}",
+              "style": "body",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         }
       ]
     },
@@ -557,22 +1120,82 @@
       "description": "Record-powered editorial listing",
       "blocks": [
         {
-          "id": "b_33jo72",
-          "type": "text",
-          "text": "{{format}} / {{date}}",
-          "style": "eyebrow"
+          "id": "m7_post-row_0",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_33jo72",
+              "type": "text",
+              "text": "{{format}} / {{date}}",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_36vqgt",
-          "type": "text",
-          "text": "{{title}}",
-          "style": "heading"
+          "id": "m7_post-row_1",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_36vqgt",
+              "type": "text",
+              "text": "{{title}}",
+              "style": "heading",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_6uk7yv",
-          "type": "text",
-          "text": "{{summary}}",
-          "style": "caption"
+          "id": "m7_post-row_2",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_6uk7yv",
+              "type": "text",
+              "text": "{{summary}}",
+              "style": "caption",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         }
       ]
     }
@@ -596,31 +1219,66 @@
                   "id": "m6-hero-eyebrow",
                   "type": "text",
                   "text": "TA  /  DESIGN  /  RESEARCH",
-                  "style": "eyebrow"
+                  "style": "eyebrow",
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 2
+                  }
                 },
                 {
                   "id": "m6-hero-title",
                   "type": "text",
                   "text": "Architecture,\ncomputation &\na continuous\ncuriosity.",
-                  "style": "display"
+                  "style": "display",
+                  "area": {
+                    "x1": 1,
+                    "y1": 2,
+                    "x2": 2,
+                    "y2": 6
+                  }
                 },
                 {
                   "id": "m6-hero-text",
                   "type": "text",
                   "text": "A practice connecting built environments, computational thinking and hands-on exploration.",
-                  "style": "body"
+                  "style": "body",
+                  "area": {
+                    "x1": 1,
+                    "y1": 6,
+                    "x2": 2,
+                    "y2": 8
+                  }
                 },
                 {
                   "id": "m6-hero-action",
                   "type": "button",
                   "text": "Explore selected work ↗",
-                  "href": "/work/"
+                  "href": "/work/",
+                  "area": {
+                    "x1": 1,
+                    "y1": 8,
+                    "x2": 2,
+                    "y2": 9
+                  }
                 }
               ],
-              "layout": "stack",
-              "tone": "clear",
               "padding": "none",
-              "variant": "hero-copy"
+              "variant": "hero-copy",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              },
+              "columns": 1,
+              "rows": 8,
+              "gap": "regular",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5
             },
             {
               "id": "m6-hero-graphic",
@@ -631,25 +1289,53 @@
                   "type": "image",
                   "source": "field",
                   "fit": "cover",
-                  "caption": false
+                  "caption": false,
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 8
+                  }
                 },
                 {
                   "id": "m6-hero-graphic-cap",
                   "type": "text",
                   "text": "001  /  FORM, FIELD & SYSTEM",
-                  "style": "eyebrow"
+                  "style": "eyebrow",
+                  "area": {
+                    "x1": 1,
+                    "y1": 8,
+                    "x2": 2,
+                    "y2": 9
+                  }
                 }
               ],
-              "layout": "stack",
-              "tone": "clear",
               "padding": "none",
-              "variant": "hero-graphic"
+              "variant": "hero-graphic",
+              "area": {
+                "x1": 2,
+                "y1": 1,
+                "x2": 3,
+                "y2": 2
+              },
+              "columns": 1,
+              "rows": 8,
+              "gap": "regular",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5
             }
           ],
-          "layout": "split",
-          "tone": "soft",
-          "padding": "large",
-          "variant": "hero"
+          "padding": "regular",
+          "variant": "hero",
+          "columns": 2,
+          "rows": 1,
+          "gap": "regular",
+          "background": "grey-100",
+          "border": false,
+          "constrainHeight": true,
+          "heightFactor": 0.48
         },
         {
           "id": "m6-intro",
@@ -659,19 +1345,36 @@
               "id": "m6-intro-label",
               "type": "text",
               "text": "AN INTEGRATED PRACTICE",
-              "style": "eyebrow"
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
             },
             {
               "id": "m6-intro-copy",
               "type": "text",
               "text": "Design is a way of connecting things: ideas, materials, geometries, tools and people.",
-              "style": "heading"
+              "style": "heading",
+              "area": {
+                "x1": 2,
+                "y1": 1,
+                "x2": 3,
+                "y2": 2
+              }
             }
           ],
-          "layout": "split",
-          "tone": "clear",
           "padding": "none",
-          "variant": "intro"
+          "variant": "intro",
+          "columns": 2,
+          "rows": 1,
+          "gap": "regular",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5
         },
         {
           "id": "m6-work-title",
@@ -681,7 +1384,13 @@
               "id": "m6-work-label",
               "type": "text",
               "text": "01  /  SELECTED WORK",
-              "style": "eyebrow"
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
             },
             {
               "id": "m6-work-title-right",
@@ -691,35 +1400,83 @@
                   "id": "m6-work-heading",
                   "type": "text",
                   "text": "Ideas in progress.",
-                  "style": "heading"
+                  "style": "heading",
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 2
+                  }
                 },
                 {
                   "id": "m6-work-subtitle",
                   "type": "text",
                   "text": "Architecture, experiments and research from a growing archive.",
-                  "style": "body"
+                  "style": "body",
+                  "area": {
+                    "x1": 1,
+                    "y1": 2,
+                    "x2": 2,
+                    "y2": 3
+                  }
                 }
               ],
-              "layout": "stack",
-              "tone": "clear",
-              "padding": "none"
+              "padding": "none",
+              "area": {
+                "x1": 2,
+                "y1": 1,
+                "x2": 3,
+                "y2": 2
+              },
+              "columns": 1,
+              "rows": 2,
+              "gap": "regular",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5
             }
           ],
-          "layout": "split",
-          "tone": "clear",
           "padding": "none",
-          "variant": "section-lead"
+          "variant": "section-lead",
+          "columns": 2,
+          "rows": 1,
+          "gap": "regular",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5
         },
         {
-          "id": "m6-project-query",
-          "type": "query",
-          "collection": "projects",
-          "layout": "grid",
-          "count": 4,
-          "component": "project-tile",
-          "filter": "featured",
-          "sort": "newest",
-          "variant": "work-grid"
+          "id": "m7_home_3",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "m6-project-query",
+              "type": "query",
+              "collection": "projects",
+              "layout": "grid",
+              "count": 4,
+              "component": "project-tile",
+              "filter": "featured",
+              "sort": "newest",
+              "variant": "work-grid",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
           "id": "m6-methods-title",
@@ -729,19 +1486,36 @@
               "id": "m6-methods-label",
               "type": "text",
               "text": "02  /  WHAT WE EXPLORE",
-              "style": "eyebrow"
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
             },
             {
               "id": "m6-methods-heading",
               "type": "text",
               "text": "Across scales and disciplines.",
-              "style": "heading"
+              "style": "heading",
+              "area": {
+                "x1": 2,
+                "y1": 1,
+                "x2": 3,
+                "y2": 2
+              }
             }
           ],
-          "layout": "split",
-          "tone": "clear",
           "padding": "none",
-          "variant": "section-lead"
+          "variant": "section-lead",
+          "columns": 2,
+          "rows": 1,
+          "gap": "regular",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5
         },
         {
           "id": "m6-disciplines",
@@ -755,25 +1529,54 @@
                   "id": "m6-architecture-num",
                   "type": "text",
                   "text": "01  /  ARCHITECTURE",
-                  "style": "eyebrow"
+                  "style": "eyebrow",
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 2
+                  }
                 },
                 {
                   "id": "m6-architecture-title",
                   "type": "text",
                   "text": "Space & construction.",
-                  "style": "heading"
+                  "style": "heading",
+                  "area": {
+                    "x1": 1,
+                    "y1": 2,
+                    "x2": 2,
+                    "y2": 3
+                  }
                 },
                 {
                   "id": "m6-architecture-copy",
                   "type": "text",
                   "text": "Architectural ideas developed through spatial logic, materials and making.",
-                  "style": "body"
+                  "style": "body",
+                  "area": {
+                    "x1": 1,
+                    "y1": 3,
+                    "x2": 2,
+                    "y2": 4
+                  }
                 }
               ],
-              "layout": "stack",
-              "tone": "soft",
-              "padding": "large",
-              "variant": "discipline-architecture"
+              "padding": "regular",
+              "variant": "discipline-architecture",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              },
+              "columns": 1,
+              "rows": 3,
+              "gap": "regular",
+              "background": "grey-100",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5
             },
             {
               "id": "m6-computation-card",
@@ -783,25 +1586,54 @@
                   "id": "m6-computation-num",
                   "type": "text",
                   "text": "02  /  COMPUTATION",
-                  "style": "eyebrow"
+                  "style": "eyebrow",
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 2
+                  }
                 },
                 {
                   "id": "m6-computation-title",
                   "type": "text",
                   "text": "Systems & tools.",
-                  "style": "heading"
+                  "style": "heading",
+                  "area": {
+                    "x1": 1,
+                    "y1": 2,
+                    "x2": 2,
+                    "y2": 3
+                  }
                 },
                 {
                   "id": "m6-computation-copy",
                   "type": "text",
                   "text": "Computational approaches that make complexity legible, reusable and adaptable.",
-                  "style": "body"
+                  "style": "body",
+                  "area": {
+                    "x1": 1,
+                    "y1": 3,
+                    "x2": 2,
+                    "y2": 4
+                  }
                 }
               ],
-              "layout": "stack",
-              "tone": "soft",
-              "padding": "large",
-              "variant": "discipline-computation"
+              "padding": "regular",
+              "variant": "discipline-computation",
+              "area": {
+                "x1": 2,
+                "y1": 1,
+                "x2": 3,
+                "y2": 2
+              },
+              "columns": 1,
+              "rows": 3,
+              "gap": "regular",
+              "background": "grey-100",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5
             },
             {
               "id": "m6-research-card",
@@ -811,31 +1643,65 @@
                   "id": "m6-research-num",
                   "type": "text",
                   "text": "03  /  RESEARCH",
-                  "style": "eyebrow"
+                  "style": "eyebrow",
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 2
+                  }
                 },
                 {
                   "id": "m6-research-title",
                   "type": "text",
                   "text": "Questions & experiments.",
-                  "style": "heading"
+                  "style": "heading",
+                  "area": {
+                    "x1": 1,
+                    "y1": 2,
+                    "x2": 2,
+                    "y2": 3
+                  }
                 },
                 {
                   "id": "m6-research-copy",
                   "type": "text",
                   "text": "Prototyping across façades, digital fabrication, geometry and visual systems.",
-                  "style": "body"
+                  "style": "body",
+                  "area": {
+                    "x1": 1,
+                    "y1": 3,
+                    "x2": 2,
+                    "y2": 4
+                  }
                 }
               ],
-              "layout": "stack",
-              "tone": "soft",
-              "padding": "large",
-              "variant": "discipline-research"
+              "padding": "regular",
+              "variant": "discipline-research",
+              "area": {
+                "x1": 3,
+                "y1": 1,
+                "x2": 4,
+                "y2": 2
+              },
+              "columns": 1,
+              "rows": 3,
+              "gap": "regular",
+              "background": "grey-100",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5
             }
           ],
-          "layout": "three",
-          "tone": "clear",
           "padding": "none",
-          "variant": "disciplines"
+          "variant": "disciplines",
+          "columns": 3,
+          "rows": 1,
+          "gap": "regular",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5
         },
         {
           "id": "m6-approach",
@@ -849,25 +1715,54 @@
                   "id": "m6-approach-label",
                   "type": "text",
                   "text": "03  /  WORKING TOGETHER",
-                  "style": "eyebrow"
+                  "style": "eyebrow",
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 2
+                  }
                 },
                 {
                   "id": "m6-approach-heading",
                   "type": "text",
                   "text": "A useful process starts with the right arrangement.",
-                  "style": "heading"
+                  "style": "heading",
+                  "area": {
+                    "x1": 1,
+                    "y1": 2,
+                    "x2": 2,
+                    "y2": 3
+                  }
                 },
                 {
                   "id": "m6-approach-note",
                   "type": "text",
                   "text": "Three engagement formats we're developing. Specific deliverables and terms are defined around each brief.",
-                  "style": "body"
+                  "style": "body",
+                  "area": {
+                    "x1": 1,
+                    "y1": 3,
+                    "x2": 2,
+                    "y2": 4
+                  }
                 }
               ],
-              "layout": "stack",
-              "tone": "clear",
               "padding": "none",
-              "variant": "approach-intro"
+              "variant": "approach-intro",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              },
+              "columns": 1,
+              "rows": 3,
+              "gap": "regular",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5
             },
             {
               "id": "m6-approach-options",
@@ -881,19 +1776,42 @@
                       "id": "m6-fixed-num",
                       "type": "text",
                       "text": "01  /  FIXED PACKAGES",
-                      "style": "eyebrow"
+                      "style": "eyebrow",
+                      "area": {
+                        "x1": 1,
+                        "y1": 1,
+                        "x2": 2,
+                        "y2": 2
+                      }
                     },
                     {
                       "id": "m6-fixed-body",
                       "type": "text",
                       "text": "Defined scope. Clear deliverables.",
-                      "style": "body"
+                      "style": "body",
+                      "area": {
+                        "x1": 1,
+                        "y1": 2,
+                        "x2": 2,
+                        "y2": 3
+                      }
                     }
                   ],
-                  "layout": "stack",
-                  "tone": "clear",
-                  "padding": "small",
-                  "variant": "method-line"
+                  "padding": "compact",
+                  "variant": "method-line",
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 2
+                  },
+                  "columns": 1,
+                  "rows": 2,
+                  "gap": "regular",
+                  "background": "transparent",
+                  "border": false,
+                  "constrainHeight": false,
+                  "heightFactor": 0.5
                 },
                 {
                   "id": "m6-subscription",
@@ -903,19 +1821,42 @@
                       "id": "m6-subscription-num",
                       "type": "text",
                       "text": "02  /  SUBSCRIPTION",
-                      "style": "eyebrow"
+                      "style": "eyebrow",
+                      "area": {
+                        "x1": 1,
+                        "y1": 1,
+                        "x2": 2,
+                        "y2": 2
+                      }
                     },
                     {
                       "id": "m6-subscription-body",
                       "type": "text",
                       "text": "Ongoing design and computation support.",
-                      "style": "body"
+                      "style": "body",
+                      "area": {
+                        "x1": 1,
+                        "y1": 2,
+                        "x2": 2,
+                        "y2": 3
+                      }
                     }
                   ],
-                  "layout": "stack",
-                  "tone": "clear",
-                  "padding": "small",
-                  "variant": "method-line"
+                  "padding": "compact",
+                  "variant": "method-line",
+                  "area": {
+                    "x1": 1,
+                    "y1": 2,
+                    "x2": 2,
+                    "y2": 3
+                  },
+                  "columns": 1,
+                  "rows": 2,
+                  "gap": "regular",
+                  "background": "transparent",
+                  "border": false,
+                  "constrainHeight": false,
+                  "heightFactor": 0.5
                 },
                 {
                   "id": "m6-custom",
@@ -925,31 +1866,70 @@
                       "id": "m6-custom-num",
                       "type": "text",
                       "text": "03  /  CUSTOM PROJECT",
-                      "style": "eyebrow"
+                      "style": "eyebrow",
+                      "area": {
+                        "x1": 1,
+                        "y1": 1,
+                        "x2": 2,
+                        "y2": 2
+                      }
                     },
                     {
                       "id": "m6-custom-body",
                       "type": "text",
                       "text": "A tailored arrangement for a unique challenge.",
-                      "style": "body"
+                      "style": "body",
+                      "area": {
+                        "x1": 1,
+                        "y1": 2,
+                        "x2": 2,
+                        "y2": 3
+                      }
                     }
                   ],
-                  "layout": "stack",
-                  "tone": "clear",
-                  "padding": "small",
-                  "variant": "method-line"
+                  "padding": "compact",
+                  "variant": "method-line",
+                  "area": {
+                    "x1": 1,
+                    "y1": 3,
+                    "x2": 2,
+                    "y2": 4
+                  },
+                  "columns": 1,
+                  "rows": 2,
+                  "gap": "regular",
+                  "background": "transparent",
+                  "border": false,
+                  "constrainHeight": false,
+                  "heightFactor": 0.5
                 }
               ],
-              "layout": "stack",
-              "tone": "clear",
               "padding": "none",
-              "variant": "approach-options"
+              "variant": "approach-options",
+              "area": {
+                "x1": 2,
+                "y1": 1,
+                "x2": 3,
+                "y2": 2
+              },
+              "columns": 1,
+              "rows": 3,
+              "gap": "regular",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5
             }
           ],
-          "layout": "split",
-          "tone": "dark",
-          "padding": "large",
-          "variant": "approach"
+          "padding": "regular",
+          "variant": "approach",
+          "columns": 2,
+          "rows": 1,
+          "gap": "regular",
+          "background": "black",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5
         },
         {
           "id": "m6-journal-title",
@@ -959,7 +1939,13 @@
               "id": "m6-journal-label",
               "type": "text",
               "text": "04  /  JOURNAL",
-              "style": "eyebrow"
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
             },
             {
               "id": "m6-journal-right",
@@ -969,35 +1955,83 @@
                   "id": "m6-journal-heading",
                   "type": "text",
                   "text": "Notes from the process.",
-                  "style": "heading"
+                  "style": "heading",
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 2
+                  }
                 },
                 {
                   "id": "m6-journal-subtitle",
                   "type": "text",
                   "text": "Short observations, studio updates and longer pieces on design and technology.",
-                  "style": "body"
+                  "style": "body",
+                  "area": {
+                    "x1": 1,
+                    "y1": 2,
+                    "x2": 2,
+                    "y2": 3
+                  }
                 }
               ],
-              "layout": "stack",
-              "tone": "clear",
-              "padding": "none"
+              "padding": "none",
+              "area": {
+                "x1": 2,
+                "y1": 1,
+                "x2": 3,
+                "y2": 2
+              },
+              "columns": 1,
+              "rows": 2,
+              "gap": "regular",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5
             }
           ],
-          "layout": "split",
-          "tone": "clear",
           "padding": "none",
-          "variant": "section-lead"
+          "variant": "section-lead",
+          "columns": 2,
+          "rows": 1,
+          "gap": "regular",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5
         },
         {
-          "id": "m6-journal-query",
-          "type": "query",
-          "collection": "posts",
-          "layout": "list",
-          "count": 3,
-          "component": "post-row",
-          "filter": "published",
-          "sort": "newest",
-          "variant": "journal-list"
+          "id": "m7_home_8",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "m6-journal-query",
+              "type": "query",
+              "collection": "posts",
+              "layout": "list",
+              "count": 3,
+              "component": "post-row",
+              "filter": "published",
+              "sort": "newest",
+              "variant": "journal-list",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
           "id": "m6-close",
@@ -1011,37 +2045,77 @@
                   "id": "m6-close-label",
                   "type": "text",
                   "text": "TA  /  THE OPEN ARCHIVE",
-                  "style": "eyebrow"
+                  "style": "eyebrow",
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 2
+                  }
                 },
                 {
                   "id": "m6-close-title",
                   "type": "text",
                   "text": "Ideas are meant\nto keep moving.",
-                  "style": "heading"
+                  "style": "heading",
+                  "area": {
+                    "x1": 1,
+                    "y1": 2,
+                    "x2": 2,
+                    "y2": 3
+                  }
                 },
                 {
                   "id": "m6-close-copy",
                   "type": "text",
                   "text": "A working collection of projects, tools, experiments and thoughts. More to come.",
-                  "style": "body"
+                  "style": "body",
+                  "area": {
+                    "x1": 1,
+                    "y1": 3,
+                    "x2": 2,
+                    "y2": 4
+                  }
                 }
               ],
-              "layout": "stack",
-              "tone": "clear",
               "padding": "none",
-              "variant": "closer-left"
+              "variant": "closer-left",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              },
+              "columns": 1,
+              "rows": 3,
+              "gap": "regular",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5
             },
             {
               "id": "m6-close-button",
               "type": "button",
               "text": "Read the journal ↗",
-              "href": "/posts/"
+              "href": "/posts/",
+              "area": {
+                "x1": 2,
+                "y1": 1,
+                "x2": 3,
+                "y2": 2
+              }
             }
           ],
-          "layout": "split",
-          "tone": "soft",
-          "padding": "large",
-          "variant": "closer"
+          "padding": "regular",
+          "variant": "closer",
+          "columns": 2,
+          "rows": 1,
+          "gap": "regular",
+          "background": "grey-100",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5
         }
       ]
     },
@@ -1052,32 +2126,112 @@
       "status": "Published",
       "blocks": [
         {
-          "id": "b_rfoptf",
-          "type": "text",
-          "text": "TA / ARCHIVE",
-          "style": "eyebrow"
+          "id": "m7_work_0",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_rfoptf",
+              "type": "text",
+              "text": "TA / ARCHIVE",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_6o0c4y",
-          "type": "text",
-          "text": "Selected work.",
-          "style": "display"
+          "id": "m7_work_1",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_6o0c4y",
+              "type": "text",
+              "text": "Selected work.",
+              "style": "display",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_bseqsf",
-          "type": "text",
-          "text": "Architecture, prototypes, experiments and ongoing research.",
-          "style": "body"
+          "id": "m7_work_2",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_bseqsf",
+              "type": "text",
+              "text": "Architecture, prototypes, experiments and ongoing research.",
+              "style": "body",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_73h0n0",
-          "type": "query",
-          "collection": "projects",
-          "layout": "grid",
-          "count": 12,
-          "component": "project-tile",
-          "filter": "all",
-          "sort": "newest"
+          "id": "m7_work_3",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_73h0n0",
+              "type": "query",
+              "collection": "projects",
+              "layout": "grid",
+              "count": 12,
+              "component": "project-tile",
+              "filter": "all",
+              "sort": "newest",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         }
       ]
     },
@@ -1088,32 +2242,112 @@
       "status": "Published",
       "blocks": [
         {
-          "id": "b_h4y8s6",
-          "type": "text",
-          "text": "TA / WRITING",
-          "style": "eyebrow"
+          "id": "m7_journal_0",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_h4y8s6",
+              "type": "text",
+              "text": "TA / WRITING",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_fal1dt",
-          "type": "text",
-          "text": "Notes, news & research.",
-          "style": "display"
+          "id": "m7_journal_1",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_fal1dt",
+              "type": "text",
+              "text": "Notes, news & research.",
+              "style": "display",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_njlbt9",
-          "type": "text",
-          "text": "A living feed of short observations, studio news and longer articles.",
-          "style": "body"
+          "id": "m7_journal_2",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_njlbt9",
+              "type": "text",
+              "text": "A living feed of short observations, studio news and longer articles.",
+              "style": "body",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_nue5t9",
-          "type": "query",
-          "collection": "posts",
-          "layout": "list",
-          "count": 30,
-          "component": "post-row",
-          "filter": "published",
-          "sort": "newest"
+          "id": "m7_journal_3",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_nue5t9",
+              "type": "query",
+              "collection": "posts",
+              "layout": "list",
+              "count": 30,
+              "component": "post-row",
+              "filter": "published",
+              "sort": "newest",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         }
       ]
     },
@@ -1124,16 +2358,56 @@
       "status": "Draft",
       "blocks": [
         {
-          "id": "b_glxz39",
-          "type": "text",
-          "text": "DESIGN / COMPUTATION / RESEARCH",
-          "style": "eyebrow"
+          "id": "m7_studio_0",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_glxz39",
+              "type": "text",
+              "text": "DESIGN / COMPUTATION / RESEARCH",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
-          "id": "b_55634f",
-          "type": "text",
-          "text": "Working between\ndesign and code.",
-          "style": "display"
+          "id": "m7_studio_1",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_55634f",
+              "type": "text",
+              "text": "Working between\ndesign and code.",
+              "style": "display",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         },
         {
           "id": "b_rjajsx",
@@ -1143,24 +2417,61 @@
               "id": "b_6d7zx0",
               "type": "text",
               "text": "A small independent practice building useful tools, architectural systems and meaningful work.",
-              "style": "body"
+              "style": "body",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
             },
             {
               "id": "b_xxsfoi",
               "type": "image",
               "source": "glyph",
               "fit": "cover",
-              "caption": false
+              "caption": false,
+              "area": {
+                "x1": 2,
+                "y1": 1,
+                "x2": 3,
+                "y2": 2
+              }
             }
           ],
-          "layout": "split",
-          "tone": "soft",
-          "padding": "large"
+          "padding": "regular",
+          "columns": 2,
+          "rows": 1,
+          "gap": "regular",
+          "background": "grey-100",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5
         },
         {
-          "id": "b_60ijye",
-          "type": "component",
-          "component": "contact-cta"
+          "id": "m7_studio_3",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "none",
+          "padding": "none",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "b_60ijye",
+              "type": "component",
+              "component": "contact-cta",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
         }
       ]
     }

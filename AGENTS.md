@@ -29,7 +29,7 @@ See `docs/IMPLEMENTATION_PLAN.md` for sequencing.
 
 ## Supported viewport and visual QA
 - **Content Studio is desktop-only.** Focus on desktop interaction and visual quality; do not implement or test mobile editor variants unless explicitly requested.
-- The **public website** remains responsive on mobile; desktop-only applies to the authoring app, not the site.
+- The **public website deliberately uses a nonadaptive print-style layout** on mobile: fixed Card grid divisions and child areas, proportional scaling in page-width units, no breakpoint reflow. Users can zoom/pan like a presentation. Desktop-only still applies to the authoring app.
 - For remote UI reviews, run desktop browser tests and share a compact set of screenshots and findings **directly in the chat**. No screenshot archives in GitHub and no recordings by default.
 - Baseline desktop viewports: 1600×1000, plus 1280×800 when relevant.
 
@@ -39,3 +39,11 @@ See `docs/IMPLEMENTATION_PLAN.md` for sequencing.
 - Use GitHub Actions CI as the repeatable baseline; do not label absent or pending checks as passing.
 - Favor squash merges for cohesive changes and link related issues. Merge only after findings affecting correctness/security/data loss are resolved.
 - Where possible, provide honest screenshots of the browser-tested result directly in the conversation. Avoid overclaiming that tests fully cover the interface.
+
+## M7 — confirmed print/presentation Card system
+- Cards are equal-division grids with explicit integer rows/columns. Their immediate children, Cards or atomic Objects, have `{x1,y1,x2,y2}` grid-line areas (1-indexed start inclusive/end exclusive).
+- Page, nav, sections and footer are semantic Cards; nested Cards restart their own grids. No automatic rearrangement or responsive breakpoint layouts.
+- `1u = page width / 100` (`1cqw`); text, padding, gap, radius and sizing derive from it, not pixel floors/clamps. On narrow screens layout scales down instead of changing columns.
+- Section Cards and nav/footer provide a `constrainHeight` toggle with height = Card width × `heightFactor`, else content-height rows.
+- Strict grayscale background palette including `transparent`; a site-level Card-border toggle and per-Card optional subtle borders. Gaps and padding limited to none/compact/regular/generous; overflow clipped with invisible scrollbars.
+- Don't silently reintroduce responsive card layouts, saturated colour tokens, arbitrary line dividers or fixed-size child positioning.

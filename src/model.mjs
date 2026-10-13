@@ -57,6 +57,45 @@ export function validate(data) {
     if(typeof asset.src!=='string')fail(`Invalid asset source: ${asset.id}`);
     if(/^data:/i.test(asset.src))fail(`Invalid asset source: embedded data URIs are not supported (${asset.id})`);
   }
+  const allowedBackgrounds=new Set(['transparent','white','grey-100','grey-200','grey-300','grey-600','black']);
+  const allowedSizes=new Set(['none','compact','regular','generous']);
+  if(data.site.design!==undefined){
+    const design=data.site.design;
+    if(!design||typeof design!=='object'||design.unitDivisor!==100||typeof design.cardBorders!=='boolean')
+      fail('Invalid site design controls');
+    if(design.frame!==undefined){
+      for(const name of ['header','footer']){
+        const region=design.frame[name];
+        if(!region||typeof region.constrainHeight!=='boolean'||!Number.isFinite(region.heightFactor)||region.heightFactor<=0||region.heightFactor>4)
+          fail(`Invalid semantic Card height constraint: ${name}`);
+      }
+    }
+    for(const hex of Object.values(design.palette||{})){
+      if(!/^#[0-9a-fA-F]{6}$/.test(hex))fail('Invalid grayscale palette value');
+      const x=hex.slice(1).toLowerCase();
+      if(x.slice(0,2)!==x.slice(2,4)||x.slice(2,4)!==x.slice(4,6))fail('Palette must be grayscale only');
+    }
+  }
+  const checkBlocks=(blocks,where)=>{
+    for(const b of blocks){
+      if(!b||typeof b!=='object'||!safeId(b.id))fail(`Invalid block in ${where}`);
+      if(b.type!=='card')continue;
+      if(b.columns===undefined&&b.rows===undefined)continue; // old V2 import compatibility
+      if(!Number.isInteger(b.columns)||b.columns<1||b.columns>64||!Number.isInteger(b.rows)||b.rows<1||b.rows>64)
+        fail(`Invalid grid divisions on ${b.id}`);
+      if(!Array.isArray(b.children)||!allowedBackgrounds.has(b.background)||!allowedSizes.has(b.gap)||!allowedSizes.has(b.padding))
+        fail(`Invalid Card settings on ${b.id}`);
+      if(typeof b.border!=='boolean'||typeof b.constrainHeight!=='boolean'||!Number.isFinite(b.heightFactor)||b.heightFactor<=0||b.heightFactor>4)
+        fail(`Invalid Card constraint on ${b.id}`);
+      for(const child of b.children){
+        const a=child?.area;
+        if(!a||![a.x1,a.y1,a.x2,a.y2].every(Number.isInteger)||a.x1<1||a.y1<1||a.x2<=a.x1||a.y2<=a.y1||a.x2>b.columns+1||a.y2>b.rows+1)
+          fail(`Invalid child grid area in ${b.id}: ${child?.id}`);
+      }
+      checkBlocks(b.children,b.id);
+    }
+  };
+  for(const p of [...data.pages,...data.templates,...data.components])checkBlocks(p.blocks,p.id);
   for (const template of data.templates) if (!Array.isArray(template.blocks)) fail(`Invalid template ${template.id}`);
   for (const component of data.components) if (!Array.isArray(component.blocks)) fail(`Invalid component ${component.id}`);
   const templateIds = new Set(data.templates.map(t=>t.id));
