@@ -146,11 +146,16 @@ export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
   const section=here==='/'?'/':here.startsWith('/work/')?'/work/':here.startsWith('/posts/')?'/posts/':here;
   const nav=(data.site.navigation || [{label:'Home',href:'/'},{label:'Work',href:'/work/'},{label:'Journal',href:'/posts/'}]).filter(link=>published.has(normalizeRoute(link.href)));
   const logo=published.has('/')?'<a class="web-logo" href="/" aria-label="TA — Home" data-site-route="/">TA<span style="font-weight:300">/</span></a>':'<span class="web-logo">TA<span style="font-weight:300">/</span></span>';
+  const frameHeight = name => {
+    const settings=data.site?.design?.frame?.[name];
+    return settings?.constrainHeight && Number.isFinite(settings.heightFactor) && settings.heightFactor>0 && settings.heightFactor<=4
+      ? ` style="aspect-ratio:1 / ${settings.heightFactor};"` : '';
+  };
   const links=nav.map(link=>{
     const href=normalizeRoute(link.href),active=href===section;
     return `<a href="${escapeHtml(href)}" data-site-route="${escapeHtml(href)}"${active?' class="is-active" aria-current="page"':''}>${escapeHtml(link.label)}</a>`;
   }).join('');
-  return `<div class="webpage ${design?'design':'view'}${data.site?.design?.cardBorders?' show-card-borders':''}"><a class="skip-link" href="#main-content">Skip to content</a><nav class="web-nav b-card grid-card semantic-header bg-transparent" aria-label="Main navigation">${logo}<div class="web-links">${links}</div></nav><main id="main-content" class="web-content b-card semantic-page bg-transparent">${content}</main><footer class="web-footer b-card grid-card semantic-footer bg-transparent"><span>${escapeHtml(data.site.name)}</span><span>© ${new Date().getUTCFullYear()}</span></footer></div>`;
+  return `<div class="webpage ${design?'design':'view'}${data.site?.design?.cardBorders?' show-card-borders':''}"><a class="skip-link" href="#main-content">Skip to content</a><nav class="web-nav b-card grid-card semantic-header bg-transparent"${frameHeight('header')} aria-label="Main navigation">${logo}<div class="web-links">${links}</div></nav><main id="main-content" class="web-content b-card semantic-page bg-transparent">${content}</main><footer class="web-footer b-card grid-card semantic-footer bg-transparent"${frameHeight('footer')}><span>${escapeHtml(data.site.name)}</span><span>© ${new Date().getUTCFullYear()}</span></footer></div>`;
 }
 export function renderPagePreview(data,blocks,context=null,options={}) {
   return renderSiteFrame(renderBlocks(blocks,context,data,options),data,{...options,route:options.route||resolvePreviewRoute(data,blocks,context)});
