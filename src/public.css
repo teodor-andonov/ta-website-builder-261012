@@ -1,38 +1,251 @@
-/* Public website only. The desktop Content Studio UI is not changed. */
-:root { --site-max: 1600px; }
-body.published-site { background:#fff; margin:0; color:#292c28; }
-.published-site .webpage { max-width:var(--site-max); margin:0 auto; border:0; box-shadow:none; min-height:100vh; display:flex; flex-direction:column; }
-.published-site .web-nav { min-height:80px; height:auto; padding:20px clamp(24px,4.8vw,75px); border-bottom:1px solid #eceee8; gap:32px; }
-.published-site .web-logo { font-size:25px; }
-.published-site .web-links { display:flex; align-items:center; flex-wrap:wrap; gap:clamp(18px,3vw,42px); color:#7d827c; font:12px/1.4 var(--mono); letter-spacing:.02em; }
-.published-site .web-links a { padding:5px 0; border-bottom:1px solid transparent; }
-.published-site .web-links a:hover,.published-site .web-links a.is-active { color:#272b27; border-color:currentColor; }
-.published-site .web-content { flex:1; width:100%; padding:clamp(35px,6vw,96px) clamp(24px,5vw,80px) 110px; }
-.published-site .web-content > .block { margin-bottom:clamp(28px,3vw,55px); }
-.published-site .b-text.display { font-size:clamp(42px,6vw,92px); line-height:1.04; letter-spacing:-.065em; white-space:pre-line; font-weight:520; }
-.published-site .b-text.heading { font-size:clamp(23px,2.8vw,42px); line-height:1.1; font-weight:560; }
-.published-site .b-text.body { font-size:clamp(15px,1.15vw,18px); line-height:1.65; max-width:60ch; white-space:pre-line; }
-.published-site .b-text.eyebrow { font-size:11px; letter-spacing:.11em; }
-.published-site .b-card { gap:clamp(20px,4vw,70px); padding:clamp(24px,4vw,65px); }
-.published-site .b-card .b-text.display { font-size:clamp(38px,5.3vw,78px); }
-.published-site .b-query.grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(25px,3vw,45px); }
-.published-site .b-query.list { gap:0; }
-.published-site .b-query.list .q-entry { padding:24px 0; }
-.published-site .q-entry { display:block; color:inherit; text-decoration:none; transition:opacity .15s; }
-.published-site .q-entry:focus-visible,.published-site .web-links a:focus-visible,.published-site .web-logo:focus-visible { outline:2px solid #5261a5; outline-offset:4px; }
-.published-site .q-image { aspect-ratio:1.42; }
-.published-site .web-footer { padding:28px clamp(24px,5vw,80px); font-size:11px; margin-top:auto; }
-.published-site .b-action { margin:12px 0; }
-.published-site .skip-link { position:absolute; top:-100px; left:20px; z-index:10; background:#fff; padding:10px 15px; }
-.published-site .skip-link:focus { top:10px; }
-.published-site .not-found-title { font-size:clamp(42px,8vw,90px); margin:24px 0; letter-spacing:-.05em; }
-@media(max-width:750px) {
-  .published-site .web-nav { padding:19px 20px; gap:18px; flex-wrap:wrap; }
-  .published-site .web-links { gap:17px; font-size:10px; }
-  .published-site .web-content { padding:38px 20px 70px; }
-  .published-site .b-card.split,.published-site .b-card.grid,.published-site .b-card.three { grid-template-columns:1fr; }
-  .published-site .b-query.grid,.published-site .b-query.three { grid-template-columns:1fr; }
-  .published-site .b-text.display { font-size:clamp(38px,11vw,65px); }
-  .published-site .b-card { padding:22px; }
-  .published-site .web-footer { padding:22px 20px; }
+/* M6 — TA Soft Precision · one website language for published pages and desktop Studio previews.
+   Shared CSS uses semantic block variants; content and composition remain in JSON. */
+:root{
+  --ta-paper:#f9f9f6;
+  --ta-ink:#242825;
+  --ta-muted:#6d736e;
+  --ta-line:#e6e8e1;
+  --ta-soft:#eff0eb;
+  --ta-soft-2:#e9eae3;
+  --ta-deep:#252b29;
+  --ta-accent:#454f49;
+  --ta-radius:22px;
+  --ta-radius-small:13px;
+  --ta-site-max:1600px;
+  --ta-mono:"Geist Mono","PT Mono",Consolas,monospace;
+}
+body.published-site{margin:0;background:var(--ta-paper);color:var(--ta-ink)}
+:is(.published-site,.editor-shell) .webpage{
+  box-sizing:border-box;container-type:inline-size;
+  max-width:var(--ta-site-max);margin:0 auto;
+  background:var(--ta-paper);color:var(--ta-ink);
+  border:0;box-shadow:none;min-height:100%;
+  font-family:var(--ta-mono);font-weight:450;
+  -webkit-font-smoothing:antialiased;
+}
+.published-site .webpage{min-height:100vh;display:flex;flex-direction:column}
+:is(.published-site,.editor-shell) .web-nav{
+  box-sizing:border-box;height:auto;min-height:90px;
+  display:flex;align-items:center;gap:24px;justify-content:space-between;
+  padding:20px clamp(26px,4.5cqw,74px);
+  border-bottom:1px solid var(--ta-line);
+}
+:is(.published-site,.editor-shell) .web-logo{
+  font:600 25px/1 var(--ta-mono);letter-spacing:-.11em;color:var(--ta-ink);
+}
+:is(.published-site,.editor-shell) .web-links{
+  display:flex;gap:clamp(15px,2.8cqw,40px);align-items:center;flex-wrap:wrap;
+  font:500 11px/1.3 var(--ta-mono);letter-spacing:.075em;text-transform:uppercase;
+  color:var(--ta-muted);
+}
+:is(.published-site,.editor-shell) .web-links a{
+  display:inline-flex;padding:8px 0;border-bottom:1px solid transparent;
+  color:inherit;text-decoration:none;
+}
+:is(.published-site,.editor-shell) .web-links a:hover,
+:is(.published-site,.editor-shell) .web-links a.is-active{
+  border-color:var(--ta-ink);color:var(--ta-ink);
+}
+:is(.published-site,.editor-shell) .web-content{
+  flex:1;box-sizing:border-box;width:100%;
+  padding:clamp(28px,4.5cqw,72px) clamp(26px,4.5cqw,74px) clamp(55px,8cqw,128px);
+}
+:is(.published-site,.editor-shell) .web-content>.block{margin-bottom:clamp(30px,4.5cqw,72px)}
+:is(.published-site,.editor-shell) .web-content>.block:last-child{margin-bottom:0}
+:is(.published-site,.editor-shell) .block{min-width:0}
+:is(.published-site,.editor-shell) .b-text{overflow-wrap:break-word;white-space:pre-line}
+:is(.published-site,.editor-shell) .b-text.eyebrow{
+  font:500 clamp(9px,.77cqw,11px)/1.5 var(--ta-mono);letter-spacing:.12em;
+  color:var(--ta-muted);text-transform:uppercase;
+}
+:is(.published-site,.editor-shell) .b-text.display{
+  font:550 clamp(33px,4.65cqw,76px)/1.12 var(--ta-mono);
+  letter-spacing:-.065em;color:var(--ta-ink);
+}
+:is(.published-site,.editor-shell) .b-text.heading{
+  font:550 clamp(24px,2.5cqw,39px)/1.22 var(--ta-mono);
+  letter-spacing:-.05em;color:inherit;
+}
+:is(.published-site,.editor-shell) .b-text.body{
+  font:450 clamp(12px,1.03cqw,16px)/1.75 var(--ta-mono);
+  letter-spacing:-.025em;color:inherit;max-width:64ch;
+}
+:is(.published-site,.editor-shell) .b-text.caption{
+  font:450 11px/1.55 var(--ta-mono);color:var(--ta-muted);
+}
+:is(.published-site,.editor-shell) .b-card{align-items:stretch;min-height:0}
+:is(.published-site,.editor-shell) .b-card.soft{background:var(--ta-soft)}
+:is(.published-site,.editor-shell) .b-card.dark{background:var(--ta-deep);color:#f6f7f2}
+:is(.published-site,.editor-shell) .b-card.white{background:white;border-color:var(--ta-line)}
+:is(.published-site,.editor-shell) .b-card .block{margin-bottom:0}
+
+/* The hero is an authored two-column Card with an image object and ordinary nested Cards. */
+:is(.published-site,.editor-shell) .variant-hero>.b-card{
+  grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);
+  gap:clamp(28px,4cqw,70px);
+  min-height:clamp(390px,41cqw,620px);
+  padding:clamp(28px,4cqw,66px);
+  border-radius:var(--ta-radius);
+  background:var(--ta-soft);
+}
+:is(.published-site,.editor-shell) .variant-hero-copy>.b-card{
+  height:100%;display:flex;flex-direction:column;align-items:flex-start;
+  gap:clamp(17px,2cqw,29px);
+}
+:is(.published-site,.editor-shell) .variant-hero-copy .b-text.display{
+  font-size:clamp(33px,4.1cqw,66px);line-height:1.13;
+}
+:is(.published-site,.editor-shell) .variant-hero-copy .b-text.body{
+  max-width:43ch;color:#4c554e;
+}
+:is(.published-site,.editor-shell) .variant-hero-copy .block:has(.b-action){margin-top:auto}
+:is(.published-site,.editor-shell) .b-action{
+  display:inline-flex;align-items:center;justify-content:space-between;gap:30px;
+  width:max-content;max-width:100%;min-height:45px;
+  padding:13px 17px;border:1px solid var(--ta-deep);
+  border-radius:var(--ta-radius-small);
+  background:var(--ta-deep);color:#fff;
+  font:500 11px/1.5 var(--ta-mono);text-decoration:none;
+  transition:transform .15s,background .15s;
+}
+:is(.published-site,.editor-shell) .b-action:hover{
+  transform:translateY(-2px);background:#3a4540;
+}
+:is(.published-site,.editor-shell) .variant-hero-graphic>.b-card{height:100%;grid-template-rows:minmax(230px,1fr) auto;gap:15px}
+:is(.published-site,.editor-shell) .variant-hero-graphic .b-figure{height:100%;overflow:hidden;border-radius:16px;background:#e3e4dd}
+:is(.published-site,.editor-shell) .variant-hero-graphic .b-image{
+  width:100%;height:100%;max-height:none;min-height:0;object-fit:cover;
+}
+:is(.published-site,.editor-shell) .variant-hero-graphic .b-text.eyebrow{text-align:right}
+
+/* Editorial dividers and a deliberately limited heading scale. */
+:is(.published-site,.editor-shell) .variant-intro>.b-card,
+:is(.published-site,.editor-shell) .variant-section-lead>.b-card{
+  grid-template-columns:minmax(150px,.33fr) minmax(0,.67fr);
+  gap:clamp(22px,3cqw,50px);padding:0;
+}
+:is(.published-site,.editor-shell) .variant-intro>.b-card{
+  align-items:start;border-top:1px solid var(--ta-line);
+  padding:clamp(22px,2.8cqw,42px) 0 0;
+}
+:is(.published-site,.editor-shell) .variant-intro .b-text.heading{
+  max-width:34ch;font-size:clamp(23px,2.7cqw,43px);line-height:1.35;
+}
+:is(.published-site,.editor-shell) .variant-section-lead>.b-card{
+  align-items:start;border-top:1px solid var(--ta-line);padding-top:25px;
+}
+:is(.published-site,.editor-shell) .variant-section-lead .b-text.body{margin-top:12px;color:var(--ta-muted);max-width:54ch}
+
+/* Project tiles: one image, one metadata line and one title. */
+:is(.published-site,.editor-shell) .variant-work-grid .b-query.grid,
+:is(.published-site,.editor-shell) .b-query.grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:clamp(22px,3cqw,46px);
+}
+:is(.published-site,.editor-shell) .q-entry{
+  color:inherit;text-decoration:none;min-width:0;transition:opacity .15s;
+}
+:is(.published-site,.editor-shell) .q-entry:hover{opacity:.72}
+:is(.published-site,.editor-shell) .b-query.grid .q-entry .b-figure{
+  overflow:hidden;border-radius:17px;background:var(--ta-soft-2);
+}
+:is(.published-site,.editor-shell) .b-query.grid .q-entry .b-image{
+  width:100%;max-height:none;min-height:0;aspect-ratio:1.42;object-fit:cover;
+}
+:is(.published-site,.editor-shell) .b-query.grid .q-entry .b-text.eyebrow{margin-top:15px}
+:is(.published-site,.editor-shell) .b-query.grid .q-entry .b-text.body{font-size:clamp(15px,1.35cqw,20px);font-weight:550;line-height:1.4}
+
+/* Three coherent practice areas, using three nested Cards rather than invented payload types. */
+:is(.published-site,.editor-shell) .variant-disciplines>.b-card{
+  gap:clamp(12px,1.3cqw,20px);grid-template-columns:repeat(3,minmax(0,1fr));padding:0;
+}
+:is(.published-site,.editor-shell) .variant-discipline-architecture>.b-card,
+:is(.published-site,.editor-shell) .variant-discipline-computation>.b-card,
+:is(.published-site,.editor-shell) .variant-discipline-research>.b-card{
+  min-height:clamp(260px,24cqw,355px);display:flex;flex-direction:column;
+  align-items:flex-start;gap:clamp(18px,2.3cqw,37px);
+  padding:clamp(20px,2.5cqw,38px);border-radius:var(--ta-radius);
+  border:1px solid var(--ta-line);background:#f0f1ed;
+}
+:is(.published-site,.editor-shell) .variant-disciplines .b-text.heading{
+  font-size:clamp(18px,1.8cqw,27px);line-height:1.32;
+}
+:is(.published-site,.editor-shell) .variant-disciplines .b-text.body{
+  font-size:clamp(12px,.87cqw,14px);line-height:1.75;color:#636a64;
+}
+
+/* Ways of working: grounded language, still not a priced product listing. */
+:is(.published-site,.editor-shell) .variant-approach>.b-card{
+  gap:clamp(38px,6cqw,96px);grid-template-columns:1.04fr .96fr;
+  padding:clamp(30px,4.4cqw,72px);border-radius:var(--ta-radius);
+}
+:is(.published-site,.editor-shell) .variant-approach .b-text.heading{
+  font-size:clamp(25px,2.6cqw,40px);max-width:21ch;
+}
+:is(.published-site,.editor-shell) .variant-approach .b-text.eyebrow{color:#b6bdb5}
+:is(.published-site,.editor-shell) .variant-approach .b-text.body{color:#c9cfc9;font-size:clamp(12px,.89cqw,14px)}
+:is(.published-site,.editor-shell) .variant-approach-intro>.b-card{display:flex;flex-direction:column;gap:25px}
+:is(.published-site,.editor-shell) .variant-approach-options>.b-card{display:flex;flex-direction:column;gap:0}
+:is(.published-site,.editor-shell) .variant-method-line>.b-card{
+  display:flex;flex-direction:column;gap:9px;padding:22px 0!important;
+  border-top:1px solid #555e56;
+}
+:is(.published-site,.editor-shell) .variant-method-line:last-child>.b-card{border-bottom:1px solid #555e56}
+
+/* Journal records read like an index, not cards. */
+:is(.published-site,.editor-shell) .variant-journal-list .b-query.list .q-entry,
+:is(.published-site,.editor-shell) .b-query.list .q-entry{
+  display:grid;grid-template-columns:minmax(120px,.75fr) minmax(0,1.7fr) minmax(0,1.25fr);
+  align-items:start;gap:clamp(14px,2.3cqw,38px);
+  padding:clamp(20px,2.4cqw,35px) 0;border-bottom:1px solid var(--ta-line);
+}
+:is(.published-site,.editor-shell) .b-query.list .q-entry:first-child{border-top:1px solid var(--ta-line)}
+:is(.published-site,.editor-shell) .b-query.list .b-text.heading{
+  font-size:clamp(18px,1.65cqw,26px);line-height:1.35;
+}
+:is(.published-site,.editor-shell) .b-query.list .b-text.caption{font-size:clamp(11px,.9cqw,14px);line-height:1.65}
+
+/* Closing statement / gentle call to action without a fabricated email address. */
+:is(.published-site,.editor-shell) .variant-closer>.b-card{
+  grid-template-columns:1.25fr .75fr;align-items:end;
+  gap:clamp(20px,4cqw,65px);padding:clamp(28px,4cqw,62px);
+  background:var(--ta-soft);border-radius:var(--ta-radius);
+}
+:is(.published-site,.editor-shell) .variant-closer-left>.b-card{display:flex;flex-direction:column;gap:23px}
+:is(.published-site,.editor-shell) .variant-closer .b-text.heading{font-size:clamp(24px,3cqw,47px)}
+:is(.published-site,.editor-shell) .variant-closer>.b-card>.block:last-child{justify-self:end}
+:is(.published-site,.editor-shell) .web-footer{
+  display:flex;justify-content:space-between;gap:20px;
+  border-top:1px solid var(--ta-line);padding:26px clamp(26px,4.5cqw,74px);
+  color:var(--ta-muted);font:450 11px/1.5 var(--ta-mono);
+}
+:is(.published-site,.editor-shell) :is(.web-links a,.web-logo,.q-entry,.b-action):focus-visible{
+  outline:2px solid #5e7564;outline-offset:4px;
+}
+:is(.published-site,.editor-shell) .skip-link{
+  position:absolute;left:15px;top:-100px;padding:10px;
+  color:var(--ta-ink);background:white;z-index:20;
+}
+:is(.published-site,.editor-shell) .skip-link:focus{top:12px}
+@container (max-width:820px){
+  :is(.published-site,.editor-shell) .variant-hero>.b-card{grid-template-columns:1fr}
+  :is(.published-site,.editor-shell) .variant-hero-graphic .b-figure{height:260px}
+  :is(.published-site,.editor-shell) .variant-disciplines>.b-card{grid-template-columns:1fr}
+  :is(.published-site,.editor-shell) .variant-disciplines .b-card{min-height:0}
+  :is(.published-site,.editor-shell) .variant-approach>.b-card{grid-template-columns:1fr}
+  :is(.published-site,.editor-shell) .variant-intro>.b-card,
+  :is(.published-site,.editor-shell) .variant-section-lead>.b-card{grid-template-columns:1fr;gap:12px}
+  :is(.published-site,.editor-shell) .b-query.list .q-entry{grid-template-columns:1fr;gap:8px}
+  :is(.published-site,.editor-shell) .variant-closer>.b-card{grid-template-columns:1fr}
+  :is(.published-site,.editor-shell) .variant-closer>.b-card>.block:last-child{justify-self:start}
+}
+@container (max-width:590px){
+  :is(.published-site,.editor-shell) .web-nav{min-height:76px;align-items:flex-start;flex-direction:column;gap:14px}
+  :is(.published-site,.editor-shell) .web-content{padding:22px 16px 70px}
+  :is(.published-site,.editor-shell) .web-nav{padding:19px 16px}
+  :is(.published-site,.editor-shell) .web-footer{padding:23px 16px}
+  :is(.published-site,.editor-shell) .variant-hero>.b-card{padding:24px 22px}
+  :is(.published-site,.editor-shell) .variant-hero-copy .b-text.display{font-size:clamp(32px,9cqw,45px)}
+  :is(.published-site,.editor-shell) .b-query.grid{grid-template-columns:1fr}
+  :is(.published-site,.editor-shell) .web-links{font-size:10px;gap:20px}
 }
