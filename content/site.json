@@ -132,7 +132,7 @@
           "status": "Concept",
           "summary": "A growing collection of spatial and computational patterns.",
           "cover": "glyph",
-          "featured": false,
+          "featured": true,
           "tags": [
             "Computation",
             "Research"
