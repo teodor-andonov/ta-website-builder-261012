@@ -67,3 +67,24 @@ test('the current project/posts still publish unchanged, noindex, and public rou
  assert.ok(pages.some(x=>x.route==='/posts/designing-with-code/'));
  assert.ok(pages.every(x=>x.html.includes('noindex, nofollow')));
 });
+
+
+test('global and per-Card outlines are translucent, non-layout, and configurable',async()=>{
+ const data=validate(await load());
+ assert.equal(data.site.design.cardBorders,true,'global outlines should be on');
+ const home=data.pages.find(p=>p.id==='home');
+ const html=renderPagePreview(data,home.blocks,null,{route:'/'});
+ assert.match(html,/class="webpage view show-card-borders"/);
+ const stylesheet=await readFile(path.join(root,'src/public.css'),'utf8');
+ assert.match(stylesheet,/outline:1px solid color-mix\(in srgb, currentColor 20%, transparent\)/);
+ assert.match(stylesheet,/outline-offset:-1px/);
+ assert.doesNotMatch(stylesheet,/border:1px solid transparent/,'a hidden border would change geometry');
+ assert.match(stylesheet,/\.show-card-borders \.b-card/,'all nested, header and footer Cards must be included');
+ assert.match(stylesheet,/\.webpage\.show-card-borders/,'the master Page Card should be included');
+ const off=clone(data);
+ off.site.design.cardBorders=false;
+ off.pages.find(p=>p.id==='home').blocks[0].border=true;
+ const offHtml=renderPagePreview(off,off.pages.find(p=>p.id==='home').blocks,null,{route:'/'});
+ assert.doesNotMatch(offHtml,/show-card-borders/);
+ assert.match(offHtml,/has-border/,'single Card override remains available');
+});
