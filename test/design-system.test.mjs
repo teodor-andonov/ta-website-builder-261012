@@ -50,7 +50,7 @@ test('M6 has a compact token system and retains sample noindex protection',async
  const stylesheet=await readFile(path.join(root,'src/public.css'),'utf8');
  for(const token of ['--ta-paper','--ta-ink','--ta-radius','--ta-mono','--ta-site-max'])assert.ok(stylesheet.includes(token),token);
  assert.ok(stylesheet.includes('.editor-shell'));
- assert.ok(stylesheet.includes('@container (max-width:590px)'));
+ assert.ok(stylesheet.includes('No responsive breakpoints'));
  const built=collectPages(data).find(p=>p.route==='/');
  assert.ok(built.html.includes('noindex, nofollow'));
  assert.ok(!built.html.includes('hello@example.com'));
