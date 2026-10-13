@@ -20,8 +20,9 @@ test('development server serves shared ESM and demo assets but no arbitrary file
       await delay(80);
     }
     assert.ok(ready,'Dev server did not start');
-    const [module,svg,deny,missing]=await Promise.all([
+    const [module,css,svg,deny,missing]=await Promise.all([
       fetch(`${url}/src/render.mjs`),
+      fetch(`${url}/src/public.css`),
       fetch(`${url}/assets/demo/house.svg`),
       fetch(`${url}/.env`),
       fetch(`${url}/assets/demo/unknown.svg`),
@@ -29,6 +30,9 @@ test('development server serves shared ESM and demo assets but no arbitrary file
     assert.equal(module.status,200);
     assert.match(module.headers.get('content-type'),/text\/javascript/);
     assert.match(await module.text(),/export function renderBlocks/);
+    assert.equal(css.status,200);
+    assert.match(css.headers.get('content-type'),/text\/css/);
+    assert.match(await css.text(),/M6 — TA Soft Precision/);
     assert.equal(svg.status,200);
     assert.match(svg.headers.get('content-type'),/image\/svg\+xml/);
     assert.match(await svg.text(),/<svg/);

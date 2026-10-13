@@ -132,7 +132,7 @@
           "status": "Concept",
           "summary": "A growing collection of spatial and computational patterns.",
           "cover": "glyph",
-          "featured": false,
+          "featured": true,
           "tags": [
             "Computation",
             "Research"
@@ -585,84 +585,463 @@
       "status": "Published",
       "blocks": [
         {
-          "id": "b_kzdema",
+          "id": "m6-hero",
           "type": "card",
           "children": [
             {
-              "id": "b_vdbnpm",
+              "id": "m6-hero-copy",
               "type": "card",
               "children": [
                 {
-                  "id": "b_5743q3",
+                  "id": "m6-hero-eyebrow",
                   "type": "text",
-                  "text": "TA / DESIGN & RESEARCH",
+                  "text": "TA  /  DESIGN  /  RESEARCH",
                   "style": "eyebrow"
                 },
                 {
-                  "id": "b_x1yy0p",
+                  "id": "m6-hero-title",
                   "type": "text",
-                  "text": "Architecture,\ncomputation\n& everything\nin between.",
+                  "text": "Architecture,\ncomputation &\na continuous\ncuriosity.",
                   "style": "display"
                 },
                 {
-                  "id": "b_iu0i4e",
+                  "id": "m6-hero-text",
                   "type": "text",
-                  "text": "A design practice exploring geometry, technology and the built environment.",
+                  "text": "A practice connecting built environments, computational thinking and hands-on exploration.",
+                  "style": "body"
+                },
+                {
+                  "id": "m6-hero-action",
+                  "type": "button",
+                  "text": "Explore selected work ↗",
+                  "href": "/work/"
+                }
+              ],
+              "layout": "stack",
+              "tone": "clear",
+              "padding": "none",
+              "variant": "hero-copy"
+            },
+            {
+              "id": "m6-hero-graphic",
+              "type": "card",
+              "children": [
+                {
+                  "id": "m6-hero-image",
+                  "type": "image",
+                  "source": "field",
+                  "fit": "cover",
+                  "caption": false
+                },
+                {
+                  "id": "m6-hero-graphic-cap",
+                  "type": "text",
+                  "text": "001  /  FORM, FIELD & SYSTEM",
+                  "style": "eyebrow"
+                }
+              ],
+              "layout": "stack",
+              "tone": "clear",
+              "padding": "none",
+              "variant": "hero-graphic"
+            }
+          ],
+          "layout": "split",
+          "tone": "soft",
+          "padding": "large",
+          "variant": "hero"
+        },
+        {
+          "id": "m6-intro",
+          "type": "card",
+          "children": [
+            {
+              "id": "m6-intro-label",
+              "type": "text",
+              "text": "AN INTEGRATED PRACTICE",
+              "style": "eyebrow"
+            },
+            {
+              "id": "m6-intro-copy",
+              "type": "text",
+              "text": "Design is a way of connecting things: ideas, materials, geometries, tools and people.",
+              "style": "heading"
+            }
+          ],
+          "layout": "split",
+          "tone": "clear",
+          "padding": "none",
+          "variant": "intro"
+        },
+        {
+          "id": "m6-work-title",
+          "type": "card",
+          "children": [
+            {
+              "id": "m6-work-label",
+              "type": "text",
+              "text": "01  /  SELECTED WORK",
+              "style": "eyebrow"
+            },
+            {
+              "id": "m6-work-title-right",
+              "type": "card",
+              "children": [
+                {
+                  "id": "m6-work-heading",
+                  "type": "text",
+                  "text": "Ideas in progress.",
+                  "style": "heading"
+                },
+                {
+                  "id": "m6-work-subtitle",
+                  "type": "text",
+                  "text": "Architecture, experiments and research from a growing archive.",
                   "style": "body"
                 }
               ],
               "layout": "stack",
               "tone": "clear",
               "padding": "none"
-            },
-            {
-              "id": "b_lra1dw",
-              "type": "image",
-              "source": "field",
-              "fit": "cover",
-              "caption": false
             }
           ],
           "layout": "split",
-          "tone": "soft",
-          "padding": "large"
+          "tone": "clear",
+          "padding": "none",
+          "variant": "section-lead"
         },
         {
-          "id": "b_gfcx3b",
-          "type": "text",
-          "text": "01 / SELECTED WORK",
-          "style": "eyebrow"
-        },
-        {
-          "id": "b_s8i02c",
+          "id": "m6-project-query",
           "type": "query",
           "collection": "projects",
           "layout": "grid",
           "count": 4,
           "component": "project-tile",
           "filter": "featured",
-          "sort": "newest"
+          "sort": "newest",
+          "variant": "work-grid"
         },
         {
-          "id": "b_5mwy53",
-          "type": "text",
-          "text": "02 / JOURNAL",
-          "style": "eyebrow"
+          "id": "m6-methods-title",
+          "type": "card",
+          "children": [
+            {
+              "id": "m6-methods-label",
+              "type": "text",
+              "text": "02  /  WHAT WE EXPLORE",
+              "style": "eyebrow"
+            },
+            {
+              "id": "m6-methods-heading",
+              "type": "text",
+              "text": "Across scales and disciplines.",
+              "style": "heading"
+            }
+          ],
+          "layout": "split",
+          "tone": "clear",
+          "padding": "none",
+          "variant": "section-lead"
         },
         {
-          "id": "b_tx7qx0",
+          "id": "m6-disciplines",
+          "type": "card",
+          "children": [
+            {
+              "id": "m6-architecture-card",
+              "type": "card",
+              "children": [
+                {
+                  "id": "m6-architecture-num",
+                  "type": "text",
+                  "text": "01  /  ARCHITECTURE",
+                  "style": "eyebrow"
+                },
+                {
+                  "id": "m6-architecture-title",
+                  "type": "text",
+                  "text": "Space & construction.",
+                  "style": "heading"
+                },
+                {
+                  "id": "m6-architecture-copy",
+                  "type": "text",
+                  "text": "Architectural ideas developed through spatial logic, materials and making.",
+                  "style": "body"
+                }
+              ],
+              "layout": "stack",
+              "tone": "soft",
+              "padding": "large",
+              "variant": "discipline-architecture"
+            },
+            {
+              "id": "m6-computation-card",
+              "type": "card",
+              "children": [
+                {
+                  "id": "m6-computation-num",
+                  "type": "text",
+                  "text": "02  /  COMPUTATION",
+                  "style": "eyebrow"
+                },
+                {
+                  "id": "m6-computation-title",
+                  "type": "text",
+                  "text": "Systems & tools.",
+                  "style": "heading"
+                },
+                {
+                  "id": "m6-computation-copy",
+                  "type": "text",
+                  "text": "Computational approaches that make complexity legible, reusable and adaptable.",
+                  "style": "body"
+                }
+              ],
+              "layout": "stack",
+              "tone": "soft",
+              "padding": "large",
+              "variant": "discipline-computation"
+            },
+            {
+              "id": "m6-research-card",
+              "type": "card",
+              "children": [
+                {
+                  "id": "m6-research-num",
+                  "type": "text",
+                  "text": "03  /  RESEARCH",
+                  "style": "eyebrow"
+                },
+                {
+                  "id": "m6-research-title",
+                  "type": "text",
+                  "text": "Questions & experiments.",
+                  "style": "heading"
+                },
+                {
+                  "id": "m6-research-copy",
+                  "type": "text",
+                  "text": "Prototyping across façades, digital fabrication, geometry and visual systems.",
+                  "style": "body"
+                }
+              ],
+              "layout": "stack",
+              "tone": "soft",
+              "padding": "large",
+              "variant": "discipline-research"
+            }
+          ],
+          "layout": "three",
+          "tone": "clear",
+          "padding": "none",
+          "variant": "disciplines"
+        },
+        {
+          "id": "m6-approach",
+          "type": "card",
+          "children": [
+            {
+              "id": "m6-approach-intro",
+              "type": "card",
+              "children": [
+                {
+                  "id": "m6-approach-label",
+                  "type": "text",
+                  "text": "03  /  WORKING TOGETHER",
+                  "style": "eyebrow"
+                },
+                {
+                  "id": "m6-approach-heading",
+                  "type": "text",
+                  "text": "A useful process starts with the right arrangement.",
+                  "style": "heading"
+                },
+                {
+                  "id": "m6-approach-note",
+                  "type": "text",
+                  "text": "Three engagement formats we're developing. Specific deliverables and terms are defined around each brief.",
+                  "style": "body"
+                }
+              ],
+              "layout": "stack",
+              "tone": "clear",
+              "padding": "none",
+              "variant": "approach-intro"
+            },
+            {
+              "id": "m6-approach-options",
+              "type": "card",
+              "children": [
+                {
+                  "id": "m6-fixed",
+                  "type": "card",
+                  "children": [
+                    {
+                      "id": "m6-fixed-num",
+                      "type": "text",
+                      "text": "01  /  FIXED PACKAGES",
+                      "style": "eyebrow"
+                    },
+                    {
+                      "id": "m6-fixed-body",
+                      "type": "text",
+                      "text": "Defined scope. Clear deliverables.",
+                      "style": "body"
+                    }
+                  ],
+                  "layout": "stack",
+                  "tone": "clear",
+                  "padding": "small",
+                  "variant": "method-line"
+                },
+                {
+                  "id": "m6-subscription",
+                  "type": "card",
+                  "children": [
+                    {
+                      "id": "m6-subscription-num",
+                      "type": "text",
+                      "text": "02  /  SUBSCRIPTION",
+                      "style": "eyebrow"
+                    },
+                    {
+                      "id": "m6-subscription-body",
+                      "type": "text",
+                      "text": "Ongoing design and computation support.",
+                      "style": "body"
+                    }
+                  ],
+                  "layout": "stack",
+                  "tone": "clear",
+                  "padding": "small",
+                  "variant": "method-line"
+                },
+                {
+                  "id": "m6-custom",
+                  "type": "card",
+                  "children": [
+                    {
+                      "id": "m6-custom-num",
+                      "type": "text",
+                      "text": "03  /  CUSTOM PROJECT",
+                      "style": "eyebrow"
+                    },
+                    {
+                      "id": "m6-custom-body",
+                      "type": "text",
+                      "text": "A tailored arrangement for a unique challenge.",
+                      "style": "body"
+                    }
+                  ],
+                  "layout": "stack",
+                  "tone": "clear",
+                  "padding": "small",
+                  "variant": "method-line"
+                }
+              ],
+              "layout": "stack",
+              "tone": "clear",
+              "padding": "none",
+              "variant": "approach-options"
+            }
+          ],
+          "layout": "split",
+          "tone": "dark",
+          "padding": "large",
+          "variant": "approach"
+        },
+        {
+          "id": "m6-journal-title",
+          "type": "card",
+          "children": [
+            {
+              "id": "m6-journal-label",
+              "type": "text",
+              "text": "04  /  JOURNAL",
+              "style": "eyebrow"
+            },
+            {
+              "id": "m6-journal-right",
+              "type": "card",
+              "children": [
+                {
+                  "id": "m6-journal-heading",
+                  "type": "text",
+                  "text": "Notes from the process.",
+                  "style": "heading"
+                },
+                {
+                  "id": "m6-journal-subtitle",
+                  "type": "text",
+                  "text": "Short observations, studio updates and longer pieces on design and technology.",
+                  "style": "body"
+                }
+              ],
+              "layout": "stack",
+              "tone": "clear",
+              "padding": "none"
+            }
+          ],
+          "layout": "split",
+          "tone": "clear",
+          "padding": "none",
+          "variant": "section-lead"
+        },
+        {
+          "id": "m6-journal-query",
           "type": "query",
           "collection": "posts",
           "layout": "list",
           "count": 3,
           "component": "post-row",
           "filter": "published",
-          "sort": "newest"
+          "sort": "newest",
+          "variant": "journal-list"
         },
         {
-          "id": "b_14tqqx",
-          "type": "component",
-          "component": "contact-cta"
+          "id": "m6-close",
+          "type": "card",
+          "children": [
+            {
+              "id": "m6-close-left",
+              "type": "card",
+              "children": [
+                {
+                  "id": "m6-close-label",
+                  "type": "text",
+                  "text": "TA  /  THE OPEN ARCHIVE",
+                  "style": "eyebrow"
+                },
+                {
+                  "id": "m6-close-title",
+                  "type": "text",
+                  "text": "Ideas are meant\nto keep moving.",
+                  "style": "heading"
+                },
+                {
+                  "id": "m6-close-copy",
+                  "type": "text",
+                  "text": "A working collection of projects, tools, experiments and thoughts. More to come.",
+                  "style": "body"
+                }
+              ],
+              "layout": "stack",
+              "tone": "clear",
+              "padding": "none",
+              "variant": "closer-left"
+            },
+            {
+              "id": "m6-close-button",
+              "type": "button",
+              "text": "Read the journal ↗",
+              "href": "/posts/"
+            }
+          ],
+          "layout": "split",
+          "tone": "soft",
+          "padding": "large",
+          "variant": "closer"
         }
       ]
     },

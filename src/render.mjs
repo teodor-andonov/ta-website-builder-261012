@@ -108,7 +108,7 @@ function renderBlock(block,context,data,options,depth) {
     }
     default: content='<div class="placeholder">Unknown block</div>';
   }
-  return `<div class="block${selected}"${attrs}>${content}</div>`;
+  return `<div class="block${block.variant?' variant-'+safeToken(block.variant):''}${selected}"${attrs}>${content}</div>`;
 }
 /** Map a record or bespoke page to its URL without duplicating the renderer. */
 export function resolvePreviewRoute(data,blocks,context=null) {
@@ -141,7 +141,7 @@ export function renderDocument(data,{title,blocks,context=null,route}) {
   const description=escapeHtml(context?.summary||data.site.description||'');
   const page=renderPagePreview(data,blocks,context,{route:route||resolvePreviewRoute(data,blocks,context)});
   // Sample content isn't approved for live indexing yet.
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${heading} — ${name}</title><meta name="description" content="${description}"><meta name="robots" content="noindex, nofollow"><link rel="stylesheet" href="/site.css"></head><body class="published-site">${page}</body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${heading} — ${name}</title><meta name="description" content="${description}"><meta name="robots" content="noindex, nofollow"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;450;500;550;600;650&display=swap"><link rel="stylesheet" href="/site.css"></head><body class="published-site">${page}</body></html>`;
 }
 export function collectPages(data) {
   const pages=[];

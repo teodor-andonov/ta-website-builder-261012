@@ -63,6 +63,9 @@ const server = http.createServer(async (req,res)=>{
   try {
     if (req.method==='GET' && (pathname==='/' || pathname==='/studio/' || pathname==='/studio/index.html'))
       return respond(res,200,await readFile(studioFile),'text/html; charset=utf-8');
+    // Shared styling for the public site and the editor preview, not arbitrary file serving.
+    if(req.method==='GET' && pathname==='/src/public.css')
+      return respond(res,200,await readFile(path.join(root,'src','public.css')),'text/css; charset=utf-8');
     // Allow the editor to import the *same* ESM renderer that the static build uses.
     if(req.method==='GET' && pathname==='/src/render.mjs')
       return respond(res,200,await readFile(path.join(root,'src','render.mjs')),'text/javascript; charset=utf-8');
