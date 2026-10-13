@@ -39,6 +39,8 @@ test('grid CSS uses fixed equal tracks, child cell positions and constrained wid
  const html=renderPagePreview(data,home.blocks,null,{route:'/'});
  assert.match(html,/grid-column:2\/3;grid-row:1\/2/);
  assert.match(html,/semantic-header/);assert.match(html,/semantic-page/);assert.match(html,/semantic-footer/);
+ assert.match(html,/semantic-header bg-transparent\" style=\"aspect-ratio:1 \/ 0\.06/);
+ assert.match(html,/semantic-footer bg-transparent\" style=\"aspect-ratio:1 \/ 0\.05/);
  assert.ok(!html.includes('b-divider'));
 });
 test('CSS is width proportional, grayscale and has no adaptive breakpoints',async()=>{
@@ -55,6 +57,7 @@ test('validator rejects invalid area, over-large grids, invalid height and tinte
   d=>d.pages[0].blocks[0].children[0].area.x2=999,
   d=>d.pages[0].blocks[0].heightFactor=-1,
   d=>d.site.design.palette.ink='#112233',
+  d=>d.site.design.frame.header.heightFactor=0,
  ];
  for(const update of cases){const d=clone(good);update(d);assert.throws(()=>validate(d));}
 });
