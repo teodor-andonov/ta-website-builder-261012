@@ -32,7 +32,7 @@ test('development server serves shared ESM and demo assets but no arbitrary file
     assert.match(await module.text(),/export function renderBlocks/);
     assert.equal(css.status,200);
     assert.match(css.headers.get('content-type'),/text\/css/);
-    assert.match(await css.text(),/M6 — TA Soft Precision/);
+    assert.match(await css.text(),/M7 \/ Print-native Card system/);
     assert.equal(svg.status,200);
     assert.match(svg.headers.get('content-type'),/image\/svg\+xml/);
     assert.match(await svg.text(),/<svg/);
