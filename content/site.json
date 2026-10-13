@@ -773,7 +773,7 @@
               "layout": "stack",
               "tone": "soft",
               "padding": "large",
-              "variant": "discipline-discipline-architecture"
+              "variant": "discipline-architecture"
             },
             {
               "id": "m6-computation-card",
@@ -801,7 +801,7 @@
               "layout": "stack",
               "tone": "soft",
               "padding": "large",
-              "variant": "discipline-discipline-computation"
+              "variant": "discipline-computation"
             },
             {
               "id": "m6-research-card",
@@ -829,7 +829,7 @@
               "layout": "stack",
               "tone": "soft",
               "padding": "large",
-              "variant": "discipline-discipline-research"
+              "variant": "discipline-research"
             }
           ],
           "layout": "three",
@@ -866,7 +866,8 @@
               ],
               "layout": "stack",
               "tone": "clear",
-              "padding": "none"
+              "padding": "none",
+              "variant": "approach-intro"
             },
             {
               "id": "m6-approach-options",
@@ -941,7 +942,8 @@
               ],
               "layout": "stack",
               "tone": "clear",
-              "padding": "none"
+              "padding": "none",
+              "variant": "approach-options"
             }
           ],
           "layout": "split",
@@ -1026,7 +1028,8 @@
               ],
               "layout": "stack",
               "tone": "clear",
-              "padding": "none"
+              "padding": "none",
+              "variant": "closer-left"
             },
             {
               "id": "m6-close-button",
