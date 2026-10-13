@@ -23,7 +23,6 @@
     ],
     "design": {
       "unitDivisor": 100,
-      "cardBorder": false,
       "palette": {
         "paper": "#ffffff",
         "ink": "#141414",
@@ -32,7 +31,8 @@
         "grey300": "#bcbcbc",
         "grey600": "#666666",
         "black": "#111111"
-      }
+      },
+      "cardBorders": false
     }
   },
   "collections": [
