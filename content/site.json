@@ -32,7 +32,17 @@
         "grey600": "#666666",
         "black": "#111111"
       },
-      "cardBorders": false
+      "cardBorders": false,
+      "frame": {
+        "header": {
+          "constrainHeight": true,
+          "heightFactor": 0.06
+        },
+        "footer": {
+          "constrainHeight": true,
+          "heightFactor": 0.05
+        }
+      }
     }
   },
   "collections": [
