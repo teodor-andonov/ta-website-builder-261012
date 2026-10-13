@@ -63,6 +63,13 @@ export function validate(data) {
     const design=data.site.design;
     if(!design||typeof design!=='object'||design.unitDivisor!==100||typeof design.cardBorders!=='boolean')
       fail('Invalid site design controls');
+    if(design.frame!==undefined){
+      for(const name of ['header','footer']){
+        const region=design.frame[name];
+        if(!region||typeof region.constrainHeight!=='boolean'||!Number.isFinite(region.heightFactor)||region.heightFactor<=0||region.heightFactor>4)
+          fail(`Invalid semantic Card height constraint: ${name}`);
+      }
+    }
     for(const hex of Object.values(design.palette||{})){
       if(!/^#[0-9a-fA-F]{6}$/.test(hex))fail('Invalid grayscale palette value');
       const x=hex.slice(1).toLowerCase();
