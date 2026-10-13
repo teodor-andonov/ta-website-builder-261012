@@ -6,6 +6,7 @@
   --ta-grey-100:#f2f2f2;--ta-grey-200:#e3e3e3;
   --ta-grey-300:#bcbcbc;--ta-grey-600:#666666;--ta-black:#111111;
   --ta-mono:"Geist Mono","PT Mono",Consolas,monospace;
+  --ta-radius:1.15cqw;
   --ta-site-max:1600px;
 }
 body.published-site{margin:0;background:#ffffff;color:#141414}
@@ -19,7 +20,7 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .webpage *{box-sizing:border-box}
 :is(.published-site,.editor-shell) .grid-card{display:grid;min-width:0;min-height:0;align-items:stretch;align-content:stretch}
 :is(.published-site,.editor-shell) .b-card.grid-card{
-  border:1px solid transparent;border-radius:1.15cqw;
+  border:1px solid transparent;border-radius:var(--ta-radius);
   gap:2cqw;padding:2cqw;min-height:0;min-width:0;
 }
 :is(.published-site,.editor-shell) .grid-card>.block{
