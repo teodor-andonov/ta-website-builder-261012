@@ -80,6 +80,14 @@
 .area-values input{width:100%;min-width:0;border:1px solid var(--line);border-radius:5px;padding:8px 4px;margin-top:3px;text-align:center;font:12px var(--mono);background:white}
 .area-actions{display:flex;gap:7px;align-items:center;justify-content:space-between;margin-top:9px}
 .area-error{color:#a54040;font:10px/1.5 var(--mono);min-height:15px}
+ 
+/* M8 Structure keyboard actions; all emphasis uses the Studio-only blue. */
+.structure-editbar{display:flex;align-items:center;gap:5px;padding:4px 12px 10px;border-bottom:1px solid var(--line)}
+.structure-move{border:1px solid rgba(82,92,187,.24);background:var(--panel);color:var(--m8-blue);border-radius:5px;min-width:27px;height:26px;font:600 14px var(--mono);cursor:pointer}
+.structure-move:hover:not(:disabled){background:var(--m8-blue-soft);border-color:var(--m8-blue)}
+.structure-move:focus-visible{outline:2px solid var(--m8-blue);outline-offset:1px}
+.structure-move:disabled{opacity:.28;cursor:default}
+.structure-move-hint{margin-left:auto;font:8px var(--mono);letter-spacing:.04em;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -89,14 +97,19 @@
   <div class="toolbar"><span class="saved" id="saved">JSON FILE · READY</span><button class="btn ghost" id="importBtn">Import JSON</button><button class="btn dark" id="exportBtn">↧ &nbsp;Export JSON</button><input hidden type="file" id="importFile" accept=".json,application/json"><input hidden type="file" id="imageFile" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif" multiple></div>
  </header>
  <aside class="sidebar" id="sidebar"><div class="side-inner" id="sidebarContent"></div><div class="side-bottom">LOCAL FIRST &nbsp;↗<br>FILES · COLLECTIONS · TEMPLATES</div></aside>
- <aside class="structure-pane" id="structurePane" aria-label="Document structure"><div class="structure-head"><span>DOCUMENT STRUCTURE</span><button class="btn ghost sm" data-act="toggle-structure" title="Hide document structure" aria-label="Hide document structure">✕</button></div><div class="structure-summary" id="structureSummary"></div><div class="structure-scroll" id="structureTree" role="tree" aria-label="Cards and Items"></div><div class="structure-footer"><button class="btn sm" data-act="show-blocks" data-inside="no">+ Section</button><button class="btn sm" data-act="show-blocks" data-inside="yes" id="treeAddChild" title="Add Item or Card into selected Card" disabled>+ Child</button><button class="btn ghost sm" data-act="undo-structure" id="treeUndo" title="Undo (Ctrl+Z)" disabled>↶ Undo</button><button class="btn ghost sm" data-act="redo-structure" id="treeRedo" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button></div></aside>
+ <aside class="structure-pane" id="structurePane" aria-label="Document structure"><div class="structure-head"><span>DOCUMENT STRUCTURE</span><button class="btn ghost sm" data-act="toggle-structure" title="Hide document structure" aria-label="Hide document structure">✕</button></div><div class="structure-summary" id="structureSummary"></div><div class="structure-editbar" role="toolbar" aria-label="Move selected Card or Item">
+<button class="structure-move" data-act="tree-move" data-move="up" title="Move before previous sibling (Alt+↑)" aria-label="Move selection up" disabled>↑</button>
+<button class="structure-move" data-act="tree-move" data-move="down" title="Move after next sibling (Alt+↓)" aria-label="Move selection down" disabled>↓</button>
+<button class="structure-move" data-act="tree-move" data-move="indent" title="Nest into preceding Card (Alt+→)" aria-label="Nest selection into previous Card" disabled>↳</button>
+<button class="structure-move" data-act="tree-move" data-move="outdent" title="Move out of parent Card (Alt+←)" aria-label="Move selection out of parent Card" disabled>↰</button>
+<span class="structure-move-hint">ALT + ARROWS</span></div><div class="structure-scroll" id="structureTree" role="tree" aria-label="Cards and Items"></div><div class="structure-footer"><button class="btn sm" data-act="show-blocks" data-inside="no">+ Section</button><button class="btn sm" data-act="show-blocks" data-inside="yes" id="treeAddChild" title="Add Item or Card into selected Card" disabled>+ Child</button><button class="btn ghost sm" data-act="undo-structure" id="treeUndo" title="Undo (Ctrl+Z)" disabled>↶ Undo</button><button class="btn ghost sm" data-act="redo-structure" id="treeRedo" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button></div></aside>
  <main class="workspace"><div class="worktop"><div class="breadcrumbs" id="breadcrumbs"></div><div class="workactions"><button class="btn sm structure-toggle" id="structureToggle" data-act="toggle-structure" aria-pressed="true" title="Show or hide document structure">☷ Structure</button><button class="btn sm inspect-toggle" id="inspectToggle">Properties</button><div class="seg" id="modeTabs"></div></div></div><div class="workbody" id="workbody"></div></main>
  <aside class="inspector" id="inspector"><div class="inspect-head"><span id="inspectorTitle">Properties</span><button class="btn ghost sm" id="inspectClose">✕</button></div><div class="inspect-body" id="inspectBody"></div></aside>
 </div>
 <div id="modalHost"></div>
 <script type="module">
 import { renderBlocks as renderSharedBlocks, renderSiteFrame, assetSrc } from "/src/render.mjs";
-import {moveTreeNode,findFreeArea} from "/src/tree-editor.mjs";
+import {moveTreeNode,moveTreeByIntent,findFreeArea} from "/src/tree-editor.mjs";
 import {createEditorHistory} from "/src/editor-history.mjs";
 (async ()=>{'use strict';
 const SVG_ART={
@@ -299,6 +312,8 @@ function renderStructure(){
  $('#treeRedo').disabled=!editorHistory.canRedo(historyScope());
  const selected=ui.node?findNode(ui.node)?.node:null;
  $('#treeAddChild').disabled=!(selected?.type==='card'&&!selected.source&&!selected.reference);
+ for(const control of document.querySelectorAll('#structurePane [data-act="tree-move"]'))
+   control.disabled=!(active&&ui.node&&moveTreeByIntent(currentBlocks(),ui.node,control.dataset.move).ok);
  const toggle=$('#structureToggle');toggle.style.display=active?'':'none';toggle.setAttribute('aria-pressed',String(visible));
 }
 function findNodePath(id,nodes=currentBlocks(),trail=[]){
@@ -308,6 +323,22 @@ function findNodePath(id,nodes=currentBlocks(),trail=[]){
   if(n.children){const hit=findNodePath(id,n.children,next);if(hit)return hit}
  }
  return null;
+}
+function applyTreeMove(intent){
+ if(!structureMode()||!ui.node)return false;
+ const result=moveTreeByIntent(currentBlocks(),ui.node,intent);
+ if(!result.ok)return false;
+ const scope=currentScope(),before=snapshotScope(),selectedBefore=ui.node;
+ scope.blocks=result.blocks;
+ if(result.parentId)ui.structureCollapsed.delete(result.parentId);
+ const path=findNodePath(ui.node);
+ for(const n of path?.slice(0,-1)||[])ui.structureCollapsed.delete(n.id);
+ const changed=saveScopeEdit(before,selectedBefore);
+ if(changed)requestAnimationFrame(()=>{
+   const focus=document.querySelector('#structureTree .structure-select[data-id="'+ui.node+'"]');
+   focus?.scrollIntoView({block:'nearest'});focus?.focus();
+ });
+ return changed;
 }
 function selectStudioNode(id){
  if(!findNode(id))return;
@@ -436,6 +467,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'mode':ui.mode=btn.dataset.mode;ui.jsonMessage='';renderTop();renderWork();renderInspector();break;
  case'toggle-structure':ui.structureVisible=!ui.structureVisible;renderStructure();break;
  case'structure-fold':if(ui.structureCollapsed.has(id))ui.structureCollapsed.delete(id);else ui.structureCollapsed.add(id);renderStructure();break;
+ case'tree-move':applyTreeMove(btn.dataset.move);break;
  case'apply-area':{
    const raw={};for(const key of ['x1','y1','x2','y2'])raw[key]=Number(document.querySelector('[data-area-value="'+key+'"]')?.value);
    commitArea(raw);break;
@@ -711,6 +743,11 @@ document.addEventListener('keydown',event=>{
 document.addEventListener('keydown',event=>{
  const focus=event.target.closest('.structure-select');
  if(!focus||!structureMode())return;
+ if(event.altKey&&!event.ctrlKey&&!event.metaKey&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)){
+   event.preventDefault();
+   applyTreeMove(({ArrowUp:'up',ArrowDown:'down',ArrowRight:'indent',ArrowLeft:'outdent'})[event.key]);
+   return;
+ }
  const rows=[...document.querySelectorAll('#structureTree .structure-select')];
  const index=rows.indexOf(focus);
  if(index<0)return;
