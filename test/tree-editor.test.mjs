@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {moveTreeByIntent,moveTreeNode,nodePath,findFreeArea} from '../src/tree-editor.mjs';
+import {moveTreeByIntent,moveTreeNode,nodePath,findFreeArea,findAreaConflicts} from '../src/tree-editor.mjs';
 
 const item=(id,area)=>({id,type:'text',text:id,area});
 const card=(id,children,area,columns=2,rows=2)=>({
