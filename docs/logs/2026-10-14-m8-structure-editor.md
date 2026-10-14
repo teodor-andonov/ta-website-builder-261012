@@ -33,3 +33,18 @@ At the last verified M8 checkpoint: **57/57 automated tests passed**, as did rea
 - This run updates the **draft M8 branch only**; stable `main` and live Pages are intentionally unchanged pending milestone acceptance.
 
 **Verification:** documentation was checked against the GitHub branch/PR API and actual tree. GitHub's **Validate Content Studio** check completed successfully with **57/57 tests**, and **Design preview screenshots** completed successfully on the housekeeping documentation cycle (2026-10-14). Recheck both workflows on the final PR head after any further changes.
+
+## M8 history and structural-safety cycle — 2026-10-14 (later session)
+
+**Goal:** replace single-step tree Undo with coherent multi-step Undo/Redo and verify everyday destructive/geometry operations before further tree-UI polish.
+
+**Implemented on `feature/m8-advanced-editor`, not on `main`:**
+- Added pure bounded `src/editor-history.mjs`, serving only through an explicitly allowed local editor module route. It keeps **up to 40 snapshot transactions per Page/Template/Component scope** and at most 16 recently opened scopes. History lives in memory, so **reloading the browser resets it**.
+- Document Structure now exposes **Undo / Redo** and supports **Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z** (plus Ctrl/Cmd+Y) when focus is not in a native input. Keyboard editing fields retain their own native Undo behavior.
+- One transaction covers a valid Card/Item property change, atomic four-line grid-area edit, new object insertion, sibling reorder, drag reparent, duplication or deletion. Invalid numeric drafts, selection and no-op actions are not recorded. Undo restores the appropriate selected node and expands hidden parent paths.
+- Duplication now searches for a vacant grid area; it only extends rows when necessary and refuses impossible placement, avoiding an invisible duplicate occupying the original Item's exact cell.
+- The real-browser test now exercises **two older grid Undos and Redos**, undoing/replaying a previous tree move, making a new edit to invalidate an abandoned Redo path, then **duplicate → undo → redo → delete → undo**. All tests use disposable copies of source JSON; the committed content is unaffected.
+
+**Verification:** latest completed CI on the implementation head before this documentation update: **65/65 unit/integration tests passed**. Chromium confirmed `M8_HISTORY_OK`, `M8_HISTORY_STRUCTURE_OK`, `M8_TREE_AREA_OK` and `M8_STRUCTURE_OK`, and captured a desktop Content Studio screenshot with working Structure/Canvas/Properties. GitHub Pages path checks also passed. Re-run after documentation changes to confirm final PR head checks. [Draft PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23) remains **unmerged**.
+
+**Known limitations / next actions:** in-memory (non-durable) history; no atomic rollback yet when file saving fails; non-tree content records remain outside Card/Item scope history; keyboard-accessible tree reparenting and extensive large-document usability still require work. Continue M8 without publishing early. See the [living implementation plan](../IMPLEMENTATION_PLAN.md).
