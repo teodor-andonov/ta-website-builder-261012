@@ -486,14 +486,24 @@
           "children": [
             {
               "id": "b_acon1s",
-              "type": "component",
-              "component": "contact-cta",
+              "type": "card",
+              "variant": "reusable",
               "area": {
                 "x1": 1,
                 "y1": 1,
                 "x2": 2,
                 "y2": 2
-              }
+              },
+              "columns": 1,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "reference": "contact-cta",
+              "children": []
             }
           ]
         }
@@ -1036,16 +1046,17 @@
       "description": "Record-powered project card",
       "blocks": [
         {
-          "id": "m7_project-tile_0",
+          "id": "project-record-card",
           "type": "card",
+          "variant": "project-record",
           "columns": 1,
-          "rows": 1,
+          "rows": 6,
           "gap": "x1",
           "padding": "x1",
           "background": "transparent",
           "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
+          "constrainHeight": true,
+          "heightFactor": 0.97,
           "children": [
             {
               "id": "b_b4dn5b",
@@ -1057,23 +1068,9 @@
                 "x1": 1,
                 "y1": 1,
                 "x2": 2,
-                "y2": 2
+                "y2": 5
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_project-tile_1",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_46i46m",
               "type": "text",
@@ -1081,25 +1078,11 @@
               "style": "eyebrow",
               "area": {
                 "x1": 1,
-                "y1": 1,
+                "y1": 5,
                 "x2": 2,
-                "y2": 2
+                "y2": 6
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_project-tile_2",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_jesowg",
               "type": "text",
@@ -1107,9 +1090,9 @@
               "style": "body",
               "area": {
                 "x1": 1,
-                "y1": 1,
+                "y1": 6,
                 "x2": 2,
-                "y2": 2
+                "y2": 7
               }
             }
           ]
@@ -1122,16 +1105,17 @@
       "description": "Record-powered editorial listing",
       "blocks": [
         {
-          "id": "m7_post-row_0",
+          "id": "journal-record-card",
           "type": "card",
-          "columns": 1,
+          "variant": "journal-record",
+          "columns": 3,
           "rows": 1,
           "gap": "x1",
           "padding": "x1",
           "background": "transparent",
           "border": false,
           "constrainHeight": false,
-          "heightFactor": 0.5,
+          "heightFactor": 0.15,
           "children": [
             {
               "id": "b_33jo72",
@@ -1144,56 +1128,28 @@
                 "x2": 2,
                 "y2": 2
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_post-row_1",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_36vqgt",
               "type": "text",
               "text": "{{title}}",
               "style": "heading",
               "area": {
-                "x1": 1,
+                "x1": 2,
                 "y1": 1,
-                "x2": 2,
+                "x2": 3,
                 "y2": 2
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_post-row_2",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_6uk7yv",
               "type": "text",
               "text": "{{summary}}",
               "style": "caption",
               "area": {
-                "x1": 1,
+                "x1": 3,
                 "y1": 1,
-                "x2": 2,
+                "x2": 4,
                 "y2": 2
               }
             }
@@ -1463,20 +1419,31 @@
           "children": [
             {
               "id": "m6-project-query",
-              "type": "query",
-              "collection": "projects",
-              "layout": "grid",
-              "count": 4,
-              "component": "project-tile",
-              "filter": "featured",
-              "sort": "newest",
+              "type": "card",
               "variant": "work-grid",
               "area": {
                 "x1": 1,
                 "y1": 1,
                 "x2": 2,
                 "y2": 2
-              }
+              },
+              "columns": 2,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "source": {
+                "collection": "projects",
+                "template": "project-tile",
+                "filter": "featured",
+                "sort": "newest",
+                "count": 4,
+                "layout": "grid"
+              },
+              "children": []
             }
           ]
         },
@@ -2018,20 +1985,31 @@
           "children": [
             {
               "id": "m6-journal-query",
-              "type": "query",
-              "collection": "posts",
-              "layout": "list",
-              "count": 3,
-              "component": "post-row",
-              "filter": "published",
-              "sort": "newest",
+              "type": "card",
               "variant": "journal-list",
               "area": {
                 "x1": 1,
                 "y1": 1,
                 "x2": 2,
                 "y2": 2
-              }
+              },
+              "columns": 1,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "source": {
+                "collection": "posts",
+                "template": "post-row",
+                "filter": "published",
+                "sort": "newest",
+                "count": 3,
+                "layout": "list"
+              },
+              "children": []
             }
           ]
         },
@@ -2219,19 +2197,31 @@
           "children": [
             {
               "id": "b_73h0n0",
-              "type": "query",
-              "collection": "projects",
-              "layout": "grid",
-              "count": 12,
-              "component": "project-tile",
-              "filter": "all",
-              "sort": "newest",
+              "type": "card",
+              "variant": "collection",
               "area": {
                 "x1": 1,
                 "y1": 1,
                 "x2": 2,
                 "y2": 2
-              }
+              },
+              "columns": 2,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "source": {
+                "collection": "projects",
+                "template": "project-tile",
+                "filter": "all",
+                "sort": "newest",
+                "count": 12,
+                "layout": "grid"
+              },
+              "children": []
             }
           ]
         }
@@ -2335,19 +2325,31 @@
           "children": [
             {
               "id": "b_nue5t9",
-              "type": "query",
-              "collection": "posts",
-              "layout": "list",
-              "count": 30,
-              "component": "post-row",
-              "filter": "published",
-              "sort": "newest",
+              "type": "card",
+              "variant": "collection",
               "area": {
                 "x1": 1,
                 "y1": 1,
                 "x2": 2,
                 "y2": 2
-              }
+              },
+              "columns": 1,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "source": {
+                "collection": "posts",
+                "template": "post-row",
+                "filter": "published",
+                "sort": "newest",
+                "count": 30,
+                "layout": "list"
+              },
+              "children": []
             }
           ]
         }
@@ -2464,14 +2466,24 @@
           "children": [
             {
               "id": "b_60ijye",
-              "type": "component",
-              "component": "contact-cta",
+              "type": "card",
+              "variant": "reusable",
               "area": {
                 "x1": 1,
                 "y1": 1,
                 "x2": 2,
                 "y2": 2
-              }
+              },
+              "columns": 1,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "reference": "contact-cta",
+              "children": []
             }
           ]
         }
