@@ -61,3 +61,21 @@ The existing long-lived M8 draft branch gained accessible Structure movement wit
 **Evidence:** 68/68 automated tests, CI build and Chromium screenshot workflow passed on the implementation head before this log edit. Browser output included `M8_KEYBOARD_MOVE_OK`, `M8_HISTORY_OK`, `M8_TREE_AREA_OK` and `M8_STRUCTURE_OK`.
 
 **Remaining:** check with screen readers, stress-test larger trees, improve overlapping-cell feedback and handle save failures/multiple open editor tabs safely. This is draft work on PR #23; main and Pages are unchanged.
+
+## M8 collision feedback and revision-safe saving — 2026-10-14 (continuation)
+
+**Scope:** two unfinished M8 reliability/authoring concerns, still **draft/unmerged** on PR #23. No public Pages deployment.
+
+**Grid area feedback**
+- Added pure `findAreaConflicts(parent,nodeId,area)` to `src/tree-editor.mjs`. It reports overlapping sibling IDs/labels and exact overlapping cell count; a shared edge is not an overlap. It never mutates authored areas or prohibits intentional layering.
+- Properties shows an immediate, accessible warning when typed or pointer-dragged grid coordinates intersect siblings, with a blue striped overlap preview for occupied selected cells. No permanent canvas overlay was added.
+- Added two unit tests and a Chromium `M8_OVERLAP_OK` interaction check confirming the warning appears and clears before an atomic Apply.
+
+**Save safety / other open tabs**
+- Local JSON GET replies with a content-hash ETag. Every JSON PUT and asset POST now uses `If-Match` and is compared against the current file *inside the server mutation queue*. Missing revisions receive HTTP 428; stale revisions receive HTTP 409. JSON changes remain atomic, and stale image uploads do not create files.
+- Studio serializes JSON changes and image uploads in one write queue, gets a new ETag after each successful mutation, and stops subsequent writes if a save fails or another tab wins the revision race. Unsaved edits remain in browser memory, with a visible **UNSAVED CHANGES · EXPORT JSON** warning and unload prompt. It does **not** automatically merge competing documents or overwrite the other tab.
+- Added isolated two-tab/server concurrency regression (`test/concurrent-save.test.mjs`), updated real-asset round-trip revision headers, and extended Chromium to produce `M8_SAVE_CONFLICT_OK` after changing the file externally. The test verifies the newer disk file is untouched and unsaved editor changes remain exportable.
+
+**Validation:** 71 automated tests are expected (68 prior + 2 area diagnostics + 1 concurrency check). GitHub **Validate Content Studio** and **Design preview screenshots** checks completed successfully on implementation commit `2928a77`, including real Chromium interaction; final documentation-only head checks must also complete. Tests and browser runs use disposable data and do not rewrite repository content.
+
+**Remaining acceptance:** manual larger-tree authoring and screen-reader review; 1600×1000 and 1280×800 editor visual inspection; offline/write-failure recovery with Export JSON/reconciliation; intentional multi-tab and multi-image upload QA; final diff/security check, user review and one squash merge. The in-memory Undo history is still not reload-durable.
