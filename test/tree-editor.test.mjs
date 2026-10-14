@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {moveTreeNode,nodePath} from '../src/tree-editor.mjs';
+import {moveTreeNode,nodePath,findFreeArea} from '../src/tree-editor.mjs';
 
 const item=(id,area)=>({id,type:'text',text:id,area});
 const card=(id,children,area,columns=2,rows=2)=>({
@@ -55,4 +55,19 @@ test('M8 rejects cycles, self-drops and generated query/reference Cards',()=>{
 test('M8 returns ancestral IDs useful for selection breadcrumbs',()=>{
  assert.deepEqual(nodePath(sample(),'a'),['hero','group','a']);
  assert.equal(nodePath(sample(),'missing'),null);
+});
+
+test('M8 duplicate placement finds a non-overlapping cell and extends rows when necessary',()=>{
+ const t=sample(),group=t[0].children[0],original=group.children[0];
+ const slot=findFreeArea(group,group.children,original);
+ assert.ok(slot);
+ assert.deepEqual(slot.area,{x1:1,y1:3,x2:2,y2:4});
+ assert.equal(slot.rows,3);
+ assert.deepEqual(t[0].children[0].children.map(x=>x.id),['a','b']);
+});
+test('M8 duplicate refuses non-authorable source Cards and impossible grid sizes',()=>{
+ const t=sample(),g=t[0].children[1];g.reference='reusable';
+ assert.equal(findFreeArea(g,g.children,item('x',{x1:1,y1:1,x2:2,y2:2})),null);
+ const c=card('full',[item('taken',{x1:1,y1:1,x2:2,y2:65})],null,1,64);
+ assert.equal(findFreeArea(c,c.children,item('other',{x1:1,y1:1,x2:2,y2:2})),null);
 });
