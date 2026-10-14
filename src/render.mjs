@@ -215,14 +215,17 @@ export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
   // Master spacing is expressed in page-width units; no per-Card pixel overrides.
   const unit=value=>Number.isFinite(value)&&value>0&&value<=4?value:1;
   const spacingStyle=` style="--ta-pad:${unit(data.site?.design?.pad)}cqw;--ta-gap:${unit(data.site?.design?.gap)}cqw"`;
-  const links=nav.map(link=>{
+  const links=nav.map((link,i)=>{
     const href=normalizeRoute(link.href),active=href===section;
-    return `<a class="item item-link${active?' is-active':''}" href="${escapeHtml(href)}" data-site-route="${escapeHtml(href)}"${active?' aria-current="page"':''}>${escapeHtml(link.label)}</a>`;
+    // Navigation links are direct Items in the Nav Card's twelve-column grid.
+    const slot=Math.max(1,Math.floor(6/Math.max(1,nav.length)));
+    const x1=Math.min(12,7+i*slot),x2=i===nav.length-1?13:Math.min(13,x1+slot);
+    return `<a class="item item-link${active?' is-active':''}" style="grid-column:${x1}/${x2};grid-row:1;" href="${escapeHtml(href)}" data-site-route="${escapeHtml(href)}"${active?' aria-current="page"':''}>${escapeHtml(link.label)}</a>`;
   }).join('');
   return '<div class="card card-page webpage '+(design?'design':'view')+(data.site?.design?.cardBorders?' show-card-borders':'')+'"'+spacingStyle+
     '><a class="skip-link" href="#main-content">Skip to content</a>'+
     '<nav class="card card-nav web-nav grid-card semantic-header bg-transparent"'+frameHeight('header')+' aria-label="Main navigation">'+
-    logo+'<div class="card card-nav-links web-links">'+links+'</div></nav>'+
+    logo+links+'</nav>'+
     '<main id="main-content" class="card card-main web-content semantic-page bg-transparent">'+content+'</main>'+
     '<footer class="card card-footer web-footer grid-card semantic-footer bg-transparent"'+frameHeight('footer')+'>'+
     '<span class="item item-footer">'+escapeHtml(data.site.name)+'</span>'+
