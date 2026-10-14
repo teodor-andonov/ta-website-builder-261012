@@ -25,3 +25,11 @@ Every Card fills the assigned cell. Card rows/columns are equal subdivisions wit
 
 ## Review gate
 The feature branch is for review, not a live change. Confirm tests, screenshot comparisons at 1600 and narrow 440, browser DOM nesting and wheel/page scroll before merge. Demo projects/posts remain noindex.
+
+## Composition cleanup after annotated homepage review (2026-10-14)
+
+The Page, Nav, Main and Footer each use the **same rounded Card** grammar. Navigation links are direct Items on the Nav Card's twelve-column grid, so there is no extra links Card.
+
+The homepage's **Work, Disciplines and Journal** sections each combine headings (direct Items) with their content Cards in a single section grid. Work and Journal no longer have separate section Cards stacked immediately above a query wrapper. The three practice Cards are direct children of their shared section. Ways of working contains **four direct child Cards**, not Intro and Options Cards plus more nesting. The closing Card contains three direct text Items plus one black Card with a large Journal link Item. Standalone Work and Journal index pages use the same integrated section convention.
+
+Visual design still scales as a fixed page-width-proportional print composition, with no breakpoint reflow. Maintain these flatter compositions in the editor and renderer; only use a nested Card when it represents a meaningful group or data-driven record Card. For quick local review without GitHub Pages, use `npm run preview` at http://127.0.0.1:4173/ or the VS Code NPM SCRIPTS view.
