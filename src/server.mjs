@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { readFile, writeFile, rename, unlink, mkdir } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { validate } from './model.mjs';
@@ -34,8 +34,16 @@ function cleanFilename(value){
   return name.slice(0,160);
 }
 
-function respond(res, status, content, type='application/json; charset=utf-8') {
-  res.writeHead(status, {'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+function revision(content) {
+  return '"'+createHash('sha256').update(content).digest('hex')+'"';
+}
+function conflictStatus(requestTag,current) {
+  if (!requestTag) return {status:428,error:'Reload to obtain the current file revision before saving.'};
+  if (requestTag!==revision(current)) return {status:409,error:'JSON changed in another tab or process. Export unsaved JSON before reloading and reconciling.'};
+  return null;
+}
+function respond(res, status, content, type='application/json; charset=utf-8', extra={}) {
+  res.writeHead(status, {'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...extra});
   res.end(content);
 }
 async function readBody(req) {
@@ -50,8 +58,10 @@ async function readBody(req) {
 }
 async function atomicSave(payload) {
   const temporary=`${contentFile}.${randomUUID()}.tmp`;
-  try { await writeFile(temporary,JSON.stringify(payload,null,2)+'\n',{flag:'wx'}); await rename(temporary,contentFile); }
+  const content=JSON.stringify(payload,null,2)+'\n';
+  try { await writeFile(temporary,content,{flag:'wx'}); await rename(temporary,contentFile); }
   finally { await unlink(temporary).catch(()=>{}); }
+  return revision(content);
 }
 const server = http.createServer(async (req,res)=>{
   const origin=req.headers.origin;
@@ -90,7 +100,7 @@ const server = http.createServer(async (req,res)=>{
     if (pathname==='/api/data' && req.method==='GET') {
       const content=await readFile(contentFile,'utf8');
       validate(JSON.parse(content));
-      return respond(res,200,content);
+      return respond(res,200,content,undefined,{'ETag':revision(content)});
     }
     if(pathname==='/api/assets' && req.method==='POST') {
       const mediaType=String(req.headers['content-type']||'').split(';')[0].toLowerCase();
@@ -102,27 +112,36 @@ const server = http.createServer(async (req,res)=>{
       if(!(ext==='jpg'?['.jpg','.jpeg'].includes(suffix):suffix==='.'+ext))return respond(res,415,JSON.stringify({error:'File extension does not match image type'}));
       const bytes=await readBinary(req,maxUploadBytes);
       if(fileType(bytes)!==mediaType)return respond(res,415,JSON.stringify({error:'Image contents do not match its declared type'}));
-      const newAsset=await mutate(async()=>{
-        const data=validate(JSON.parse(await readFile(contentFile,'utf8')));
+      const result=await mutate(async()=>{
+        const content=await readFile(contentFile,'utf8');
+        const conflict=conflictStatus(req.headers['if-match'],content);
+        if(conflict){const err=new Error(conflict.error);err.status=conflict.status;throw err;}
+        const data=validate(JSON.parse(content));
         const key=randomUUID().replaceAll('-','');
         const dest=path.join(uploadsDir,`${key}.${ext}`);
         const asset={id:`asset_${key}`,name:filename.replace(/\.[^.]+$/,'').slice(0,120),src:`/assets/uploads/${key}.${ext}`,alt:'',caption:'',credit:'',tags:[],properties:{filename,mime:mediaType,bytes:bytes.length}};
         const next={...data,assets:[...data.assets,asset]};
         validate(next);
         await mkdir(uploadsDir,{recursive:true});
-        try {await writeFile(dest,bytes,{flag:'wx'});await atomicSave(next);}
+        let nextRevision;
+        try {await writeFile(dest,bytes,{flag:'wx'});nextRevision=await atomicSave(next);}
         catch(error){await unlink(dest).catch(()=>{});throw error;}
-        return asset;
+        return {asset,etag:nextRevision};
       });
-      return respond(res,201,JSON.stringify({ok:true,asset:newAsset}));
+      return respond(res,201,JSON.stringify({ok:true,asset:result.asset}),undefined,{'ETag':result.etag});
     }
     if (pathname==='/api/data' && req.method==='PUT') {
       if (!String(req.headers['content-type']||'').startsWith('application/json'))
         return respond(res,415,JSON.stringify({error:'Content-Type must be application/json'}));
       const payload=JSON.parse(await readBody(req));
       validate(payload);
-      await mutate(()=>atomicSave(payload));
-      return respond(res,200,JSON.stringify({ok:true}));
+      const newRevision=await mutate(async()=>{
+        const content=await readFile(contentFile,'utf8');
+        const conflict=conflictStatus(req.headers['if-match'],content);
+        if(conflict){const err=new Error(conflict.error);err.status=conflict.status;throw err;}
+        return atomicSave(payload);
+      });
+      return respond(res,200,JSON.stringify({ok:true}),undefined,{'ETag':newRevision});
     }
     if (req.method!=='GET' && req.method!=='HEAD')
       return respond(res,405,JSON.stringify({error:'Method not allowed'}));
