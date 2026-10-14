@@ -80,6 +80,9 @@
 .area-values input{width:100%;min-width:0;border:1px solid var(--line);border-radius:5px;padding:8px 4px;margin-top:3px;text-align:center;font:12px var(--mono);background:white}
 .area-actions{display:flex;gap:7px;align-items:center;justify-content:space-between;margin-top:9px}
 .area-error{color:#a54040;font:10px/1.5 var(--mono);min-height:15px}
+.area-overlap{color:#373d57;font:10px/1.5 var(--mono);margin:9px 0 0;padding:8px 9px;background:var(--m8-blue-soft);border-radius:5px}
+.area-overlap:empty{display:none}
+.area-grid-cell.is-overlap{background:repeating-linear-gradient(135deg,var(--m8-blue) 0 4px,#a7ade2 4px 8px);border-color:var(--m8-blue)}
  
 /* M8 Structure keyboard actions; all emphasis uses the Studio-only blue. */
 .structure-editbar{display:flex;align-items:center;gap:5px;padding:4px 12px 10px;border-bottom:1px solid var(--line)}
@@ -109,7 +112,7 @@
 <div id="modalHost"></div>
 <script type="module">
 import { renderBlocks as renderSharedBlocks, renderSiteFrame, assetSrc } from "/src/render.mjs";
-import {moveTreeNode,moveTreeByIntent,findFreeArea} from "/src/tree-editor.mjs";
+import {moveTreeNode,moveTreeByIntent,findFreeArea,findAreaConflicts} from "/src/tree-editor.mjs";
 import {createEditorHistory} from "/src/editor-history.mjs";
 (async ()=>{'use strict';
 const SVG_ART={
@@ -559,8 +562,31 @@ function validArea(a,parent){
   a.x1>=1&&a.y1>=1&&a.x2>a.x1&&a.y2>a.y1&&
   a.x2<=parent.columns+1&&a.y2<=parent.rows+1;
 }
+function areaConflictMessage(parent,nodeId,area){
+ const hits=findAreaConflicts(parent,nodeId,area);
+ if(!hits.length)return '';
+ const names=hits.slice(0,3).map(hit=>hit.label).join(', ');
+ return hits.length+' overlapping sibling'+(hits.length===1?'':'s')+': '+names+
+   (hits.length>3?', …':'')+'. Overlaps are allowed; check which Item appears on top.';
+}
+function updateAreaCollisionNotice(area){
+ const found=ui.node?findNode(ui.node):null,status=$('#areaOverlap');
+ if(status)status.textContent=found?.parent?areaConflictMessage(found.parent,ui.node,area):'';
+}
+function paintAreaSelection(area){
+ const grid=$('#areaGrid');if(!grid)return;
+ for(const cell of grid.querySelectorAll('.area-grid-cell')){
+  const x=Number(cell.dataset.areaX),y=Number(cell.dataset.areaY);
+  const selected=x>=area.x1&&x<area.x2&&y>=area.y1&&y<area.y2;
+  cell.classList.toggle('is-draft',selected);
+  cell.classList.toggle('is-selected',selected);
+  cell.classList.toggle('is-overlap',selected&&cell.classList.contains('is-other'));
+  cell.setAttribute('aria-pressed',String(selected));
+ }
+}
 function areaInputMarkup(node,parent){
  const area=ui.areaDraft?.id===node.id?ui.areaDraft.area:node.area;
+ const collision=areaConflictMessage(parent,node.id,area);
  const cols=parent.columns,rows=parent.rows;
  const usePicker=Number.isInteger(cols)&&Number.isInteger(rows)&&cols<=20&&rows<=24&&cols*rows<=400;
  let grid='';
@@ -571,25 +597,21 @@ function areaInputMarkup(node,parent){
   const cells=[];
   for(let y=1;y<=rows;y++)for(let x=1;x<=cols;x++){
    const selected=x>=area.x1&&x<area.x2&&y>=area.y1&&y<area.y2;
-   cells.push('<button type="button" class="area-grid-cell'+(selected?' is-selected':'')+(taken.has(x+':'+y)?' is-other':'')+'" data-area-x="'+x+'" data-area-y="'+y+'" title="Column '+x+', row '+y+'" aria-label="Cell '+x+', '+y+'" aria-pressed="'+selected+'"></button>');
+   const occupied=taken.has(x+':'+y);
+   const description='Column '+x+', row '+y+(occupied?' · another object occupies this cell':'');
+   cells.push('<button type="button" class="area-grid-cell'+(selected?' is-selected':'')+(occupied?' is-other':'')+(selected&&occupied?' is-overlap':'')+'" data-area-x="'+x+'" data-area-y="'+y+'" title="'+description+'" aria-label="'+description+'" aria-pressed="'+selected+'"></button>');
   }
   grid='<div id="areaGrid" class="area-grid" style="grid-template-columns:repeat('+cols+',minmax(0,1fr));width:min(100%,'+(cols*24+12)+'px)" aria-label="Drag to select a grid rectangle">'+cells.join('')+'</div>';
  }else grid='<p class="help">Large grid · use the four values below and Apply all.</p>';
  const inputs=['x1','y1','x2','y2'].map(k=>'<label>'+k.toUpperCase()+'<input class="control" type="number" step="1" min="1" data-area-value="'+k+'" value="'+area[k]+'"></label>').join('');
  return '<div class="area-editor"><div class="area-title">Grid area in parent · '+cols+' × '+rows+'</div>'+
  '<p class="help">Drag across cells to set a rectangle, or edit all four values and press Apply. No partial invalid saves.</p>'+
- grid+'<div class="area-values">'+inputs+'</div><div class="area-actions"><span id="areaError" class="area-error" role="status"></span><button class="btn sm" data-act="apply-area">Apply all</button></div></div>';
+ grid+'<p id="areaOverlap" class="area-overlap" role="status" aria-live="polite">'+e(collision)+'</p><div class="area-values">'+inputs+'</div><div class="area-actions"><span id="areaError" class="area-error" role="status"></span><button class="btn sm" data-act="apply-area">Apply all</button></div></div>';
 }
 function writeAreaDraft(nodeId,area){
  ui.areaDraft={id:nodeId,area};
- const grid=$('#areaGrid');
- if(grid)for(const cell of grid.querySelectorAll('.area-grid-cell')){
-  const x=Number(cell.dataset.areaX),y=Number(cell.dataset.areaY);
-  const yes=x>=area.x1&&x<area.x2&&y>=area.y1&&y<area.y2;
-  cell.classList.toggle('is-draft',yes);
-  cell.classList.toggle('is-selected',yes);
-  cell.setAttribute('aria-pressed',String(yes));
- }
+ paintAreaSelection(area);
+ updateAreaCollisionNotice(area);
  for(const key of ['x1','y1','x2','y2']){
   const input=document.querySelector('[data-area-value="'+key+'"]');
   if(input)input.value=area[key];
@@ -725,7 +747,20 @@ document.addEventListener('change',event=>{let el=event.target;
  if(el.id==='importFile'&&el.files[0]){el.files[0].text().then(t=>{let d=normalize(JSON.parse(t));db=d;persist();choose('dashboard')}).catch(err=>alert('Import error: '+err.message));el.value='';return}
  if(el.id==='imageFile'){importImages([...el.files]).catch(err=>alert('Image error: '+err.message));el.value='';return}
 });
-document.addEventListener('input',event=>{let el=event.target;if(el.id==='recordSearch'||el.id==='assetSearch'){ui.search=el.value;/* Commit filter on Enter or blur to avoid interrupting input. */} });
+document.addEventListener('input',event=>{
+ const el=event.target;
+ if(el.matches('[data-area-value]')){
+  const area={};
+  for(const key of ['x1','y1','x2','y2'])area[key]=Number(document.querySelector('[data-area-value="'+key+'"]')?.value);
+  const found=ui.node?findNode(ui.node):null,valid=validArea(area,found?.parent);
+  const status=$('#areaError');
+  if(status)status.textContent=valid?'':'Check grid coordinates before applying';
+  if(valid)paintAreaSelection(area);
+  updateAreaCollisionNotice(valid?area:null);
+  return;
+ }
+ if(el.id==='recordSearch'||el.id==='assetSearch'){ui.search=el.value;/* Commit filter on Enter or blur to avoid interrupting input. */}
+});
 
 document.addEventListener('keydown',event=>{
  if(!structureMode()||!(event.ctrlKey||event.metaKey)||event.altKey)return;
