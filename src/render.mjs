@@ -78,56 +78,114 @@ function queryEntries(block,data) {
   if(block.sort==='newest')rows.sort((a,b)=>String(b.date||b.year||'').localeCompare(String(a.date||a.year||'')));
   return rows.slice(0,Math.max(1,Math.min(200,Number(block.count)||4))).map(r=>({collection,record:r}));
 }
-// Used by both browser studio and Node build. options: {design, selectedId}
-export function renderBlocks(blocks, context, data, options={}, depth=0) {
-  if(depth>10 || !Array.isArray(blocks))return '';
-  return blocks.map(block=>renderBlock(block,context,data,options,depth)).join('');
-}
-function renderBlock(block,context,data,options,depth) {
-  if(!block||typeof block!=='object')return '';
-  const design=Boolean(options.design);
-  const selected=design&&options.selectedId===block.id?' chosen':'';
-  const attrs=design?` data-node-id="${escapeHtml(block.id)}" data-kind="${escapeHtml(block.type)}"`:'';
-  let content='';
-  switch(block.type){
-    case 'text': content=`<div class="b-text ${safeToken(block.style||'body')}">${escapeHtml(bind(block.text,context,data))||'<span class="muted">Empty text</span>'}</div>`;break;
-    case 'rich': content=`<div class="rich">${richText(bind(block.source,context,data))||'<p class="muted">Empty body</p>'}</div>`;break;
-    case 'divider': content='<div class="b-divider"></div>';break;
-    case 'image': {
-      const asset=data.assets.find(a=>a.id===bind(block.source,context,data));
-      const src=assetSrc(asset);
-      content=`<figure class="b-figure">${src?`<img class="b-image ${block.fit==='contain'?'contain':''}" src="${escapeHtml(src)}" alt="${escapeHtml(asset?.alt||'')}">`:'<div class="placeholder">NO IMAGE / CHOOSE AN ASSET</div>'}${block.caption&&asset?.caption?`<figcaption>${escapeHtml(asset.caption)}</figcaption>`:''}</figure>`;
-      break;
-    }
-    case 'card': {
-      const tone=backgrounds.has(block.background)?block.background:'transparent';
-      const padding=['x1','x2','x4'].includes(block.padding)?block.padding:'x1';
-      const gap=['x1','x2','x4'].includes(block.gap)?block.gap:'x1';
-      content=`<div class="b-card grid-card bg-${tone} pad-${padding} gap-${gap}${block.border?' has-border':''}" style="${cardGridStyle(block)}">${renderBlocks(block.children,context,data,{...options,parentColumns:safePositiveInt(block.columns,1),parentRows:safePositiveInt(block.rows,Math.max(1,Math.ceil((block.children||[]).length/safePositiveInt(block.columns,1))))},depth+1)||'<div class="placeholder">Empty card · add child</div>'}</div>`;
-      break;
-    }
-    case 'component': {
-      const component=data.components.find(c=>c.id===block.component);
-      // Nested component blocks are displayed but not individually selectable in this scope.
-      content=component?`<div class="reusable">${renderBlocks(component.blocks,context,data,{...options,design:false},depth+1)}</div>`:`<div class="placeholder">Missing component: ${escapeHtml(block.component)}</div>`;
-      break;
-    }
-    case 'query': {
-      const component=data.components.find(c=>c.id===block.component);
-      const entries=queryEntries(block,data);
-      content=`<div class="b-query ${safeToken(block.layout||'grid')}">${entries.map(({collection,record})=>`<a class="q-entry" href="${escapeHtml(recordPath(collection,record))}" data-open-generated="${escapeHtml(record.id)}" data-for-collection="${escapeHtml(collection.id)}">${component?renderBlocks(component.blocks,record,data,{...options,design:false},depth+1):`<div class="q-name">${escapeHtml(record.title)}</div><div class="q-meta">${escapeHtml(record.format||record.category||'')}</div>`}</a>`).join('')||'<div class="placeholder">No records match this query</div>'}</div>`;
-      break;
-    }
-    case 'button': {
-      const href=safeHref(bind(block.href||'#',context,data));
-      content=`<a class="b-action" href="${escapeHtml(href)}"${/^https?:\/\//i.test(href)?' target="_blank" rel="noopener noreferrer"':''}>${escapeHtml(bind(block.text||'Explore ↗',context,data))}</a>`;
-      break;
-    }
-    default: content='<div class="placeholder">Unknown block</div>';
-  }
+// Every authored composition node renders as exactly one Card or one Item.
+// The node itself owns parent-grid placement, overflow and editor selection.
+function nodeAttrs(node, options, baseClasses, layoutStyle='', moreAttrs='') {
+  const cls=[...baseClasses];
+  const variant=safeToken(node.variant);
+  if(variant) cls.push((baseClasses[0]==='card'?'card-':'item-')+variant,'variant-'+variant);
+  if(node.overflow==='scroll')cls.push('item-scroll');
+  if(options.design&&options.selectedId===node.id)cls.push('chosen');
   const parentCols=safePositiveInt(options.parentColumns,1),parentRows=safePositiveInt(options.parentRows,1);
-  const area=safeArea(block.area,parentCols,parentRows);
-  return `<div class="block${block.variant?' variant-'+safeToken(block.variant):''}${selected}"${attrs}${area?` style="${area}"`:''}>${content}</div>`;
+  const style=safeArea(node.area,parentCols,parentRows)+layoutStyle;
+  const selected=options.design?' data-node-id="'+escapeHtml(node.id)+'" data-kind="'+escapeHtml(node.type)+'"':'';
+  return ' class="'+cls.join(' ')+'"'+selected+(style?' style="'+style+'"':'')+moreAttrs;
+}
+const gridOptions=(node, options)=>({
+  ...options,
+  topLevel:false, linkHref:null,
+  parentColumns:safePositiveInt(node.columns,1),
+  parentRows:safePositiveInt(node.rows,Math.max(1,Math.ceil((node.children||[]).length/safePositiveInt(node.columns,1))))
+});
+const defaultCard=(id,children,area,columns=1,rows=1)=>({
+  id,type:'card',columns,rows,area,children,
+  padding:'x1',gap:'x1',background:'transparent',
+  border:false,constrainHeight:false,heightFactor:0.5
+});
+export function renderBlocks(blocks,context,data,options={},depth=0) {
+  if(depth>10||!Array.isArray(blocks))return '';
+  return blocks.map(node=>renderBlock(node,context,data,options,depth)).join('');
+}
+function renderBlock(node, context, data, options, depth) {
+  if(!node||typeof node!=='object'||depth>10)return '';
+  // Legacy JSON can be viewed, but canonical data uses source and reference Cards.
+  if(node.type==='query'){
+    const card=defaultCard(node.id,[],node.area,node.layout==='three'?3:node.layout==='grid'?2:1);
+    card.source={collection:node.collection,template:node.component,filter:node.filter,sort:node.sort,count:node.count,layout:node.layout};
+    card.variant=node.variant;
+    return renderBlock(card,context,data,options,depth);
+  }
+  if(node.type==='component'){
+    return renderBlock({...defaultCard(node.id,[],node.area),reference:node.component,variant:node.variant},context,data,options,depth);
+  }
+  if(node.type==='card'){
+    let card=node,inner='',settings=gridOptions(card,options);
+    if(card.source){
+      const source=card.source;
+      const entries=queryEntries({...source},data);
+      const cols=safePositiveInt(card.columns,1);
+      const rows=Math.max(1,Math.ceil(entries.length/cols));
+      card={...card,rows};
+      settings=gridOptions(card,options);
+      inner=entries.map(({collection,record},i)=>{
+        const area={x1:i%cols+1,y1:Math.floor(i/cols)+1,x2:i%cols+2,y2:Math.floor(i/cols)+2};
+        const template=data.components.find(c=>c.id===source.template);
+        const recordCard=template?.blocks?.find(b=>b.type==='card');
+        const entry=recordCard?{...recordCard,id:node.id+'_'+record.id,area}:
+          defaultCard(node.id+'_'+record.id,[{id:node.id+'_'+record.id+'_title',type:'text',text:'{{title}}',area:{x1:1,y1:1,x2:2,y2:2}}],area);
+        return renderBlock(entry,record,data,{...settings,design:false,linkHref:recordPath(collection,record)},depth+1);
+      }).join('')||'<div class="item item-placeholder placeholder">No records match this query</div>';
+    }else if(card.reference){
+      const component=data.components.find(c=>c.id===card.reference);
+      const nodes=component?.blocks||[];
+      card={...card,columns:1,rows:Math.max(1,nodes.length)};
+      settings=gridOptions(card,options);
+      inner=renderBlocks(nodes.map((child,i)=>({...child,area:{x1:1,y1:i+1,x2:2,y2:i+2}})),context,data,{...settings,design:false},depth+1);
+    }else{
+      inner=renderBlocks(card.children,context,data,settings,depth+1);
+    }
+    const background=backgrounds.has(card.background)?card.background:'transparent';
+    const padding=['x1','x2','x4'].includes(card.padding)?card.padding:'x1';
+    const gap=['x1','x2','x4'].includes(card.gap)?card.gap:'x1';
+    const tag=options.linkHref?'a':options.topLevel?'section':'div';
+    const classes=['card','grid-card','bg-'+background,'pad-'+padding,'gap-'+gap];
+    if(options.topLevel)classes.push('card-section');
+    if(card.source)classes.push('card-query');
+    if(card.reference)classes.push('card-reference');
+    if(options.linkHref)classes.push('card-record');
+    if(card.border)classes.push('has-border');
+    const link=options.linkHref?' href="'+escapeHtml(safeHref(options.linkHref))+'"':'';
+    const attrs=nodeAttrs(card,options,classes,cardGridStyle(card),link);
+    return '<'+tag+attrs+'>'+inner+'</'+tag+'>';
+  }
+  const type=node.type,overflow=node.overflow==='scroll'?' item-scroll':'';
+  if(type==='text'){
+    const attrs=nodeAttrs(node,options,['item','item-text','b-text',safeToken(node.style||'body')]);
+    return '<div'+attrs+'>'+ (escapeHtml(bind(node.text,context,data))||'<span class="muted">Empty text</span>')+'</div>';
+  }
+  if(type==='rich'){
+    const attrs=nodeAttrs(node,options,['item','item-rich','rich']);
+    return '<div'+attrs+'>'+ (richText(bind(node.source,context,data))||'<p class="muted">Empty body</p>')+'</div>';
+  }
+  if(type==='image'){
+    const asset=data.assets.find(a=>a.id===bind(node.source,context,data));
+    const src=assetSrc(asset);
+    const attrs=nodeAttrs(node,options,['item','item-image','b-figure']);
+    const image=src?'<img class="b-image'+(node.fit==='contain'?' contain':'')+'" src="'+escapeHtml(src)+'" alt="'+escapeHtml(asset?.alt||'')+'">':
+       '<div class="placeholder">NO IMAGE / CHOOSE AN ASSET</div>';
+    const caption=node.caption&&asset?.caption?'<figcaption>'+escapeHtml(asset.caption)+'</figcaption>':'';
+    return '<figure'+attrs+'>'+image+caption+'</figure>';
+  }
+  if(type==='button'){
+    const href=safeHref(bind(node.href||'#',context,data));
+    const attrs=nodeAttrs(node,options,['item','item-button','b-action'],'',' href="'+escapeHtml(href)+'"'+
+      (/^https?:\/\//i.test(href)?' target="_blank" rel="noopener noreferrer"':''));
+    return '<a'+attrs+'>'+escapeHtml(bind(node.text||'Explore ↗',context,data))+'</a>';
+  }
+  if(type==='divider'){
+    return '<div'+nodeAttrs(node,options,['item','item-divider','b-divider'])+'></div>';
+  }
+  return '<div'+nodeAttrs(node,options,['item','item-placeholder','placeholder'])+'>Unknown item</div>';
 }
 /** Map a record or bespoke page to its URL without duplicating the renderer. */
 export function resolvePreviewRoute(data,blocks,context=null) {
@@ -145,7 +203,7 @@ export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
   const here=normalizeRoute(route);
   const section=here==='/'?'/':here.startsWith('/work/')?'/work/':here.startsWith('/posts/')?'/posts/':here;
   const nav=(data.site.navigation || [{label:'Home',href:'/'},{label:'Work',href:'/work/'},{label:'Journal',href:'/posts/'}]).filter(link=>published.has(normalizeRoute(link.href)));
-  const logo=published.has('/')?'<a class="web-logo" href="/" aria-label="TA — Home" data-site-route="/">TA<span style="font-weight:300">/</span></a>':'<span class="web-logo">TA<span style="font-weight:300">/</span></span>';
+  const logo=published.has('/')?'<a class="item item-logo web-logo" href="/" aria-label="TA — Home" data-site-route="/">TA<span style="font-weight:300">/</span></a>':'<span class="item item-logo web-logo">TA<span style="font-weight:300">/</span></span>';
   const frameHeight = name => {
     const settings=data.site?.design?.frame?.[name];
     return settings?.constrainHeight && Number.isFinite(settings.heightFactor) && settings.heightFactor>0 && settings.heightFactor<=4
@@ -156,12 +214,19 @@ export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
   const spacingStyle=` style="--ta-pad:${unit(data.site?.design?.pad)}cqw;--ta-gap:${unit(data.site?.design?.gap)}cqw"`;
   const links=nav.map(link=>{
     const href=normalizeRoute(link.href),active=href===section;
-    return `<a href="${escapeHtml(href)}" data-site-route="${escapeHtml(href)}"${active?' class="is-active" aria-current="page"':''}>${escapeHtml(link.label)}</a>`;
+    return `<a class="item item-link${active?' is-active':''}" href="${escapeHtml(href)}" data-site-route="${escapeHtml(href)}"${active?' aria-current="page"':''}>${escapeHtml(link.label)}</a>`;
   }).join('');
-  return `<div class="webpage ${design?'design':'view'}${data.site?.design?.cardBorders?' show-card-borders':''}"${spacingStyle}><a class="skip-link" href="#main-content">Skip to content</a><nav class="web-nav b-card grid-card semantic-header bg-transparent"${frameHeight('header')} aria-label="Main navigation">${logo}<div class="web-links">${links}</div></nav><main id="main-content" class="web-content b-card semantic-page bg-transparent">${content}</main><footer class="web-footer b-card grid-card semantic-footer bg-transparent"${frameHeight('footer')}><span>${escapeHtml(data.site.name)}</span><span>© ${new Date().getUTCFullYear()}</span></footer></div>`;
+  return '<div class="card card-page webpage '+(design?'design':'view')+(data.site?.design?.cardBorders?' show-card-borders':'')+'"'+spacingStyle+
+    '><a class="skip-link" href="#main-content">Skip to content</a>'+
+    '<nav class="card card-nav web-nav grid-card semantic-header bg-transparent"'+frameHeight('header')+' aria-label="Main navigation">'+
+    logo+'<div class="card card-nav-links web-links">'+links+'</div></nav>'+
+    '<main id="main-content" class="card card-main web-content semantic-page bg-transparent">'+content+'</main>'+
+    '<footer class="card card-footer web-footer grid-card semantic-footer bg-transparent"'+frameHeight('footer')+'>'+
+    '<span class="item item-footer">'+escapeHtml(data.site.name)+'</span>'+
+    '<span class="item item-footer">© '+new Date().getUTCFullYear()+'</span></footer></div>';
 }
 export function renderPagePreview(data,blocks,context=null,options={}) {
-  return renderSiteFrame(renderBlocks(blocks,context,data,options),data,{...options,route:options.route||resolvePreviewRoute(data,blocks,context)});
+  return renderSiteFrame(renderBlocks(blocks,context,data,{...options,topLevel:true}),data,{...options,route:options.route||resolvePreviewRoute(data,blocks,context)});
 }
 export function renderDocument(data,{title,blocks,context=null,route}) {
   const heading=escapeHtml(title||data.site.name),name=escapeHtml(data.site.name);
