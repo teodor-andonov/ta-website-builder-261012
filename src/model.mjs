@@ -58,11 +58,14 @@ export function validate(data) {
     if(/^data:/i.test(asset.src))fail(`Invalid asset source: embedded data URIs are not supported (${asset.id})`);
   }
   const allowedBackgrounds=new Set(['transparent','white','grey-100','grey-200','grey-300','grey-600','black']);
-  const allowedSizes=new Set(['none','compact','regular','generous']);
+  const allowedSizes=new Set(['x1','x2','x4']);
   if(data.site.design!==undefined){
     const design=data.site.design;
     if(!design||typeof design!=='object'||design.unitDivisor!==100||typeof design.cardBorders!=='boolean')
       fail('Invalid site design controls');
+    for(const key of ['pad','gap']){
+      if(!Number.isFinite(design[key])||design[key]<=0||design[key]>4)fail(`Invalid master ${key} unit`);
+    }
     if(design.frame!==undefined){
       for(const name of ['header','footer']){
         const region=design.frame[name];
