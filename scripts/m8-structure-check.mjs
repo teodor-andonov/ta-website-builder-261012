@@ -75,6 +75,20 @@ try{
 
  const picker=await evaluate('(()=>({cells:document.querySelectorAll(".area-grid-cell").length,inputs:document.querySelectorAll("[data-area-value]").length}))()');
  if(picker.cells!==8||picker.inputs!==4)throw Error('Atomic grid picker missing: '+JSON.stringify(picker));
+ // Hand-edited grid coordinates preview non-blocking overlap feedback immediately.
+ // Restore original coordinates without Apply so this introduces no history entries.
+ const collision=await evaluate(`(()=>{
+   const set=(key,value)=>{const input=document.querySelector('[data-area-value='+key+']');input.value=String(value);input.dispatchEvent(new Event('input',{bubbles:true}));};
+   if(document.querySelector('#areaOverlap')?.textContent.trim())return {error:'Unexpected initial overlap'};
+   set('y1',1);
+   const warning=document.querySelector('#areaOverlap')?.textContent||'';
+   const overlap=document.querySelectorAll('.area-grid-cell.is-overlap').length;
+   set('y1',2);
+   return {warning,overlap,cleared:!document.querySelector('#areaOverlap')?.textContent.trim()};
+ })()`);
+ if(!collision.warning.includes('m6-hero-eyebrow')||collision.overlap!==1||!collision.cleared)
+   throw Error('Live overlap diagnostics failed: '+JSON.stringify(collision));
+ console.log('M8_OVERLAP_OK typed area warning, occupied cell preview and clearing');
  const invalid=await evaluate('(()=>{document.querySelector("[data-area-value=x1]").value="99";document.querySelector("[data-act=apply-area]").click();return document.querySelector("#areaError")?.textContent.includes("Invalid rectangle")})()');
  if(!invalid)throw Error('Invalid atomic rectangle was accepted');
  const formChange=await evaluate('(()=>{for(const [key,value] of Object.entries({x1:1,y1:3,x2:2,y2:5}))document.querySelector("[data-area-value="+key+"]").value=String(value);document.querySelector("[data-act=apply-area]").click();return true})()');
