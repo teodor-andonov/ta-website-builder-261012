@@ -465,8 +465,27 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'show-blocks':addBlockModal(btn.dataset.inside==='yes');break;
  case'select-node':selectStudioNode(id);break;
  case'move-node':moveNode(Number(btn.dataset.delta));break;
- case'duplicate-node':{let f=findNode(ui.node);if(f){let n=regenIds(clone(f.node));f.arr.splice(f.index+1,0,n);ui.node=n.id;persist();renderAll()}break}
- case'delete-node':{let f=findNode(ui.node);if(f&&confirm('Delete this object and its children?')){f.arr.splice(f.index,1);ui.node=null;persist();renderAll()}break}
+ case'duplicate-node':{
+   const f=findNode(ui.node);if(!f)break;
+   const before=snapshotScope(),selectedBefore=ui.node;
+   const n=regenIds(clone(f.node));
+   if(f.parent){
+     const slot=findFreeArea(f.parent,f.arr,n);
+     if(!slot){alert('No vacant grid area to duplicate this object.');break}
+     n.area=slot.area;f.parent.rows=slot.rows;
+   }
+   f.arr.splice(f.index+1,0,n);ui.node=n.id;
+   saveScopeEdit(before,selectedBefore);break;
+ }
+ case'delete-node':{
+   const f=findNode(ui.node);
+   if(f&&confirm('Delete this object and its children?')){
+     const before=snapshotScope(),selectedBefore=ui.node;
+     f.arr.splice(f.index,1);ui.node=null;
+     saveScopeEdit(before,selectedBefore);
+   }
+   break;
+ }
  case'delete-scope':{let s=currentScope();if(!s||!confirm('Delete this '+ui.section+'?'))break;if(ui.section==='template'){if(db.templates.length<=1){alert('Keep at least one template.');break}db.templates=db.templates.filter(x=>x.id!==s.id);choose('template',db.templates[0].id)}else if(ui.section==='component'){db.components=db.components.filter(x=>x.id!==s.id);choose('component',db.components[0]?.id)}persist();break}
  case'apply-json':{let scope=btn.dataset.scope;try{let obj=JSON.parse($('#jsonEditor').value);modifyScoped(scope,obj);normalize(db);persist();ui.jsonMessage='JSON applied successfully.';renderAll()}catch(err){ui.jsonMessage='Error: '+err.message;let x=$('#jsonNotice');if(x){x.textContent=ui.jsonMessage;x.className='notice error'}}break}
  case'copy-json':navigator.clipboard?.writeText($('#jsonEditor').value).then(()=>{if($('#jsonNotice'))$('#jsonNotice').textContent='Copied to clipboard.'}).catch(()=>{});break;
@@ -675,6 +694,19 @@ document.addEventListener('change',event=>{let el=event.target;
 });
 document.addEventListener('input',event=>{let el=event.target;if(el.id==='recordSearch'||el.id==='assetSearch'){ui.search=el.value;/* Commit filter on Enter or blur to avoid interrupting input. */} });
 
+document.addEventListener('keydown',event=>{
+ if(!structureMode()||!(event.ctrlKey||event.metaKey)||event.altKey)return;
+ const target=event.target;
+ if(target.closest('input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
+ const key=event.key.toLowerCase();
+ if(key==='z'||key==='y'){
+   if(key==='z'&&!event.shiftKey&&editorHistory.canUndo(historyScope())){
+     event.preventDefault();restoreScopeEdit('undo');
+   }else if((key==='y'||(key==='z'&&event.shiftKey))&&editorHistory.canRedo(historyScope())){
+     event.preventDefault();restoreScopeEdit('redo');
+   }
+ }
+});
 document.addEventListener('keydown',event=>{
  const focus=event.target.closest('.structure-select');
  if(!focus||!structureMode())return;
