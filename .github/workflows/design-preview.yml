@@ -48,6 +48,11 @@ jobs:
           grep '<pre id="ta-dom-result">TA_DOM_OK' /tmp/ta-dom-check-output.html || { grep '<pre id="ta-dom-result">' /tmp/ta-dom-check-output.html || true; exit 1; }
           echo "Browser verified direct Cards, record Cards, clipping, page scroll and fixed grid tracks."
 
+      - name: Dispatch actual wheel events over page Items
+        run: |
+          set -euo pipefail
+          export CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          node scripts/real-wheel-check.mjs
       - name: Store screenshot previews (not in repo)
         uses: actions/upload-artifact@v4
         with:
