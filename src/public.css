@@ -165,3 +165,9 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .card-nav-links{height:100%;overflow:clip}
 :is(.published-site,.editor-shell) .card-project-record .item-text{align-content:center}
 :is(.published-site,.editor-shell) .card-journal-record .item-text{align-content:start}
+
+/* Payload-specific styles must never override the universal Item overflow policy.
+   clip is NOT a scroll container; scroll opts in and chains wheel events to the page. */
+:is(.published-site,.editor-shell) .item:not(.item-scroll){overflow:clip}
+:is(.published-site,.editor-shell) .item.item-scroll{overflow:auto;scrollbar-width:none;overscroll-behavior:auto}
+:is(.published-site,.editor-shell) .item.item-scroll::-webkit-scrollbar{display:none}
