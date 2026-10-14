@@ -28,7 +28,7 @@ test('semantic Page/Nav/Main/Footer and authored Cards occupy real DOM nodes',()
  assert.match(html,/<footer class="card card-footer /);
  assert.match(html,/<section class="card grid-card /);
  assert.match(html,/<div class="item item-text b-text /);
- assert.match(html,/<figure class="item item-image b-figure /);
+ assert.match(html,/<figure class="item item-image b-figure(?:\s|")/);
  assert.doesNotMatch(html,/class="block(?:\s|")|class="q-entry(?:\s|")|class="b-query/);
  assert.match(html,/card-hero[\s"]/);
  assert.match(html,/grid-column:2\/3;grid-row:1\/2/);
