@@ -83,40 +83,40 @@ The original [M0–M3 baseline implementation plan](logs/2026-10-12-foundations.
 
 ---
 
-## Post-V1 roadmap — extension after M11 (discussion draft)
+## Post-V1 roadmap — agreed extension after M11
 
-> **Ordering decision (2026-10-15):** The original M8–M11 milestones above remain unchanged and take precedence. Complete the existing V1 Content Studio and TA website, including the original M9 content, M10 QA/backups, and M11 hosting/launch, **before** beginning these expansions. Earlier conversational proposals that reused M9–M13 are not replacements for the original roadmap. This addendum records post-V1 product intent, not current implementation status.
+> **Decisions confirmed 2026-10-15.** This extension follows and **does not replace, reorder, or expand the agreed scope of the original M8–M11 roadmap above**. First complete M8 editor acceptance → M9 real TA content → M10 production QA/backups → M11 hosting and V1 launch. Post-V1 work must not block V1. **The TA website is the only required real project; do not build another demo website.**
+>
+> **Full implementation specification:** [Post-V1 architecture and queries](POST_V1_ARCHITECTURE.md). It owns detailed semantics, not milestone status. Planning resolution is recorded in [2026-10-15 design log](logs/2026-10-15-post-v1-planning.md). All steps below are **planned, not implemented**.
 
-### Decisions agreed for the extension
+### Agreed product model
 
-- **Focus on the actual TA website and freedom to author it effectively.** Improve the reusable system through real TA content and real TA page workflows. **No second demo/test website is required**; reuse is a design property, not a separate project deliverable.
-- **One website = one project folder = one local Studio instance.** Source JSON, actual media, local editor and build live together. No central multi-site manager or hosted accounts.
-- **One Card/Item composition system everywhere.** Bespoke pages and collection-generated pages each own editable content compositions. Manually construct Cards and atomic Items; do not add mandatory layout presets, a separate editorial-block editor, or a third authored graphic type.
-- **Isolated editing by scope.** Edit page compositions, record compositions, templates and components separately through Structure/Canvas/Properties. Preview the full assembled page separately; do not make template context a compulsory editing canvas.
-- **One main content slot in each page template.** General and specialist templates are Card/Item compositions, containing component references and a single insertion point for the page's or record's unique root Card. A Home and Work page can share a general template; a Studio page can choose another template, reusing the same navbar with a different footer.
-- **Header, navbar and footer are reusable components**, not irrevocably hardcoded site chrome. Maintain semantic HTML roles and current-route navigation states when changing the existing frame renderer.
-- **Configurable appearance per website.** Global visual tokens, reusable named Card/Item styles and *limited explicit local overrides*, distinct from grid geometry. Preserve TA appearance during migration. No need to build an additional website to prove this.
-- **Generic collections.** Each collection defines typed fields and records. Collection records may optionally have generated detail pages, with a default page template and optional per-record override. Collection-driven Cards filter/sort/render records, but a grid displayed on a page is not itself the collection.
-- **Assets are a queryable built-in data source.** Media files remain separate from their JSON metadata. A collection-driven Card can query asset entries by tags, relations and other exposed metadata, without a duplicate Images collection. Other custom collections may also contain asset references.
-- **Contextual, typed collection queries.** Within a project record's page template, a Card can draw from the Assets source with **AND** filters such as asset associated with the current project record (e.g. relation to `{{record.id}}`) **and** tag `highlighted`. This is evaluated once per page using the current record context, then the chosen asset Card component is instantiated per match. Use stable record IDs for references rather than project display names or slugs. Support tag arrays and relationship fields with validated operators, not arbitrary evaluated JS or unescaped string templates. This is an extension specification; current source queries support only limited predefined filter strings.
-- **No parallel Markdown content store or new rendering engine.** Canonical JSON, optionally split into a few broad files only when useful.
+- **One site = one folder = one local Studio instance.** JSON and actual media remain file-first and portable.
+- **One Card/Item composition system for pages and collection records.** Manual Card/Item authoring only. Components, templates, page compositions and record compositions are edited in isolation, with full-page preview separately.
+- **One main composition slot in each page template.** Templates can position reusable Navbar/Header/Footer and other components around a unique root Card. Home and Work can use a General template; Studio can choose a different template sharing its navbar but not necessarily its footer.
+- **Configurable site design:** global tokens → named Card/Item style → limited local overrides; grid geometry independent. Preserve TA's current look through migration.
+- **Generic typed collections** with optional detail pages; default template by collection, optional override per record. A query Card displays filtered records through a reusable Card component.
+- **Assets are queryable** as a built-in source with tags and **multiple typed relationships** to any number of valid project/post/other records. Relations use stable collection and record IDs, not filenames or names, and do not duplicate files.
+- **Contextual deterministic queries:** filter an asset source by relation to the current page record **AND** a tag such as highlighted; preserve separate page-record and query-item binding contexts. Allowed typed operators, order/limit, no arbitrary code.
+- **No second test site or new graphical node kinds.** Test reuse through real TA use cases, schema validation, isolated components and regression checks.
 
-### Candidate post-V1 milestones (provisional order)
+### Executable post-V1 milestone sequence
 
-| Milestone | Outcome | Acceptance direction |
-| --- | --- | --- |
-| **M12 — Unified page and template system** | Shared page/record assembly, a single content slot, reusable header/navbar/footer components | Home, Work and Studio can select templates; author compositions independently and preview the assembled results |
-| **M13 — Site-wide styles** | Global tokens, named Card/Item styles, limited local overrides and TA renderer decoupling | Real TA pages retain their intended identity; the engine no longer embeds TA-only design constraints |
-| **M14 — Record compositions** | Optional unique root Card/Item composition per project, article or other record; collection default template plus record override | Two TA projects share a template but contain independent narrative compositions |
-| **M15 — Generic collections and contextual asset queries** | User-defined collections, optional detail pages, type-safe relational filters; Assets as a query source | A project template filters images by current project ID plus `highlighted` tag, using existing Card/Item renderer |
-| **M16 — Authoring usability and maintainability** | Streamlined manual placement, nested Structure editing, modularisation, robust file handling | Complex real TA content remains fast and safe to author and maintain |
-| **M17 — Reusable Studio handoff** | Documented one-site-per-folder starter/portability, migration and regression coverage | The TA website's own authoring and build workflow remains reliable, with no second site required |
+| Stage | Small delivery slices (proposed) | Acceptance / TA use case | Effort estimate |
+| --- | --- | --- | --- |
+| **M12 — Unified page and template system** | 12.1 validate one-slot contract; 12.2 page/record assembly; 12.3 componentize Nav/Header/Footer; 12.4 isolated preview + regression migration | Home, Work and Studio choose different/shared templates without duplicating navbar/footer or changing published layout unexpectedly | ~2–4 sessions |
+| **M13 — Site design system** | 13.1 design tokens/schema; 13.2 named styles + resolver; 13.3 local overrides; 13.4 Studio Design controls and migration | Edit TA typography, palette, rounding and spacing in Studio; appearance preserved unless explicitly changed | ~2–4 sessions |
+| **M14 — Record compositions** | 14.1 validated root Card per record; 14.2 collection default/record template override; 14.3 isolated record composition editor; 14.4 tests on real projects/posts | Two projects share Project Detail template but have completely different editable narratives and media | ~2–4 sessions |
+| **M15 — Generic collections and asset queries** | 15.1 typed field/record editor; 15.2 asset relation picker; 15.3 query operators/context and rendering; 15.4 full TA media integration test | Project Detail automatically displays assets related to current project and tagged highlighted; one asset can appear in multiple projects | ~3–5 sessions |
+| **M16 — Manual authoring quality** | 16.1 fix Card/Item friction discovered in TA content; 16.2 asset metadata and SVG safety; 16.3 module separation; 16.4 resilience/UX acceptance | TA pages and long posts can be authored, changed and saved quickly and safely without layout presets | ~2–4 sessions |
+| **M17 — Portable Studio handoff** | 17.1 folder/setup documentation; 17.2 migrations and complete data/media backup; 17.3 static build/release regression; 17.4 end-to-end sign-off | One TA project folder can be copied, restored and built with same engine; no separate demo site | ~1–3 sessions |
 
-### Remaining design decisions / implementation questions
+Effort is in focused development sessions, **not guaranteed calendar days**. Each milestone gets a coherent feature branch/PR, incremental implementation/tests/screen capture, user acceptance, merge and head-branch cleanup as prescribed above. This is a sequence of small slices that can progress across days or weeks depending on real integration results.
 
-1. **Asset relationships:** determine whether asset associations can reference multiple records/collections (recommended) or have exactly one primary parent, and how this appears in Assets UI. Avoid making a file-system folder path the canonical relation.
-2. **Contextual query details:** decide allowed typed field operators, sort order and count; expose stable record context (`record.id`), and decide how asset query Card templates bind each asset's data.
-3. **Record publication defaults:** detail-page creation should be optional; define collection-wide default versus per-record overrides and validate route uniqueness.
-4. **Media workflow:** final scope of safe SVG support, alt text, credits and grouping, guided by actual TA website needs.
+### Next actions and boundaries
 
-Do not pull these post-V1 features into M8–M11 unless explicitly agreed as essential to the original V1. Preserve the current main-branch release and the M8 acceptance gate.
+1. **Now:** complete remaining M8 structural usability, visual/keyboard QA, save recovery verification and review PR #23. Do not merge until accepted.
+2. **Then:** execute unchanged original M9, M10 and M11 toward TA website + Content Studio V1 launch.
+3. **After V1:** begin M12; consult [the locked post-V1 specification](POST_V1_ARCHITECTURE.md) at each subsequent milestone. Only implementation-level UI field names/serialization choices remain flexible—not the product decisions above.
+4. Do not turn contextual asset queries, multi-record relationships or unified templates into emergency M8 work. The current renderer does **not** yet implement these post-V1 extensions.
+
