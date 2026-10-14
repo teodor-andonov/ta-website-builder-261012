@@ -176,6 +176,38 @@ try{
  console.log('M8_HISTORY_STRUCTURE_OK duplicate/undo/redo/delete/undo and no overlapping Card areas');
 
 
+
+ // Keyboard-only authoring must produce the same immutable tree transaction
+ // as pointer drag, and remain undoable. Validate against disposable site.json.
+ const keyboardFocus=await evaluate('(()=>{const n=document.querySelector("#structureTree .structure-select[data-id=m6-hero-graphic]");if(!n)return false;n.click();document.querySelector("#structureTree .structure-select[data-id=m6-hero-graphic]")?.focus();return document.activeElement?.dataset.id==="m6-hero-graphic"})()');
+ if(!keyboardFocus)throw Error('Card row could not receive keyboard focus');
+ const keyboardMove=async(key,code,vkey)=>{
+   await command('Input.dispatchKeyEvent',{type:'keyDown',key,code,modifiers:1,windowsVirtualKeyCode:vkey,nativeVirtualKeyCode:vkey});
+   await command('Input.dispatchKeyEvent',{type:'keyUp',key,code,modifiers:1,windowsVirtualKeyCode:vkey,nativeVirtualKeyCode:vkey});
+   await sleep(440);
+ };
+ await keyboardMove('ArrowUp','ArrowUp',38);
+ const movedUp=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
+   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.map(b=>b.id);
+ if(movedUp[0]!=='m6-hero-graphic')throw Error('Alt+ArrowUp did not reorder Card');
+ const focusAfter=await evaluate('document.activeElement?.dataset.id');
+ if(focusAfter!=='m6-hero-graphic')throw Error('Keyboard move lost focus');
+ await invoke('undo-structure');
+ const previous=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
+   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.map(b=>b.id);
+ if(previous[1]!=='m6-hero-graphic')throw Error('Keyboard reorder Undo failed');
+ const toolbar=await evaluate('(()=>{document.querySelector("#structureTree .structure-select[data-id=m6-hero-graphic]")?.click();const n=document.querySelector(\'#structurePane [data-act="tree-move"][data-move="indent"]\');if(!n||n.disabled)return false;n.click();return true})()');
+ if(!toolbar)throw Error('Tree Move toolbar cannot indent into preceding Card');
+ await sleep(480);
+ const afterIndent=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
+   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero');
+ if(!afterIndent.children.find(b=>b.id==='m6-hero-copy').children.some(b=>b.id==='m6-hero-graphic'))
+   throw Error('Toolbar indent did not nest Card into previous sibling');
+ await invoke('undo-structure');
+ const undoIndent=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
+   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.map(b=>b.id);
+ if(undoIndent[1]!=='m6-hero-graphic')throw Error('Toolbar indent was not undoable');
+ console.log('M8_KEYBOARD_MOVE_OK Alt+ArrowUp, retained focus, toolbar indent and history Undo');
  const fold=await evaluate("(()=>{const el=document.querySelector('#structurePane [data-act=\"structure-fold\"][data-id=\"m6-hero\"]');if(!el)return false;el.click();return !document.querySelector('#structurePane [data-id=\"m6-hero-title\"]');})()");
  if(!fold)throw Error('Structure collapsing failed');
  const unfold=await evaluate("(()=>{document.querySelector('#structurePane [data-act=\"structure-fold\"][data-id=\"m6-hero\"]').click();return !!document.querySelector('#structurePane [data-id=\"m6-hero-title\"]');})()");
