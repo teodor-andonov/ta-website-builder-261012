@@ -48,3 +48,16 @@ At the last verified M8 checkpoint: **57/57 automated tests passed**, as did rea
 **Verification:** latest completed CI on the implementation head before this documentation update: **65/65 unit/integration tests passed**. Chromium confirmed `M8_HISTORY_OK`, `M8_HISTORY_STRUCTURE_OK`, `M8_TREE_AREA_OK` and `M8_STRUCTURE_OK`, and captured a desktop Content Studio screenshot with working Structure/Canvas/Properties. GitHub Pages path checks also passed. Re-run after documentation changes to confirm final PR head checks. [Draft PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23) remains **unmerged**.
 
 **Known limitations / next actions:** in-memory (non-durable) history; no atomic rollback yet when file saving fails; non-tree content records remain outside Card/Item scope history; keyboard-accessible tree reparenting and extensive large-document usability still require work. Continue M8 without publishing early. See the [living implementation plan](../IMPLEMENTATION_PLAN.md).
+
+## M8 keyboard editing cycle — 2026-10-14
+
+The existing long-lived M8 draft branch gained accessible Structure movement without a canvas overlay.
+
+- Implemented pure `moveTreeByIntent` in `src/tree-editor.mjs`, using the same validated tree transformation as mouse dragging. Move intents: up/down sibling order, indent into preceding editable Card, outdent after parent Card. Invalid moves leave JSON unchanged.
+- Added Structure toolbar Up, Down, Indent, Outdent actions; unavailable actions are disabled. The selected tree row accepts Alt+ArrowUp/Down/Right/Left. Normal unmodified arrows continue navigating the tree.
+- Kept selection and keyboard focus on the moved row, expanding its parent tree path. Each move is one undoable history transaction.
+- Extended pure geometry/tree tests and Chromium integration tests for keyboard order, focus preservation, toolbar nesting and Undo. All tests use disposable JSON and leave repository source unchanged.
+
+**Evidence:** 68/68 automated tests, CI build and Chromium screenshot workflow passed on the implementation head before this log edit. Browser output included `M8_KEYBOARD_MOVE_OK`, `M8_HISTORY_OK`, `M8_TREE_AREA_OK` and `M8_STRUCTURE_OK`.
+
+**Remaining:** check with screen readers, stress-test larger trees, improve overlapping-cell feedback and handle save failures/multiple open editor tabs safely. This is draft work on PR #23; main and Pages are unchanged.
