@@ -35,16 +35,8 @@ Four desktop regions: (1) existing left Workspace navigation; (2) collapsible/re
 ## Constraints
 JSON remains canonical. Cards only contain Cards and atomic Items, no graphical Block wrappers. Keep the shared renderer, equal grids, page-width-scaled print layout, grayscale public site, component templates/queries, intrinsic padding and optional 20%-opacity outlines. The Content Studio editor is desktop only, the static public website never exposes writable APIs.
 
-## M8 implementation checkpoint (branch-only, 2026-10-14)
+## Delivery progress
 
-Implemented on the long-lived \`feature/m8-advanced-editor\` branch:
+This document specifies the **M8 interaction design**. For implemented/checkpoint status, acceptance criteria and next work, see the [living implementation plan](IMPLEMENTATION_PLAN.md). For the detailed development record and tests, see the [2026-10-14 M8 implementation log](logs/2026-10-14-m8-structure-editor.md).
 
-- Four desktop regions: Workspace / Document Structure / Canvas / Properties. The Document Structure panel can collapse without altering the authored page.
-- Single Studio accent \`#525cbb\`: tree selection, Card/Item hover and active outline, drag target feedback and miniature grid picker. Public website is unchanged and strictly grayscale.
-- Expand/collapse the recursive Card/Item tree. Click a Card or Item on the canvas or in the tree; both select the same canonical JSON node. Selection ancestry is shown in Properties. Canvas selection unfolds hidden ancestors automatically.
-- Drag a tree row by its handle **before, after or inside** an ordinary Card. Pure \`src/tree-editor.mjs\` rejects self/descendant cycles, invalid containers and illegal root Items. Sibling reordering preserves grid areas; reparenting selects a free cell or extends the receiving Card's rows. One-level structure Undo restores the previous tree.
-- Optional structure label per authored node, contextual **Add Child** for ordinary Cards, **Add Section**, plus keyboard Up/Down selection and Left/Right expand/collapse.
-- A miniature equal-grid rectangle picker in Properties; drag over cells to apply one valid x1/y1/x2/y2 rectangle. Four numeric fields remain but use **one Apply all action**. The controls no longer save invalid intermediate states.
-- Browser tests run against a temporary copy of the JSON, verifying selected Card/Item state, structure panel interactions, picker numeric validation/persistence, real pointer grid selection, tree reparent and Undo. No browser test data changes the repository's content file.
-
-Not yet ready to merge: broader structural actions and multi-selection, richer undo/redo history, drag/drop accessibility refinements, performance on very large trees and user visual acceptance. Keep this branch and PR #23 in **draft**; do not deploy to GitHub Pages until the full M8 review.
+**Branch:** `feature/m8-advanced-editor` · **[Draft PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23)**. Do not merge or publish until complete M8 visual review and acceptance.
