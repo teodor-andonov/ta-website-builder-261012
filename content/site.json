@@ -486,14 +486,24 @@
           "children": [
             {
               "id": "b_acon1s",
-              "type": "component",
-              "component": "contact-cta",
+              "type": "card",
+              "variant": "reusable",
               "area": {
                 "x1": 1,
                 "y1": 1,
                 "x2": 2,
                 "y2": 2
-              }
+              },
+              "columns": 1,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "reference": "contact-cta",
+              "children": []
             }
           ]
         }
@@ -1036,16 +1046,17 @@
       "description": "Record-powered project card",
       "blocks": [
         {
-          "id": "m7_project-tile_0",
+          "id": "project-record-card",
           "type": "card",
+          "variant": "project-record",
           "columns": 1,
-          "rows": 1,
+          "rows": 6,
           "gap": "x1",
           "padding": "x1",
           "background": "transparent",
           "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
+          "constrainHeight": true,
+          "heightFactor": 0.97,
           "children": [
             {
               "id": "b_b4dn5b",
@@ -1057,23 +1068,9 @@
                 "x1": 1,
                 "y1": 1,
                 "x2": 2,
-                "y2": 2
+                "y2": 5
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_project-tile_1",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_46i46m",
               "type": "text",
@@ -1081,25 +1078,11 @@
               "style": "eyebrow",
               "area": {
                 "x1": 1,
-                "y1": 1,
+                "y1": 5,
                 "x2": 2,
-                "y2": 2
+                "y2": 6
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_project-tile_2",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_jesowg",
               "type": "text",
@@ -1107,9 +1090,9 @@
               "style": "body",
               "area": {
                 "x1": 1,
-                "y1": 1,
+                "y1": 6,
                 "x2": 2,
-                "y2": 2
+                "y2": 7
               }
             }
           ]
@@ -1122,16 +1105,17 @@
       "description": "Record-powered editorial listing",
       "blocks": [
         {
-          "id": "m7_post-row_0",
+          "id": "journal-record-card",
           "type": "card",
-          "columns": 1,
+          "variant": "journal-record",
+          "columns": 3,
           "rows": 1,
           "gap": "x1",
           "padding": "x1",
           "background": "transparent",
           "border": false,
           "constrainHeight": false,
-          "heightFactor": 0.5,
+          "heightFactor": 0.15,
           "children": [
             {
               "id": "b_33jo72",
@@ -1144,56 +1128,28 @@
                 "x2": 2,
                 "y2": 2
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_post-row_1",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_36vqgt",
               "type": "text",
               "text": "{{title}}",
               "style": "heading",
               "area": {
-                "x1": 1,
+                "x1": 2,
                 "y1": 1,
-                "x2": 2,
+                "x2": 3,
                 "y2": 2
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_post-row_2",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_6uk7yv",
               "type": "text",
               "text": "{{summary}}",
               "style": "caption",
               "area": {
-                "x1": 1,
+                "x1": 3,
                 "y1": 1,
-                "x2": 2,
+                "x2": 4,
                 "y2": 2
               }
             }
@@ -1390,95 +1346,72 @@
               "area": {
                 "x1": 1,
                 "y1": 1,
-                "x2": 2,
+                "x2": 6,
+                "y2": 3
+              }
+            },
+            {
+              "id": "m6-work-heading",
+              "type": "text",
+              "text": "Ideas in progress.",
+              "style": "heading",
+              "area": {
+                "x1": 6,
+                "y1": 1,
+                "x2": 13,
                 "y2": 2
               }
             },
             {
-              "id": "m6-work-title-right",
-              "type": "card",
-              "children": [
-                {
-                  "id": "m6-work-heading",
-                  "type": "text",
-                  "text": "Ideas in progress.",
-                  "style": "heading",
-                  "area": {
-                    "x1": 1,
-                    "y1": 1,
-                    "x2": 2,
-                    "y2": 2
-                  }
-                },
-                {
-                  "id": "m6-work-subtitle",
-                  "type": "text",
-                  "text": "Architecture, experiments and research from a growing archive.",
-                  "style": "body",
-                  "area": {
-                    "x1": 1,
-                    "y1": 2,
-                    "x2": 2,
-                    "y2": 3
-                  }
-                }
-              ],
-              "padding": "x1",
+              "id": "m6-work-subtitle",
+              "type": "text",
+              "text": "Architecture, experiments and research from a growing archive.",
+              "style": "body",
               "area": {
-                "x1": 2,
-                "y1": 1,
-                "x2": 3,
-                "y2": 2
-              },
-              "columns": 1,
-              "rows": 2,
-              "gap": "x1",
-              "background": "transparent",
-              "border": false,
-              "constrainHeight": false,
-              "heightFactor": 0.5
-            }
-          ],
-          "padding": "x1",
-          "variant": "section-lead",
-          "columns": 2,
-          "rows": 1,
-          "gap": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5
-        },
-        {
-          "id": "m7_home_3",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+                "x1": 6,
+                "y1": 2,
+                "x2": 13,
+                "y2": 3
+              }
+            },
             {
               "id": "m6-project-query",
-              "type": "query",
-              "collection": "projects",
-              "layout": "grid",
-              "count": 4,
-              "component": "project-tile",
-              "filter": "featured",
-              "sort": "newest",
+              "type": "card",
               "variant": "work-grid",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
-              }
+                "y1": 3,
+                "x2": 13,
+                "y2": 16
+              },
+              "columns": 2,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "source": {
+                "collection": "projects",
+                "template": "project-tile",
+                "filter": "featured",
+                "sort": "newest",
+                "count": 4,
+                "layout": "grid"
+              },
+              "children": []
             }
-          ]
+          ],
+          "padding": "x1",
+          "variant": "work-section",
+          "columns": 12,
+          "rows": 15,
+          "gap": "x1",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": true,
+          "heightFactor": 1.18
         },
         {
           "id": "m6-methods-title",
@@ -1492,7 +1425,7 @@
               "area": {
                 "x1": 1,
                 "y1": 1,
-                "x2": 2,
+                "x2": 5,
                 "y2": 2
               }
             },
@@ -1502,27 +1435,12 @@
               "text": "Across scales and disciplines.",
               "style": "heading",
               "area": {
-                "x1": 2,
+                "x1": 5,
                 "y1": 1,
-                "x2": 3,
+                "x2": 13,
                 "y2": 2
               }
-            }
-          ],
-          "padding": "x1",
-          "variant": "section-lead",
-          "columns": 2,
-          "rows": 1,
-          "gap": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5
-        },
-        {
-          "id": "m6-disciplines",
-          "type": "card",
-          "children": [
+            },
             {
               "id": "m6-architecture-card",
               "type": "card",
@@ -1568,9 +1486,9 @@
               "variant": "discipline-architecture",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
+                "y1": 2,
+                "x2": 5,
+                "y2": 7
               },
               "columns": 1,
               "rows": 3,
@@ -1624,10 +1542,10 @@
               "padding": "x1",
               "variant": "discipline-computation",
               "area": {
-                "x1": 2,
-                "y1": 1,
-                "x2": 3,
-                "y2": 2
+                "x1": 5,
+                "y1": 2,
+                "x2": 9,
+                "y2": 7
               },
               "columns": 1,
               "rows": 3,
@@ -1681,10 +1599,10 @@
               "padding": "x1",
               "variant": "discipline-research",
               "area": {
-                "x1": 3,
-                "y1": 1,
-                "x2": 4,
-                "y2": 2
+                "x1": 9,
+                "y1": 2,
+                "x2": 13,
+                "y2": 7
               },
               "columns": 1,
               "rows": 3,
@@ -1696,14 +1614,14 @@
             }
           ],
           "padding": "x1",
-          "variant": "disciplines",
-          "columns": 3,
-          "rows": 1,
+          "variant": "methods-section",
+          "columns": 12,
+          "rows": 6,
           "gap": "x1",
           "background": "transparent",
           "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5
+          "constrainHeight": true,
+          "heightFactor": 0.35
         },
         {
           "id": "m6-approach",
@@ -1756,7 +1674,7 @@
                 "x1": 1,
                 "y1": 1,
                 "x2": 2,
-                "y2": 2
+                "y2": 4
               },
               "columns": 1,
               "rows": 3,
@@ -1767,197 +1685,14 @@
               "heightFactor": 0.5
             },
             {
-              "id": "m6-approach-options",
+              "id": "m6-fixed",
               "type": "card",
               "children": [
                 {
-                  "id": "m6-fixed",
-                  "type": "card",
-                  "children": [
-                    {
-                      "id": "m6-fixed-num",
-                      "type": "text",
-                      "text": "01  /  FIXED PACKAGES",
-                      "style": "eyebrow",
-                      "area": {
-                        "x1": 1,
-                        "y1": 1,
-                        "x2": 2,
-                        "y2": 2
-                      }
-                    },
-                    {
-                      "id": "m6-fixed-body",
-                      "type": "text",
-                      "text": "Defined scope. Clear deliverables.",
-                      "style": "body",
-                      "area": {
-                        "x1": 1,
-                        "y1": 2,
-                        "x2": 2,
-                        "y2": 3
-                      }
-                    }
-                  ],
-                  "padding": "x1",
-                  "variant": "method-line",
-                  "area": {
-                    "x1": 1,
-                    "y1": 1,
-                    "x2": 2,
-                    "y2": 2
-                  },
-                  "columns": 1,
-                  "rows": 2,
-                  "gap": "x1",
-                  "background": "transparent",
-                  "border": false,
-                  "constrainHeight": false,
-                  "heightFactor": 0.5
-                },
-                {
-                  "id": "m6-subscription",
-                  "type": "card",
-                  "children": [
-                    {
-                      "id": "m6-subscription-num",
-                      "type": "text",
-                      "text": "02  /  SUBSCRIPTION",
-                      "style": "eyebrow",
-                      "area": {
-                        "x1": 1,
-                        "y1": 1,
-                        "x2": 2,
-                        "y2": 2
-                      }
-                    },
-                    {
-                      "id": "m6-subscription-body",
-                      "type": "text",
-                      "text": "Ongoing design and computation support.",
-                      "style": "body",
-                      "area": {
-                        "x1": 1,
-                        "y1": 2,
-                        "x2": 2,
-                        "y2": 3
-                      }
-                    }
-                  ],
-                  "padding": "x1",
-                  "variant": "method-line",
-                  "area": {
-                    "x1": 1,
-                    "y1": 2,
-                    "x2": 2,
-                    "y2": 3
-                  },
-                  "columns": 1,
-                  "rows": 2,
-                  "gap": "x1",
-                  "background": "transparent",
-                  "border": false,
-                  "constrainHeight": false,
-                  "heightFactor": 0.5
-                },
-                {
-                  "id": "m6-custom",
-                  "type": "card",
-                  "children": [
-                    {
-                      "id": "m6-custom-num",
-                      "type": "text",
-                      "text": "03  /  CUSTOM PROJECT",
-                      "style": "eyebrow",
-                      "area": {
-                        "x1": 1,
-                        "y1": 1,
-                        "x2": 2,
-                        "y2": 2
-                      }
-                    },
-                    {
-                      "id": "m6-custom-body",
-                      "type": "text",
-                      "text": "A tailored arrangement for a unique challenge.",
-                      "style": "body",
-                      "area": {
-                        "x1": 1,
-                        "y1": 2,
-                        "x2": 2,
-                        "y2": 3
-                      }
-                    }
-                  ],
-                  "padding": "x1",
-                  "variant": "method-line",
-                  "area": {
-                    "x1": 1,
-                    "y1": 3,
-                    "x2": 2,
-                    "y2": 4
-                  },
-                  "columns": 1,
-                  "rows": 2,
-                  "gap": "x1",
-                  "background": "transparent",
-                  "border": false,
-                  "constrainHeight": false,
-                  "heightFactor": 0.5
-                }
-              ],
-              "padding": "x1",
-              "variant": "approach-options",
-              "area": {
-                "x1": 2,
-                "y1": 1,
-                "x2": 3,
-                "y2": 2
-              },
-              "columns": 1,
-              "rows": 3,
-              "gap": "x1",
-              "background": "transparent",
-              "border": false,
-              "constrainHeight": false,
-              "heightFactor": 0.5
-            }
-          ],
-          "padding": "x2",
-          "variant": "approach",
-          "columns": 2,
-          "rows": 1,
-          "gap": "x2",
-          "background": "black",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5
-        },
-        {
-          "id": "m6-journal-title",
-          "type": "card",
-          "children": [
-            {
-              "id": "m6-journal-label",
-              "type": "text",
-              "text": "04  /  JOURNAL",
-              "style": "eyebrow",
-              "area": {
-                "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
-              }
-            },
-            {
-              "id": "m6-journal-right",
-              "type": "card",
-              "children": [
-                {
-                  "id": "m6-journal-heading",
+                  "id": "m6-fixed-num",
                   "type": "text",
-                  "text": "Notes from the process.",
-                  "style": "heading",
+                  "text": "01  /  FIXED PACKAGES",
+                  "style": "eyebrow",
                   "area": {
                     "x1": 1,
                     "y1": 1,
@@ -1966,9 +1701,9 @@
                   }
                 },
                 {
-                  "id": "m6-journal-subtitle",
+                  "id": "m6-fixed-body",
                   "type": "text",
-                  "text": "Short observations, studio updates and longer pieces on design and technology.",
+                  "text": "Defined scope. Clear deliverables.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1979,6 +1714,7 @@
                 }
               ],
               "padding": "x1",
+              "variant": "method-line",
               "area": {
                 "x1": 2,
                 "y1": 1,
@@ -1992,61 +1728,15 @@
               "border": false,
               "constrainHeight": false,
               "heightFactor": 0.5
-            }
-          ],
-          "padding": "x1",
-          "variant": "section-lead",
-          "columns": 2,
-          "rows": 1,
-          "gap": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5
-        },
-        {
-          "id": "m7_home_8",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
-              "id": "m6-journal-query",
-              "type": "query",
-              "collection": "posts",
-              "layout": "list",
-              "count": 3,
-              "component": "post-row",
-              "filter": "published",
-              "sort": "newest",
-              "variant": "journal-list",
-              "area": {
-                "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
-              }
-            }
-          ]
-        },
-        {
-          "id": "m6-close",
-          "type": "card",
-          "children": [
-            {
-              "id": "m6-close-left",
+              "id": "m6-subscription",
               "type": "card",
               "children": [
                 {
-                  "id": "m6-close-label",
+                  "id": "m6-subscription-num",
                   "type": "text",
-                  "text": "TA  /  THE OPEN ARCHIVE",
+                  "text": "02  /  SUBSCRIPTION",
                   "style": "eyebrow",
                   "area": {
                     "x1": 1,
@@ -2056,40 +1746,28 @@
                   }
                 },
                 {
-                  "id": "m6-close-title",
+                  "id": "m6-subscription-body",
                   "type": "text",
-                  "text": "Ideas are meant\nto keep moving.",
-                  "style": "heading",
+                  "text": "Ongoing design and computation support.",
+                  "style": "body",
                   "area": {
                     "x1": 1,
                     "y1": 2,
                     "x2": 2,
                     "y2": 3
                   }
-                },
-                {
-                  "id": "m6-close-copy",
-                  "type": "text",
-                  "text": "A working collection of projects, tools, experiments and thoughts. More to come.",
-                  "style": "body",
-                  "area": {
-                    "x1": 1,
-                    "y1": 3,
-                    "x2": 2,
-                    "y2": 4
-                  }
                 }
               ],
               "padding": "x1",
-              "variant": "closer-left",
+              "variant": "method-line",
               "area": {
-                "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
+                "x1": 2,
+                "y1": 2,
+                "x2": 3,
+                "y2": 3
               },
               "columns": 1,
-              "rows": 3,
+              "rows": 2,
               "gap": "x1",
               "background": "transparent",
               "border": false,
@@ -2097,27 +1775,223 @@
               "heightFactor": 0.5
             },
             {
-              "id": "m6-close-button",
-              "type": "button",
-              "text": "Read the journal ↗",
-              "href": "/posts/",
+              "id": "m6-custom",
+              "type": "card",
+              "children": [
+                {
+                  "id": "m6-custom-num",
+                  "type": "text",
+                  "text": "03  /  CUSTOM PROJECT",
+                  "style": "eyebrow",
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 2
+                  }
+                },
+                {
+                  "id": "m6-custom-body",
+                  "type": "text",
+                  "text": "A tailored arrangement for a unique challenge.",
+                  "style": "body",
+                  "area": {
+                    "x1": 1,
+                    "y1": 2,
+                    "x2": 2,
+                    "y2": 3
+                  }
+                }
+              ],
+              "padding": "x1",
+              "variant": "method-line",
+              "area": {
+                "x1": 2,
+                "y1": 3,
+                "x2": 3,
+                "y2": 4
+              },
+              "columns": 1,
+              "rows": 2,
+              "gap": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5
+            }
+          ],
+          "padding": "x2",
+          "variant": "approach",
+          "columns": 2,
+          "rows": 3,
+          "gap": "x1",
+          "background": "black",
+          "border": false,
+          "constrainHeight": true,
+          "heightFactor": 0.34
+        },
+        {
+          "id": "m6-journal-title",
+          "type": "card",
+          "children": [
+            {
+              "id": "m6-journal-label",
+              "type": "text",
+              "text": "04  /  JOURNAL",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 6,
+                "y2": 2
+              }
+            },
+            {
+              "id": "m6-journal-heading",
+              "type": "text",
+              "text": "Notes from the process.",
+              "style": "heading",
+              "area": {
+                "x1": 6,
+                "y1": 1,
+                "x2": 13,
+                "y2": 2
+              }
+            },
+            {
+              "id": "m6-journal-subtitle",
+              "type": "text",
+              "text": "Short observations, studio updates and longer pieces on design and technology.",
+              "style": "body",
+              "area": {
+                "x1": 6,
+                "y1": 2,
+                "x2": 13,
+                "y2": 3
+              }
+            },
+            {
+              "id": "m6-journal-query",
+              "type": "card",
+              "variant": "journal-list",
+              "area": {
+                "x1": 1,
+                "y1": 3,
+                "x2": 13,
+                "y2": 10
+              },
+              "columns": 1,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "source": {
+                "collection": "posts",
+                "template": "post-row",
+                "filter": "published",
+                "sort": "newest",
+                "count": 3,
+                "layout": "list"
+              },
+              "children": []
+            }
+          ],
+          "padding": "x1",
+          "variant": "journal-section",
+          "columns": 12,
+          "rows": 9,
+          "gap": "x1",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": true,
+          "heightFactor": 0.42
+        },
+        {
+          "id": "m6-close",
+          "type": "card",
+          "children": [
+            {
+              "id": "m6-close-label",
+              "type": "text",
+              "text": "TA  /  THE OPEN ARCHIVE",
+              "style": "eyebrow",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            },
+            {
+              "id": "m6-close-title",
+              "type": "text",
+              "text": "Ideas are meant\nto keep moving.",
+              "style": "heading",
+              "area": {
+                "x1": 1,
+                "y1": 2,
+                "x2": 2,
+                "y2": 3
+              }
+            },
+            {
+              "id": "m6-close-copy",
+              "type": "text",
+              "text": "A working collection of projects, tools, experiments and thoughts. More to come.",
+              "style": "body",
+              "area": {
+                "x1": 1,
+                "y1": 3,
+                "x2": 2,
+                "y2": 4
+              }
+            },
+            {
+              "id": "m6-close-black",
+              "type": "card",
+              "variant": "close-black",
+              "columns": 1,
+              "rows": 1,
               "area": {
                 "x1": 2,
                 "y1": 1,
                 "x2": 3,
-                "y2": 2
-              }
+                "y2": 4
+              },
+              "padding": "x2",
+              "gap": "x1",
+              "background": "black",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "children": [
+                {
+                  "id": "m6-close-button",
+                  "type": "button",
+                  "text": "Read the journal ↗",
+                  "href": "/posts/",
+                  "area": {
+                    "x1": 1,
+                    "y1": 1,
+                    "x2": 2,
+                    "y2": 2
+                  }
+                }
+              ]
             }
           ],
           "padding": "x2",
           "variant": "closer",
           "columns": 2,
-          "rows": 1,
-          "gap": "x2",
+          "rows": 3,
+          "gap": "x1",
           "background": "grey-100",
           "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5
+          "constrainHeight": true,
+          "heightFactor": 0.28
         }
       ]
     },
@@ -2128,16 +2002,17 @@
       "status": "Published",
       "blocks": [
         {
-          "id": "m7_work_0",
+          "id": "work-index-section",
           "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
+          "variant": "work-index",
+          "columns": 12,
+          "rows": 16,
           "padding": "x1",
+          "gap": "x1",
           "background": "transparent",
           "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
+          "constrainHeight": true,
+          "heightFactor": 1.27,
           "children": [
             {
               "id": "b_rfoptf",
@@ -2147,24 +2022,10 @@
               "area": {
                 "x1": 1,
                 "y1": 1,
-                "x2": 2,
+                "x2": 13,
                 "y2": 2
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_work_1",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_6o0c4y",
               "type": "text",
@@ -2172,25 +2033,11 @@
               "style": "display",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
+                "y1": 2,
+                "x2": 13,
+                "y2": 4
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_work_2",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_bseqsf",
               "type": "text",
@@ -2198,40 +2045,38 @@
               "style": "body",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
+                "y1": 4,
+                "x2": 13,
+                "y2": 5
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_work_3",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_73h0n0",
-              "type": "query",
-              "collection": "projects",
-              "layout": "grid",
-              "count": 12,
-              "component": "project-tile",
-              "filter": "all",
-              "sort": "newest",
+              "type": "card",
+              "variant": "collection",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
-              }
+                "y1": 5,
+                "x2": 13,
+                "y2": 17
+              },
+              "columns": 2,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "source": {
+                "collection": "projects",
+                "template": "project-tile",
+                "filter": "all",
+                "sort": "newest",
+                "count": 12,
+                "layout": "grid"
+              },
+              "children": []
             }
           ]
         }
@@ -2244,16 +2089,17 @@
       "status": "Published",
       "blocks": [
         {
-          "id": "m7_journal_0",
+          "id": "journal-index-section",
           "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
+          "variant": "journal-index",
+          "columns": 12,
+          "rows": 10,
           "padding": "x1",
+          "gap": "x1",
           "background": "transparent",
           "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
+          "constrainHeight": true,
+          "heightFactor": 0.49,
           "children": [
             {
               "id": "b_h4y8s6",
@@ -2263,24 +2109,10 @@
               "area": {
                 "x1": 1,
                 "y1": 1,
-                "x2": 2,
+                "x2": 13,
                 "y2": 2
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_journal_1",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_fal1dt",
               "type": "text",
@@ -2288,25 +2120,11 @@
               "style": "display",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
+                "y1": 2,
+                "x2": 13,
+                "y2": 3
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_journal_2",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_njlbt9",
               "type": "text",
@@ -2314,40 +2132,38 @@
               "style": "body",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
+                "y1": 3,
+                "x2": 13,
+                "y2": 4
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_journal_3",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_nue5t9",
-              "type": "query",
-              "collection": "posts",
-              "layout": "list",
-              "count": 30,
-              "component": "post-row",
-              "filter": "published",
-              "sort": "newest",
+              "type": "card",
+              "variant": "collection",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
-              }
+                "y1": 4,
+                "x2": 13,
+                "y2": 11
+              },
+              "columns": 1,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "source": {
+                "collection": "posts",
+                "template": "post-row",
+                "filter": "published",
+                "sort": "newest",
+                "count": 30,
+                "layout": "list"
+              },
+              "children": []
             }
           ]
         }
@@ -2464,14 +2280,24 @@
           "children": [
             {
               "id": "b_60ijye",
-              "type": "component",
-              "component": "contact-cta",
+              "type": "card",
+              "variant": "reusable",
               "area": {
                 "x1": 1,
                 "y1": 1,
                 "x2": 2,
                 "y2": 2
-              }
+              },
+              "columns": 1,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "reference": "contact-cta",
+              "children": []
             }
           ]
         }

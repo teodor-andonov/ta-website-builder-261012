@@ -52,3 +52,10 @@ See `docs/IMPLEMENTATION_PLAN.md` for sequencing.
 - Canonical design has two independent master values, `site.design.pad` and `.gap` (numeric multiples of page-width `u=1cqw`). Each Card uses `padding`/`gap` = `x1|x2|x4`; default `x1` and **never use a zero-padding Card**, even when it contains one object.
 - Every grid child and nested Card fills its assigned grid area; nested padding accumulates naturally. The Page is the master padded grid; the header, main page content, footer and all section Cards use the same base spacing system.
 - Do not add special `4cqw` insets to semantic regions. No responsive reflow. Keep outline separate from CSS box sizing.
+
+## M7 refinement — Card + Item only (approved)
+- The JSON graphic tree and published DOM must contain **only Cards and atomic Items**. Do not introduce intermediate graphical `Block` wrappers; every Card or Item owns its explicit parent grid area, selection metadata and overflow behaviour.
+- Page, Nav, Main, Footer and authored Sections are semantic Cards with `.card` as their primary CSS class. Text, image, rich-text, links, etc. are direct Items with `.item` as the primary class. Incidental payload internals (for example an `img` inside an image Item) do not become graphic-tree nodes.
+- Repeated collections are **Cards with a data source**, using a reusable record Card template. Every Work and Journal result is itself a Card grouping the image and all metadata Items; never render bare `q-entry` elements or anonymous query rows.
+- Content outside an assigned cell is **clipped by default**. `Item.overflow='scroll'` is optional, uses hidden scrollbar, and chains scrolling to the document. Never reintroduce universal `overflow:auto` on Card children or `overscroll-behavior:contain` that traps wheel scroll over the page.
+- Keep these invariants in the Studio editor, canonical JSON, shared renderer and static output. Reference `docs/M7_CARD_ITEM_DOM.md`.

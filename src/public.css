@@ -22,46 +22,48 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 }
 .published-site .webpage{min-height:100vh}
 :is(.published-site,.editor-shell) .webpage *{box-sizing:border-box}
-:is(.published-site,.editor-shell) .grid-card{display:grid;min-width:0;min-height:0;align-items:stretch;align-content:stretch}
-:is(.published-site,.editor-shell) .b-card.grid-card{
+:is(.published-site,.editor-shell) .card{display:grid;min-width:0;min-height:0;align-items:stretch;align-content:stretch}
+:is(.published-site,.editor-shell) .item{min-width:0;min-height:0;max-width:100%;max-height:100%;overflow:clip;align-self:stretch;justify-self:stretch}
+:is(.published-site,.editor-shell) .item.item-scroll{overflow:auto;scrollbar-width:none;overscroll-behavior:auto}
+:is(.published-site,.editor-shell) .item.item-scroll::-webkit-scrollbar{display:none}
+:is(.published-site,.editor-shell) .card:not(.card-page):not(.card-main){overflow:clip}
+:is(.published-site,.editor-shell) .card.grid-card{
   border:0;border-radius:var(--ta-radius);
   gap:var(--ta-gap);padding:var(--ta-pad);min-height:0;min-width:0;
   width:100%;height:100%;
 }
-:is(.published-site,.editor-shell) .grid-card>.block{
-  min-width:0;min-height:0;width:100%;height:100%;
-  justify-self:stretch;align-self:stretch;
-  overflow:auto;scrollbar-width:none;overscroll-behavior:contain;
-}
-:is(.published-site,.editor-shell) .grid-card>.block::-webkit-scrollbar{display:none}
+
 /* Every Card has positive padding. Multipliers use exactly the two master values. */
-:is(.published-site,.editor-shell) .b-card.gap-x1{gap:var(--ta-gap)}
-:is(.published-site,.editor-shell) .b-card.gap-x2{gap:calc(2 * var(--ta-gap))}
-:is(.published-site,.editor-shell) .b-card.gap-x4{gap:calc(4 * var(--ta-gap))}
-:is(.published-site,.editor-shell) .b-card.pad-x1{padding:var(--ta-pad)}
-:is(.published-site,.editor-shell) .b-card.pad-x2{padding:calc(2 * var(--ta-pad))}
-:is(.published-site,.editor-shell) .b-card.pad-x4{padding:calc(4 * var(--ta-pad))}
+:is(.published-site,.editor-shell) .card.gap-x1{gap:var(--ta-gap)}
+:is(.published-site,.editor-shell) .card.gap-x2{gap:calc(2 * var(--ta-gap))}
+:is(.published-site,.editor-shell) .card.gap-x4{gap:calc(4 * var(--ta-gap))}
+:is(.published-site,.editor-shell) .card.pad-x1{padding:var(--ta-pad)}
+:is(.published-site,.editor-shell) .card.pad-x2{padding:calc(2 * var(--ta-pad))}
+:is(.published-site,.editor-shell) .card.pad-x4{padding:calc(4 * var(--ta-pad))}
 /* A nested Card always fills its parent's assigned grid-area. */
-:is(.published-site,.editor-shell) .grid-card>.block>.b-card{width:100%;height:100%}
-:is(.published-site,.editor-shell) .grid-card>.block>.reusable{display:grid;width:100%;height:100%;grid-template-columns:minmax(0,1fr)}
-:is(.published-site,.editor-shell) .semantic-page>.block>.b-card{width:100%;height:auto}
-:is(.published-site,.editor-shell) .b-card.bg-transparent{background:transparent}
-:is(.published-site,.editor-shell) .b-card.bg-white{background:#ffffff}
-:is(.published-site,.editor-shell) .b-card.bg-grey-100{background:var(--ta-grey-100)}
-:is(.published-site,.editor-shell) .b-card.bg-grey-200{background:var(--ta-grey-200)}
-:is(.published-site,.editor-shell) .b-card.bg-grey-300{background:var(--ta-grey-300)}
-:is(.published-site,.editor-shell) .b-card.bg-grey-600{background:var(--ta-grey-600);color:#fff}
-:is(.published-site,.editor-shell) .b-card.bg-black{background:var(--ta-black);color:#fff}
+:is(.published-site,.editor-shell) .card>.card{width:100%;height:100%;min-width:0;min-height:0}
+:is(.published-site,.editor-shell) .card-main>.card-section{width:100%;height:auto}
+:is(.published-site,.editor-shell) .card-page>.card-nav,
+:is(.published-site,.editor-shell) .card-page>.card-main,
+:is(.published-site,.editor-shell) .card-page>.card-footer{width:100%;height:auto;min-width:0}
+:is(.published-site,.editor-shell) .card-section{grid-column:1;min-width:0}
+:is(.published-site,.editor-shell) .card.bg-transparent{background:transparent}
+:is(.published-site,.editor-shell) .card.bg-white{background:#ffffff}
+:is(.published-site,.editor-shell) .card.bg-grey-100{background:var(--ta-grey-100)}
+:is(.published-site,.editor-shell) .card.bg-grey-200{background:var(--ta-grey-200)}
+:is(.published-site,.editor-shell) .card.bg-grey-300{background:var(--ta-grey-300)}
+:is(.published-site,.editor-shell) .card.bg-grey-600{background:var(--ta-grey-600);color:#fff}
+:is(.published-site,.editor-shell) .card.bg-black{background:var(--ta-black);color:#fff}
 /* Outline never enters the CSS box model. currentColor adapts to dark/light Cards.
    Drawing inward keeps the line visible on clipped nested Card edges. */
-:is(.published-site,.editor-shell) .b-card.has-border,
-:is(.published-site,.editor-shell) .show-card-borders .b-card,
+:is(.published-site,.editor-shell) .card.has-border,
+:is(.published-site,.editor-shell) .show-card-borders .card,
 :is(.published-site,.editor-shell) .webpage.show-card-borders{
   outline:1px solid color-mix(in srgb, currentColor 20%, transparent);
   outline-offset:-1px;
 }
-:is(.published-site,.editor-shell) .b-card.grid-card>.block{margin:0}
-:is(.published-site,.editor-shell) .block{min-width:0}
+
+
 :is(.published-site,.editor-shell) .b-text{overflow-wrap:anywhere;white-space:pre-line}
 :is(.published-site,.editor-shell) .b-text.eyebrow{
  font:500 0.68cqw/1.55 var(--ta-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ta-grey-600);
@@ -101,17 +103,13 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .b-query.grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 :is(.published-site,.editor-shell) .b-query.three{grid-template-columns:repeat(3,minmax(0,1fr))}
 :is(.published-site,.editor-shell) .b-query.list{grid-template-columns:1fr}
-:is(.published-site,.editor-shell) .q-entry{min-width:0;overflow:hidden;color:inherit;text-decoration:none}
-:is(.published-site,.editor-shell) .q-entry .block{margin-bottom:.65cqw}
-:is(.published-site,.editor-shell) .q-entry .block:last-child{margin-bottom:0}
-:is(.published-site,.editor-shell) .q-entry .b-figure{height:auto;aspect-ratio:4/3}
-:is(.published-site,.editor-shell) .q-entry .b-text.heading{font-size:1.4cqw}
-:is(.published-site,.editor-shell) .q-entry .b-text.body{font-size:1.04cqw}
-:is(.published-site,.editor-shell) .q-entry .b-text.eyebrow{margin-top:.5cqw}
-:is(.published-site,.editor-shell) .b-query.list .q-entry{
- display:grid;grid-template-columns:1fr 2fr 1.5fr;gap:1.5cqw;
- padding:1.35cqw 0;
-}
+:is(.published-site,.editor-shell) .card-record{min-width:0;overflow:hidden;color:inherit;text-decoration:none}
+
+:is(.published-site,.editor-shell) .card-record .b-figure{height:auto;aspect-ratio:4/3}
+:is(.published-site,.editor-shell) .card-record .b-text.heading{font-size:1.4cqw}
+:is(.published-site,.editor-shell) .card-record .b-text.body{font-size:1.04cqw}
+:is(.published-site,.editor-shell) .card-record .b-text.eyebrow{margin-top:.5cqw}
+:is(.published-site,.editor-shell) .card-journal-record{min-height:6cqw}
 :is(.published-site,.editor-shell) .web-nav.semantic-header{
  display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
  grid-template-rows:1fr;gap:var(--ta-gap);
@@ -123,8 +121,8 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
  font:600 1.8cqw/1 var(--ta-mono);letter-spacing:-.09em;color:inherit;
 }
 :is(.published-site,.editor-shell) .web-links{
- grid-column:7/13;grid-row:1;display:flex;align-items:center;
- justify-content:flex-end;gap:2cqw;min-width:0;
+ grid-column:7/13;grid-row:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ align-items:center;justify-items:end;gap:var(--ta-gap);padding:var(--ta-pad);min-width:0;
  font:500 .78cqw/1.3 var(--ta-mono);letter-spacing:.03em;text-transform:uppercase;
  color:var(--ta-grey-600);
 }
@@ -135,7 +133,7 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
  width:100%;min-height:0;padding:var(--ta-pad);
  background:transparent;align-content:start;
 }
-:is(.published-site,.editor-shell) .web-content.semantic-page>.block{width:100%;margin:0}
+:is(.published-site,.editor-shell) .web-content.semantic-page>.card-section{width:100%;margin:0}
 :is(.published-site,.editor-shell) .web-footer.semantic-footer{
  display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:1fr;
  padding:var(--ta-pad);gap:var(--ta-gap);
@@ -144,7 +142,7 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 }
 :is(.published-site,.editor-shell) .web-footer>*:first-child{grid-column:1/7}
 :is(.published-site,.editor-shell) .web-footer>*:last-child{grid-column:10/13;justify-self:end}
-:is(.published-site,.editor-shell) .variant-hero-copy>.b-card{gap:var(--ta-gap)}
+:is(.published-site,.editor-shell) .card-hero-copy{gap:var(--ta-gap)}
 :is(.published-site,.editor-shell) .variant-hero .b-text.display{font-size:3.6cqw}
 :is(.published-site,.editor-shell) .variant-hero .b-text.body{font-size:1.03cqw}
 :is(.published-site,.editor-shell) .variant-section-lead .b-text.heading{font-size:2.4cqw}
@@ -157,4 +155,61 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
  font:.9cqw var(--ta-mono);padding:1cqw;
 }
 :is(.published-site,.editor-shell) .skip-link:focus{top:1cqw}
-:is(.published-site,.editor-shell) :is(a,.q-entry):focus-visible{outline:1px solid #333;outline-offset:.3cqw}
+:is(.published-site,.editor-shell) :is(a,.card-record):focus-visible{outline:1px solid #333;outline-offset:.3cqw}
+
+/* Source-driven results render as Cards with direct Items, not anonymous rows. */
+:is(.published-site,.editor-shell) .card-record{min-width:0;color:inherit;text-decoration:none}
+:is(.published-site,.editor-shell) .card-record .item{width:100%;height:100%}
+:is(.published-site,.editor-shell) .card-record .b-figure{height:100%;aspect-ratio:auto}
+:is(.published-site,.editor-shell) .card-query{width:100%;min-width:0}
+:is(.published-site,.editor-shell) .card-nav-links{height:100%;overflow:clip}
+:is(.published-site,.editor-shell) .card-project-record .item-text{align-content:center}
+:is(.published-site,.editor-shell) .card-journal-record .item-text{align-content:start}
+
+/* Payload-specific styles must never override the universal Item overflow policy.
+   clip is NOT a scroll container; scroll opts in and chains wheel events to the page. */
+:is(.published-site,.editor-shell) .item:not(.item-scroll){overflow:clip}
+:is(.published-site,.editor-shell) .item.item-scroll{overflow:auto;scrollbar-width:none;overscroll-behavior:auto}
+:is(.published-site,.editor-shell) .item.item-scroll::-webkit-scrollbar{display:none}
+
+/* M7 annotated review: the Page, Nav and Main are all true rounded Cards. */
+:is(.published-site,.editor-shell) .card-page,
+:is(.published-site,.editor-shell) .card-nav,
+:is(.published-site,.editor-shell) .card-main,
+:is(.published-site,.editor-shell) .card-footer{
+  border-radius:var(--ta-radius);
+}
+/* The navigation contains direct link Items in its twelve-column grid.
+   No extra inner navigation Card or secondary visible outline. */
+:is(.published-site,.editor-shell) .card-nav>.item-link{
+  align-self:center;justify-self:center;
+  font:500 .78cqw/1.3 var(--ta-mono);
+  text-transform:uppercase;letter-spacing:.03em;
+  color:var(--ta-grey-600);text-decoration:none;
+  padding:.35cqw 0;white-space:nowrap;
+}
+:is(.published-site,.editor-shell) .card-nav>.item-link.is-active{color:var(--ta-ink);font-weight:600}
+:is(.published-site,.editor-shell) .card-nav>.item-logo{grid-column:1/4;grid-row:1}
+:is(.published-site,.editor-shell) .card-work-section>.item,
+:is(.published-site,.editor-shell) .card-journal-section>.item,
+:is(.published-site,.editor-shell) .card-methods-section>.item{align-content:center}
+/* One composed Work/Journal section each: header Items and record-source Card
+   occupy explicit cells of one parent grid, no separate header section. */
+:is(.published-site,.editor-shell) .card-work-section>.card-query,
+:is(.published-site,.editor-shell) .card-journal-section>.card-query{height:100%;min-height:0}
+/* Four direct children of the Ways-of-Working section (intro plus 3 formats).
+   No extra Options grouping Card. */
+:is(.published-site,.editor-shell) .card-approach>.card{height:100%}
+/* Closing composition: three direct text Items and a black Card with one
+   large link Item. This is a deliberate print-style two-column arrangement. */
+:is(.published-site,.editor-shell) .card-closer>.item{align-content:center}
+:is(.published-site,.editor-shell) .card-close-black{align-items:stretch}
+:is(.published-site,.editor-shell) .card-close-black>.item-button{
+  display:grid;place-items:center;
+  height:100%;width:100%;margin:0;padding:var(--ta-pad);
+  background:transparent;color:#fff;white-space:normal;text-align:center;
+  border-radius:var(--ta-radius);
+  font:550 3.3cqw/1.22 var(--ta-mono);letter-spacing:-.055em;
+}
+:is(.published-site,.editor-shell) .card-close-black>.item-button:hover{background:#222222}
+:is(.published-site,.editor-shell) .card-closer>.item-text.heading{font-size:2.65cqw}

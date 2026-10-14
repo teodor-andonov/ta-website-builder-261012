@@ -74,12 +74,12 @@ test('global and per-Card outlines are translucent, non-layout, and configurable
  assert.equal(data.site.design.cardBorders,true,'global outlines should be on');
  const home=data.pages.find(p=>p.id==='home');
  const html=renderPagePreview(data,home.blocks,null,{route:'/'});
- assert.match(html,/class="webpage view show-card-borders"/);
+ assert.match(html,/class="card card-page webpage view show-card-borders"/);
  const stylesheet=await readFile(path.join(root,'src/public.css'),'utf8');
  assert.match(stylesheet,/outline:1px solid color-mix\(in srgb, currentColor 20%, transparent\)/);
  assert.match(stylesheet,/outline-offset:-1px/);
  assert.doesNotMatch(stylesheet,/border:1px solid transparent/,'a hidden border would change geometry');
- assert.match(stylesheet,/\.show-card-borders \.b-card/,'all nested, header and footer Cards must be included');
+ assert.match(stylesheet,/\.show-card-borders \.card/,'all nested, header and footer Cards must be included');
  assert.match(stylesheet,/\.webpage\.show-card-borders/,'the master Page Card should be included');
  const off=clone(data);
  off.site.design.cardBorders=false;
@@ -118,14 +118,14 @@ test('site pad and gap scale independently; Card items and nested Cards fill gri
  for(const cls of ['pad-x1','pad-x2','gap-x1','gap-x2'])assert.ok(html.includes(cls),cls);
  for(const expr of [
   /--ta-pad:1cqw/,/--ta-gap:1cqw/,
-  /\.b-card\.pad-x1\{padding:var\(--ta-pad\)\}/,
-  /\.b-card\.pad-x2\{padding:calc\(2 \* var\(--ta-pad\)\)\}/,
-  /\.b-card\.pad-x4\{padding:calc\(4 \* var\(--ta-pad\)\)\}/,
-  /\.b-card\.gap-x1\{gap:var\(--ta-gap\)\}/,
-  /\.b-card\.gap-x2\{gap:calc\(2 \* var\(--ta-gap\)\)\}/,
-  /\.b-card\.gap-x4\{gap:calc\(4 \* var\(--ta-gap\)\)\}/,
-  /\.grid-card>\.block>\.b-card\{width:100%;height:100%\}/,
-  /\.grid-card>\.block\{[\s\S]*?width:100%;height:100%/,
+  /\.card\.pad-x1\{padding:var\(--ta-pad\)\}/,
+  /\.card\.pad-x2\{padding:calc\(2 \* var\(--ta-pad\)\)\}/,
+  /\.card\.pad-x4\{padding:calc\(4 \* var\(--ta-pad\)\)\}/,
+  /\.card\.gap-x1\{gap:var\(--ta-gap\)\}/,
+  /\.card\.gap-x2\{gap:calc\(2 \* var\(--ta-gap\)\)\}/,
+  /\.card\.gap-x4\{gap:calc\(4 \* var\(--ta-gap\)\)\}/,
+  /\.card>\.card\{width:100%;height:100%/,
+  /\.item\{[\s\S]*?overflow:clip/,
   /\.web-content\.semantic-page\{[\s\S]*?padding:var\(--ta-pad\)/
  ])assert.match(css,expr,String(expr));
  const mutated=clone(data);

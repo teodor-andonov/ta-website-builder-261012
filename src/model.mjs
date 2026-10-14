@@ -82,10 +82,22 @@ export function validate(data) {
   const checkBlocks=(blocks,where)=>{
     for(const b of blocks){
       if(!b||typeof b!=='object'||!safeId(b.id))fail(`Invalid block in ${where}`);
+      if(b.overflow!==undefined&&!['clip','scroll'].includes(b.overflow))fail(`Invalid item overflow: ${b.id}`);
+      if(b.type==='query'||b.type==='component')fail(`Legacy directive must be a source/reference Card: ${b.id}`);
       if(b.type!=='card')continue;
       if(b.columns===undefined&&b.rows===undefined)continue; // old V2 import compatibility
       if(!Number.isInteger(b.columns)||b.columns<1||b.columns>64||!Number.isInteger(b.rows)||b.rows<1||b.rows>64)
         fail(`Invalid grid divisions on ${b.id}`);
+      if(b.source!==undefined){
+        const src=b.source;
+        if(!src||typeof src!=='object'||!safeId(src.collection)||!safeId(src.template)||
+          !data.collections.some(c=>c.id===src.collection)||!data.components.some(c=>c.id===src.template)||
+          !['grid','three','list'].includes(src.layout)||!['newest','original'].includes(src.sort)||
+          typeof src.filter!=='string'||!Number.isInteger(src.count)||src.count<1||src.count>200)
+          fail(`Invalid record source Card: ${b.id}`);
+      }
+      if(b.reference!==undefined&&(!safeId(b.reference)||!data.components.some(c=>c.id===b.reference)))
+        fail(`Invalid reusable Card reference: ${b.id}`);
       if(!Array.isArray(b.children)||!allowedBackgrounds.has(b.background)||!allowedSizes.has(b.gap)||!allowedSizes.has(b.padding))
         fail(`Invalid Card settings on ${b.id}`);
       if(typeof b.border!=='boolean'||typeof b.constrainHeight!=='boolean'||!Number.isFinite(b.heightFactor)||b.heightFactor<=0||b.heightFactor>4)

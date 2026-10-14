@@ -91,3 +91,15 @@ This means public mobile pages **do not rearrange** their grids; they scale like
 ### Spacing/fill refinement
 
 All Cards—including transparent, single-item and semantic grouping Cards—have positive padding. The two configurable masters are `site.design.pad` and `site.design.gap` in page-width units `u`; each Card selects 1×, 2× or 4× independently, defaulting to 1×. Nested Cards fill their grid cell, and their own padding creates interior breathing room. The Page itself is the master padded grid; header, main sections and footer no longer use arbitrary different horizontal insets. Grid and spacing controls are available from Content Studio's page and Card inspector.
+
+## Direct Card/Item DOM (M7 refinement)
+
+The canonical composition now consists of **Cards** (nestable equal-grid containers) and **Items** (atomic payloads) only. The renderer attaches grid areas and editor selection IDs to each real Card or Item, without Block wrappers. Page, Nav, Main and Footer are semantic Cards. Data-driven Work and Journal entries are linked record Cards whose cover/title/metadata are direct Items, generated from reusable Card templates. Items clip overflow by default; internal scroll is opt-in and does not trap normal document scrolling. See `docs/M7_CARD_ITEM_DOM.md`.
+
+## Preview locally in VS Code — without publishing
+
+Open the cloned project folder in VS Code and make sure Node.js 20+ is installed. Under **Explorer → NPM SCRIPTS**, click the play icon next to **preview** (or run `npm run preview`). It automatically rebuilds the **public static website** and serves it at **http://127.0.0.1:4173/**. Try `/work/` and `/posts/` too. Refresh the browser after edits: the preview script builds on startup, not continuously.
+
+For the **desktop JSON Content Studio editor**, run the separate **dev** script (`npm run dev`), then visit **http://127.0.0.1:5173/**. This is the authoring interface, not the public static pages. You can run either script from the VS Code NPM SCRIPTS view without typing terminal commands (enable the built-in NPM Scripts view if hidden). Stop the script from VS Code or with Ctrl+C.
+
+Neither local command publishes anything. The official GitHub Pages prototype only updates after changes are merged into `main`.

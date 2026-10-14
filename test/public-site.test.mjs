@@ -34,7 +34,7 @@ test('navigation highlights current top-level section on detail and index pages'
   for(const [route,section] of [['/','/'],['/work/','/work/'],['/work/balkan-house/','/work/'],['/posts/','/posts/'],['/posts/designing-with-code/','/posts/']]){
     const html=pages.find(x=>x.route===route)?.html;
     assert.ok(html,`missing ${route}`);
-    assert.ok(html.includes(`href="${section}" data-site-route="${section}" class="is-active" aria-current="page"`),route);
+    assert.ok(html.includes(`href="${section}" data-site-route="${section}" aria-current="page"`) && /class="item item-link is-active"/.test(html),route);
   }
 });
 test('editor preview remains identical to published document for bespoke pages and records',()=>{

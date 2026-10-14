@@ -27,14 +27,32 @@ jobs:
           trap 'kill "$SERVER_PID" || true' EXIT
           for i in 1 2 3 4 5 6 7 8; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
-          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --disable-dev-shm-usage --virtual-time-budget=1500 --window-size=1600,4900 --screenshot="$PWD/screenshots/01-home-desktop.png" http://127.0.0.1:4173/
-          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --disable-dev-shm-usage --virtual-time-budget=1500 --window-size=1440,2100 --screenshot="$PWD/screenshots/02-work-desktop.png" http://127.0.0.1:4173/work/
-          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --disable-dev-shm-usage --virtual-time-budget=1500 --window-size=1440,1700 --screenshot="$PWD/screenshots/03-journal-desktop.png" http://127.0.0.1:4173/posts/
+          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --disable-dev-shm-usage --virtual-time-budget=1500 --window-size=1600,6200 --screenshot="$PWD/screenshots/01-home-desktop.png" http://127.0.0.1:4173/
+          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --disable-dev-shm-usage --virtual-time-budget=1500 --window-size=1440,2900 --screenshot="$PWD/screenshots/02-work-desktop.png" http://127.0.0.1:4173/work/
+          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --disable-dev-shm-usage --virtual-time-budget=1500 --window-size=1440,2100 --screenshot="$PWD/screenshots/03-journal-desktop.png" http://127.0.0.1:4173/posts/
           "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --disable-dev-shm-usage --virtual-time-budget=1500 --window-size=440,1800 --screenshot="$PWD/screenshots/04-home-narrow.png" http://127.0.0.1:4173/
           test -s screenshots/01-home-desktop.png
           test -s screenshots/02-work-desktop.png
           test -s screenshots/03-journal-desktop.png
           test -s screenshots/04-home-narrow.png
+      - name: Verify DOM hierarchy and document scroll in real Chromium
+        run: |
+          set -euo pipefail
+          node scripts/browser-dom-check.mjs
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory dist >/tmp/ta-dom-check-server.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for i in 1 2 3 4 5 6 7 8; do curl -fsS http://127.0.0.1:4174/__layoutcheck.html >/dev/null && break || sleep 1; done
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          "$CHROME" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=3000 --window-size=1400,850 --dump-dom http://127.0.0.1:4174/__layoutcheck.html >/tmp/ta-dom-check-output.html
+          grep '<pre id="ta-dom-result">TA_DOM_OK' /tmp/ta-dom-check-output.html || { grep '<pre id="ta-dom-result">' /tmp/ta-dom-check-output.html || true; exit 1; }
+          echo "Browser verified direct Cards, record Cards, clipping, page scroll and fixed grid tracks."
+
+      - name: Dispatch actual wheel events over page Items
+        run: |
+          set -euo pipefail
+          export CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          node scripts/real-wheel-check.mjs
       - name: Store screenshot previews (not in repo)
         uses: actions/upload-artifact@v4
         with:
