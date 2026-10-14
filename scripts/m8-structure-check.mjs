@@ -143,6 +143,38 @@ try{
  if(afterNew.area.y1!==4)throw Error('New edited area was not saved');
  await invoke('undo-structure'); // Restore the visual reference for screenshots.
  console.log('M8_HISTORY_OK multi-step area Undo/Redo, tree Redo, new-edit branch invalidation');
+ // Duplicate and delete must each be a single undoable transaction, without
+ // overlapping the original Card area or creating a different canonical ID.
+ const originalCount=restored.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+   .children.find(b=>b.id==='m6-hero-copy').children.length;
+ const duplicated=await evaluate('(()=>{const b=document.querySelector("[data-act=duplicate-node]");if(!b)return false;b.click();return true})()');
+ if(!duplicated)throw Error('Duplicate action missing');
+ await sleep(500);
+ const afterDuplicate=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
+ const copyChildren=afterDuplicate.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+   .children.find(b=>b.id==='m6-hero-copy').children;
+ if(copyChildren.length!==originalCount+1)throw Error('Duplicate did not create a new child');
+ const copies=copyChildren.filter(x=>x.type==='text'&&x.text===copyChildren.find(n=>n.id==='m6-hero-title').text);
+ if(copies.length<2)throw Error('Duplicate text content not preserved');
+ const a=copies[0].area,b=copies[1].area;
+ if(Math.max(a.x1,b.x1)<Math.min(a.x2,b.x2)&&Math.max(a.y1,b.y1)<Math.min(a.y2,b.y2))
+   throw Error('Duplicated child overlaps its source cell area');
+ await invoke('undo-structure');
+ const afterUndoDuplicate=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
+ if(afterUndoDuplicate.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ .children.find(b=>b.id==='m6-hero-copy').children.length!==originalCount)throw Error('Duplicate Undo did not remove copied child');
+ await invoke('redo-structure');
+ await evaluate('window.confirm=()=>true');
+ const deleted=await evaluate('(()=>{const b=document.querySelector("[data-act=delete-node]");if(!b)return false;b.click();return true})()');
+ if(!deleted)throw Error('Delete action missing');
+ await sleep(450);
+ const afterDelete=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
+ if(afterDelete.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ .children.find(b=>b.id==='m6-hero-copy').children.length!==originalCount)throw Error('Delete did not remove copied child');
+ await invoke('undo-structure');
+ await invoke('undo-structure'); // back to one original Title
+ console.log('M8_HISTORY_STRUCTURE_OK duplicate/undo/redo/delete/undo and no overlapping Card areas');
+
 
  const fold=await evaluate("(()=>{const el=document.querySelector('#structurePane [data-act=\"structure-fold\"][data-id=\"m6-hero\"]');if(!el)return false;el.click();return !document.querySelector('#structurePane [data-id=\"m6-hero-title\"]');})()");
  if(!fold)throw Error('Structure collapsing failed');
