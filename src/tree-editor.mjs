@@ -31,6 +31,12 @@ function vacantArea(card,children,moved){
  if(rows+h>64)return null;
  return {x1:1,y1:rows+1,x2:1+w,y2:rows+1+h,rows:rows+h};
 }
+// Public placement helper used by Structure duplicate, matching reparent rules.
+export function findFreeArea(parent,children,node){
+ if(!parent||parent.type!=='card'||parent.source||parent.reference)return null;
+ const slot=vacantArea(parent,children,node);
+ return slot?{area:{x1:slot.x1,y1:slot.y1,x2:slot.x2,y2:slot.y2},rows:slot.rows}:null;
+}
 export function moveTreeNode(blocks,sourceId,targetId,mode){
  if(!['before','after','inside'].includes(mode))return {ok:false,error:'Unknown drop mode'};
  if(!sourceId||!targetId||sourceId===targetId)return {ok:false,error:'Choose two different nodes'};
