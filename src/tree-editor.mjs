@@ -76,3 +76,32 @@ export function nodePath(blocks,id){
  }return null};
  return walk(blocks);
 }
+
+/**
+ * Accessible move commands for the selected Structure tree row.
+ * `up`/`down` change document order only; `indent` nests inside the
+ * immediately previous sibling Card; `outdent` places the node after its
+ * parent Card. Geometry changes only when the parent changes.
+ */
+export function moveTreeByIntent(blocks,id,intent){
+ if(!['up','down','indent','outdent'].includes(intent))
+   return {ok:false,error:'Unknown keyboard move'};
+ const from=locate(blocks,id);
+ if(!from)return {ok:false,error:'Select a Card or Item first'};
+ let targetId,mode;
+ if(intent==='up'||intent==='down'){
+   const offset=intent==='up'?-1:1;
+   const other=from.array[from.index+offset];
+   if(!other)return {ok:false,error:'Already at the edge of this Card'};
+   targetId=other.id;mode=intent==='up'?'before':'after';
+ }else if(intent==='indent'){
+   const previous=from.array[from.index-1];
+   if(!previous||!isCard(previous)||previous.source||previous.reference)
+     return {ok:false,error:'Indent requires a preceding editable sibling Card'};
+   targetId=previous.id;mode='inside';
+ }else{
+   if(!from.parent)return {ok:false,error:'Already at the top level'};
+   targetId=from.parent.id;mode='after';
+ }
+ return moveTreeNode(blocks,id,targetId,mode);
+}
