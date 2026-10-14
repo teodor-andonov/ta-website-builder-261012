@@ -23,7 +23,7 @@ test('M6 homepage expresses integrated identity using the existing JSON blocks',
   if(b.type==='card')visit(b.children||[]);
  }}
  visit(home.blocks);
- for(const x of ['variant-hero','variant-intro','variant-section-lead','variant-disciplines','variant-approach','variant-journal-list','variant-closer'])assert.ok(html.includes(x),x);
+ for(const x of ['variant-hero','variant-intro','variant-work-section','variant-methods-section','variant-approach','variant-journal-list','variant-closer'])assert.ok(html.includes(x),x);
  assert.ok(html.includes('Architecture,'));
  assert.ok(html.includes('COMPUTATION'));
  assert.ok(html.includes('RESEARCH'));
