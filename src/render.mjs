@@ -101,8 +101,8 @@ function renderBlock(block,context,data,options,depth) {
     }
     case 'card': {
       const tone=backgrounds.has(block.background)?block.background:'transparent';
-      const padding=['none','compact','regular','generous'].includes(block.padding)?block.padding:'regular';
-      const gap=['none','compact','regular','generous'].includes(block.gap)?block.gap:'regular';
+      const padding=['x1','x2','x4'].includes(block.padding)?block.padding:'x1';
+      const gap=['x1','x2','x4'].includes(block.gap)?block.gap:'x1';
       content=`<div class="b-card grid-card bg-${tone} pad-${padding} gap-${gap}${block.border?' has-border':''}" style="${cardGridStyle(block)}">${renderBlocks(block.children,context,data,{...options,parentColumns:safePositiveInt(block.columns,1),parentRows:safePositiveInt(block.rows,Math.max(1,Math.ceil((block.children||[]).length/safePositiveInt(block.columns,1))))},depth+1)||'<div class="placeholder">Empty card · add child</div>'}</div>`;
       break;
     }
@@ -151,11 +151,14 @@ export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
     return settings?.constrainHeight && Number.isFinite(settings.heightFactor) && settings.heightFactor>0 && settings.heightFactor<=4
       ? ` style="aspect-ratio:1 / ${settings.heightFactor};"` : '';
   };
+  // Master spacing is expressed in page-width units; no per-Card pixel overrides.
+  const unit=value=>Number.isFinite(value)&&value>0&&value<=4?value:1;
+  const spacingStyle=` style="--ta-pad:${unit(data.site?.design?.pad)}cqw;--ta-gap:${unit(data.site?.design?.gap)}cqw"`;
   const links=nav.map(link=>{
     const href=normalizeRoute(link.href),active=href===section;
     return `<a href="${escapeHtml(href)}" data-site-route="${escapeHtml(href)}"${active?' class="is-active" aria-current="page"':''}>${escapeHtml(link.label)}</a>`;
   }).join('');
-  return `<div class="webpage ${design?'design':'view'}${data.site?.design?.cardBorders?' show-card-borders':''}"><a class="skip-link" href="#main-content">Skip to content</a><nav class="web-nav b-card grid-card semantic-header bg-transparent"${frameHeight('header')} aria-label="Main navigation">${logo}<div class="web-links">${links}</div></nav><main id="main-content" class="web-content b-card semantic-page bg-transparent">${content}</main><footer class="web-footer b-card grid-card semantic-footer bg-transparent"${frameHeight('footer')}><span>${escapeHtml(data.site.name)}</span><span>© ${new Date().getUTCFullYear()}</span></footer></div>`;
+  return `<div class="webpage ${design?'design':'view'}${data.site?.design?.cardBorders?' show-card-borders':''}"${spacingStyle}><a class="skip-link" href="#main-content">Skip to content</a><nav class="web-nav b-card grid-card semantic-header bg-transparent"${frameHeight('header')} aria-label="Main navigation">${logo}<div class="web-links">${links}</div></nav><main id="main-content" class="web-content b-card semantic-page bg-transparent">${content}</main><footer class="web-footer b-card grid-card semantic-footer bg-transparent"${frameHeight('footer')}><span>${escapeHtml(data.site.name)}</span><span>© ${new Date().getUTCFullYear()}</span></footer></div>`;
 }
 export function renderPagePreview(data,blocks,context=null,options={}) {
   return renderSiteFrame(renderBlocks(blocks,context,data,options),data,{...options,route:options.route||resolvePreviewRoute(data,blocks,context)});

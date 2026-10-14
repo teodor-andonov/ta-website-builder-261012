@@ -47,3 +47,8 @@ See `docs/IMPLEMENTATION_PLAN.md` for sequencing.
 - Section Cards and nav/footer provide a `constrainHeight` toggle with height = Card width × `heightFactor`, else content-height rows.
 - Strict grayscale background palette including `transparent`; a site-level Card-border toggle and per-Card optional subtle borders. Gaps and padding limited to none/compact/regular/generous; overflow clipped with invisible scrollbars.
 - Don't silently reintroduce responsive card layouts, saturated colour tokens, arbitrary line dividers or fixed-size child positioning.
+
+## M7 refinement — master Card spacing
+- Canonical design has two independent master values, `site.design.pad` and `.gap` (numeric multiples of page-width `u=1cqw`). Each Card uses `padding`/`gap` = `x1|x2|x4`; default `x1` and **never use a zero-padding Card**, even when it contains one object.
+- Every grid child and nested Card fills its assigned grid area; nested padding accumulates naturally. The Page is the master padded grid; the header, main page content, footer and all section Cards use the same base spacing system.
+- Do not add special `4cqw` insets to semantic regions. No responsive reflow. Keep outline separate from CSS box sizing.

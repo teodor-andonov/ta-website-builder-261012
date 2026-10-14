@@ -87,3 +87,7 @@ The generated public pages deliberately retain `noindex, nofollow` because all p
 The newer design contract deliberately replaces adaptive columns with a fixed, page-width-scaled presentation system. Every Card declares equal divisions (`columns`, `rows`) and positions children in explicit grid rectangles (`area:{x1,y1,x2,y2}`). Page, header, sections and footer follow the Card grammar. Constrain-height toggles use `heightFactor` = height / Card width for proportional printed-board sections, otherwise height follows content. All design measurements use `u = page width / 100`, and the palette is strictly grayscale. See `docs/M7_PRINT_GRID.md`.
 
 This means public mobile pages **do not rearrange** their grids; they scale like a zoomable printed composition. This deliberate choice supersedes earlier responsive-layout roadmap notes. The desktop editor exposes equal grid divisions and child areas.
+
+### Spacing/fill refinement
+
+All Cards—including transparent, single-item and semantic grouping Cards—have positive padding. The two configurable masters are `site.design.pad` and `site.design.gap` in page-width units `u`; each Card selects 1×, 2× or 4× independently, defaulting to 1×. Nested Cards fill their grid cell, and their own padding creates interior breathing room. The Page itself is the master padded grid; header, main sections and footer no longer use arbitrary different horizontal insets. Grid and spacing controls are available from Content Studio's page and Card inspector.

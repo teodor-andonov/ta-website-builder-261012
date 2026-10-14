@@ -8,10 +8,14 @@
   --ta-mono:"Geist Mono","PT Mono",Consolas,monospace;
   --ta-radius:1.15cqw;
   --ta-site-max:1600px;
+  /* Both master spacing values are measured in page-width units. */
+  --ta-pad:1cqw;--ta-gap:1cqw;
 }
 body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .webpage{
   container-type:inline-size;width:100%;max-width:var(--ta-site-max);
+  display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;
+  align-content:start;gap:var(--ta-gap);padding:var(--ta-pad);
   margin:0 auto;box-sizing:border-box;background:var(--ta-paper);color:var(--ta-ink);
   font-family:var(--ta-mono);font-weight:450;-webkit-font-smoothing:antialiased;
   box-shadow:none;border:0;overflow:visible;
@@ -21,21 +25,26 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .grid-card{display:grid;min-width:0;min-height:0;align-items:stretch;align-content:stretch}
 :is(.published-site,.editor-shell) .b-card.grid-card{
   border:0;border-radius:var(--ta-radius);
-  gap:2cqw;padding:2cqw;min-height:0;min-width:0;
+  gap:var(--ta-gap);padding:var(--ta-pad);min-height:0;min-width:0;
+  width:100%;height:100%;
 }
 :is(.published-site,.editor-shell) .grid-card>.block{
-  min-width:0;min-height:0;max-width:100%;max-height:100%;
+  min-width:0;min-height:0;width:100%;height:100%;
+  justify-self:stretch;align-self:stretch;
   overflow:auto;scrollbar-width:none;overscroll-behavior:contain;
 }
 :is(.published-site,.editor-shell) .grid-card>.block::-webkit-scrollbar{display:none}
-:is(.published-site,.editor-shell) .b-card.gap-none{gap:0}
-:is(.published-site,.editor-shell) .b-card.gap-compact{gap:1cqw}
-:is(.published-site,.editor-shell) .b-card.gap-regular{gap:2cqw}
-:is(.published-site,.editor-shell) .b-card.gap-generous{gap:3cqw}
-:is(.published-site,.editor-shell) .b-card.pad-none{padding:0}
-:is(.published-site,.editor-shell) .b-card.pad-compact{padding:1cqw}
-:is(.published-site,.editor-shell) .b-card.pad-regular{padding:2cqw}
-:is(.published-site,.editor-shell) .b-card.pad-generous{padding:3cqw}
+/* Every Card has positive padding. Multipliers use exactly the two master values. */
+:is(.published-site,.editor-shell) .b-card.gap-x1{gap:var(--ta-gap)}
+:is(.published-site,.editor-shell) .b-card.gap-x2{gap:calc(2 * var(--ta-gap))}
+:is(.published-site,.editor-shell) .b-card.gap-x4{gap:calc(4 * var(--ta-gap))}
+:is(.published-site,.editor-shell) .b-card.pad-x1{padding:var(--ta-pad)}
+:is(.published-site,.editor-shell) .b-card.pad-x2{padding:calc(2 * var(--ta-pad))}
+:is(.published-site,.editor-shell) .b-card.pad-x4{padding:calc(4 * var(--ta-pad))}
+/* A nested Card always fills its parent's assigned grid-area. */
+:is(.published-site,.editor-shell) .grid-card>.block>.b-card{width:100%;height:100%}
+:is(.published-site,.editor-shell) .grid-card>.block>.reusable{display:grid;width:100%;height:100%;grid-template-columns:minmax(0,1fr)}
+:is(.published-site,.editor-shell) .semantic-page>.block>.b-card{width:100%;height:auto}
 :is(.published-site,.editor-shell) .b-card.bg-transparent{background:transparent}
 :is(.published-site,.editor-shell) .b-card.bg-white{background:#ffffff}
 :is(.published-site,.editor-shell) .b-card.bg-grey-100{background:var(--ta-grey-100)}
@@ -105,8 +114,8 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 }
 :is(.published-site,.editor-shell) .web-nav.semantic-header{
  display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
- grid-template-rows:1fr;gap:1.2cqw;
- padding:1.4cqw 4cqw;align-items:center;
+ grid-template-rows:1fr;gap:var(--ta-gap);
+ padding:var(--ta-pad);align-items:center;
  min-height:0;background:transparent;border:0;
 }
 :is(.published-site,.editor-shell) .web-logo{
@@ -122,20 +131,20 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .web-links a{padding:.4cqw 0;color:inherit;text-decoration:none;border-bottom:0}
 :is(.published-site,.editor-shell) .web-links a.is-active{color:var(--ta-ink);font-weight:600}
 :is(.published-site,.editor-shell) .web-content.semantic-page{
- display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:auto;gap:3cqw;
- width:100%;min-height:0;padding:1cqw 4cqw 5cqw;
+ display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;gap:var(--ta-gap);
+ width:100%;min-height:0;padding:var(--ta-pad);
  background:transparent;align-content:start;
 }
 :is(.published-site,.editor-shell) .web-content.semantic-page>.block{width:100%;margin:0}
 :is(.published-site,.editor-shell) .web-footer.semantic-footer{
  display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:1fr;
- padding:1.4cqw 4cqw;gap:1.2cqw;
+ padding:var(--ta-pad);gap:var(--ta-gap);
  border:0;background:transparent;
  font:450 .7cqw/1.4 var(--ta-mono);color:var(--ta-grey-600);
 }
 :is(.published-site,.editor-shell) .web-footer>*:first-child{grid-column:1/7}
 :is(.published-site,.editor-shell) .web-footer>*:last-child{grid-column:10/13;justify-self:end}
-:is(.published-site,.editor-shell) .variant-hero-copy>.b-card{gap:1.3cqw}
+:is(.published-site,.editor-shell) .variant-hero-copy>.b-card{gap:var(--ta-gap)}
 :is(.published-site,.editor-shell) .variant-hero .b-text.display{font-size:3.6cqw}
 :is(.published-site,.editor-shell) .variant-hero .b-text.body{font-size:1.03cqw}
 :is(.published-site,.editor-shell) .variant-section-lead .b-text.heading{font-size:2.4cqw}

@@ -7,7 +7,7 @@ const project=data.collections.find(c=>c.id==='projects');
 const post=data.collections.find(c=>c.id==='posts');
 const publishedProject=project.records.find(r=>r.slug==='balkan-house');
 const publishedPost=post.records.find(r=>r.slug==='designing-with-code');
-const extractFrame=html=>html.match(/<div class="webpage view(?: show-card-borders)?">[\s\S]*?<\/footer><\/div>/)?.[0];
+const extractFrame=html=>html.match(/<div class="webpage view(?: show-card-borders)?"(?: style="[^"]*")?>[\s\S]*?<\/footer><\/div>/)?.[0];
 
 test('browser editor imports the same renderer module used by build',async()=>{
   const html=await readFile(new URL('../studio/index.html',import.meta.url),'utf8');
