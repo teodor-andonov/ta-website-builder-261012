@@ -52,6 +52,8 @@
 3. **Acceptance:** inspect final diff for data-loss/security pitfalls, run `npm test`, `npm run build`, `node scripts/smoke-check.mjs`, Pages path audit and real Chromium interactions. Share screenshots and limitations with user.
 4. **Release:** only after user review, squash-merge **one M8 PR** into `main`, verify GitHub Pages deployment, delete merged branch, then start a new branch for the next cycle.
 
+**One-time repository housekeeping:** GitHub's **Automatically delete head branches** setting is currently **off**. Enable it at [Settings → General → Pull Requests](https://github.com/teodor-andonov/ta-website-builder-261012/settings). After enabling, remove older already-merged branches via PR #17 and PR #21's **Delete branch** controls. Keep the active M8 branch; the superseded, unmerged PR #19 branch is not part of merged-branch cleanup. See [current branch inventory in the dated log](logs/2026-10-14-m8-structure-editor.md).
+
 **Known separate refinement:** [Issue #22 — minimum useful grid divisions](https://github.com/teodor-andonov/ta-website-builder-261012/issues/22). Test equivalent layouts before reducing row/column counts; do not change composition silently.
 
 See [M8 design details](M8_EDITOR_PLAN.md) for interaction rules, [architecture](ARCHITECTURE.md) for data flow and [latest log](logs/2026-10-14-m8-structure-editor.md) for the detailed record.
