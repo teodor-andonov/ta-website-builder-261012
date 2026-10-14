@@ -80,3 +80,39 @@ See [M8 design details](M8_EDITOR_PLAN.md) for interaction rules, [architecture]
 ## Historical starting criteria
 
 The original [M0–M3 baseline implementation plan](logs/2026-10-12-foundations.md) is historical: M1 file editing and generated sample project/post pages, M2 reusable templates/queries, and M3 safe image assets have all been implemented. Do not treat them as the current next task.
+
+---
+
+## Post-V1 roadmap — extension after M11 (discussion draft)
+
+> **Ordering decision (2026-10-15):** The original M8–M11 milestones above remain unchanged and take precedence. Complete the existing V1 Content Studio and TA website, including the original M9 content, M10 QA/backups, and M11 hosting/launch, **before** beginning these expansions. Previous conversational proposals that reused M9–M13 are not substitutes for the established roadmap. This is a provisional post-V1 planning addendum, not current implementation status.
+
+### Product decisions agreed for the extension
+
+- **One website = one project folder = one local Studio instance.** Source JSON, real media, editor and build live together. No multi-site manager or hosted account requirement.
+- **Shared Card/Item composition model everywhere.** Home, Work and Studio pages and collection-generated project/article pages each own their editable composition. Manually construct Cards and atomic Items; no mandatory presets, third graphical node type, or special editorial-block editor.
+- **Isolated authoring by scope.** Edit pages, record compositions, templates and components separately in the Structure/Canvas/Properties editor. Assemble the full page for a separate preview.
+- **Templates wrap a unique composition.** Page templates themselves use Cards/Items and reusable component references. For example, the general template may embed a shared navbar, a page-content slot, and the main footer; a Studio template may share the same navbar but use a different footer. Page composition and record composition use the same content-slot principle. Slot count/semantics still to be decided.
+- **Navbar, header and footer are components.** Preserve semantic HTML roles and active-navigation behaviour when migrating away from the current hardcoded site frame.
+- **Configurable design system per website.** Global visual tokens, reusable named Card/Item styles and *limited* local styling overrides, separate from structural grid properties. TA's appearance is retained through its configuration; other sites may use different fonts, palettes and details.
+- **Generic collections and real assets.** Collections define fields and typed records and can optionally generate detail pages; a filtered collection-driven Card controls how records are displayed, not the collection itself. Assets are real media files with metadata. Later permit asset-library queries for image grids without forcing duplicate “Images” collections; specialised image-related collections can reference assets.
+- **No parallel Markdown database and no separate rendering engine.** Keep canonical JSON with a small practical number of files if a split becomes useful.
+
+### Candidate post-V1 milestones (provisional order)
+
+| Milestone | Outcome | Acceptance direction |
+| --- | --- | --- |
+| **M12 — Unified page and template system** | All standalone pages and collection detail pages use the same composition-in-template mechanism; header/navbar/footer are reusable components | Home, Work and Studio use independently editable compositions with shared or different templates; isolated editing and full-page preview |
+| **M13 — Reusable site design system** | Project-level tokens, named Card/Item styles, limited overrides; migrate TA-specific renderer assumptions | TA's visual output remains stable; a differently styled second site builds with the same engine |
+| **M14 — Record-specific compositions** | Optional Card/Item composition on each project, article and other eligible record; shared detail-page templates supply the slot | Two records share one template but have distinct editable content trees |
+| **M15 — Generic collections and asset queries** | More flexible collection schema/editor and filtered Card feeds; media metadata, asset filters/queries where needed | A newly defined collection and an image feed are authored without renderer edits |
+| **M16 — Studio usability and maintainability** | Refine manual Card/Item editing, isolated scope workflow and sensible modularisation | Complex real-world documents remain easy to edit, validate and save |
+| **M17 — Reusable starter and regression QA** | Document one-site-per-folder reuse and verify the extended builder against the TA site plus a second site | Both sites author/build independently; project files remain portable |
+
+### Decisions still open
+
+1. Whether V2 templates expose one required **main composition slot** or support multiple named content slots from the start.
+2. Whether every record in a collection can optionally have a dedicated page, and how collection-default templates versus per-record template choices are presented.
+3. Exact V2 scope of asset querying, image grouping, SVG import and asset/collection editing UX.
+
+Do not pull this discussion-draft work into M8–M11 unless explicitly agreed as a prerequisite for the original V1 launch. Refine the addendum as remaining product questions are answered.
