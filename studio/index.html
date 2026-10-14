@@ -39,7 +39,8 @@
 .structure-arrow{width:18px;min-width:18px;height:25px;padding:0;display:grid;place-items:center;color:#858997;border-radius:4px;font-size:11px}
 .structure-arrow:hover{background:rgba(82,92,187,.13);color:var(--m8-blue)}
 .structure-arrow:focus-visible,.structure-select:focus-visible,.structure-toggle:focus-visible{outline:2px solid var(--m8-blue);outline-offset:-2px}
-.structure-footer{border-top:1px solid var(--line);padding:12px;display:flex;justify-content:space-between;align-items:center;gap:4px;color:var(--muted);font:9px var(--mono)}
+.structure-footer{border-top:1px solid var(--line);padding:9px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:5px;color:var(--muted);font:9px var(--mono)}
+.structure-footer>.btn{flex:1 1 calc(50% - 5px);min-width:0;white-space:nowrap;justify-content:center}
 .structure-toggle{font-family:var(--mono);color:var(--m8-blue);border-color:rgba(82,92,187,.3)}
 .structure-toggle[aria-pressed="true"]{background:var(--m8-blue-soft)}
 .editor-shell .design [data-node-id]:hover:not(:has([data-node-id]:hover)){outline:1px solid var(--m8-blue)!important;outline-offset:-1px}
