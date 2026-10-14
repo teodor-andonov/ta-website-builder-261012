@@ -489,7 +489,7 @@ function areaInputMarkup(node,parent){
    const selected=x>=area.x1&&x<area.x2&&y>=area.y1&&y<area.y2;
    cells.push('<button type="button" class="area-grid-cell'+(selected?' is-selected':'')+(taken.has(x+':'+y)?' is-other':'')+'" data-area-x="'+x+'" data-area-y="'+y+'" title="Column '+x+', row '+y+'" aria-label="Cell '+x+', '+y+'" aria-pressed="'+selected+'"></button>');
   }
-  grid='<div id="areaGrid" class="area-grid" style="grid-template-columns:repeat('+cols+',minmax(0,1fr))" aria-label="Drag to select a grid rectangle">'+cells.join('')+'</div>';
+  grid='<div id="areaGrid" class="area-grid" style="grid-template-columns:repeat('+cols+',minmax(0,1fr));width:min(100%,'+(cols*24+12)+'px)" aria-label="Drag to select a grid rectangle">'+cells.join('')+'</div>';
  }else grid='<p class="help">Large grid · use the four values below and Apply all.</p>';
  const inputs=['x1','y1','x2','y2'].map(k=>'<label>'+k.toUpperCase()+'<input class="control" type="number" step="1" min="1" data-area-value="'+k+'" value="'+area[k]+'"></label>').join('');
  return '<div class="area-editor"><div class="area-title">Grid area in parent · '+cols+' × '+rows+'</div>'+
