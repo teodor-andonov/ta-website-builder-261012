@@ -49,3 +49,19 @@ test('Studio exposes editable grid selection and remains separate from published
  const publicStyles=await readFile(new URL('../src/public.css',import.meta.url),'utf8');
  assert.doesNotMatch(publicStyles,/grid-edit-overlay/);
 });
+
+test('inline Studio JavaScript is syntactically valid as an ES module',async()=>{
+ const {spawnSync}=await import('node:child_process');
+ const {mkdtemp,writeFile,rm}=await import('node:fs/promises');
+ const {tmpdir}=await import('node:os');
+ const {join}=await import('node:path');
+ const studio=await readFile(new URL('../studio/index.html',import.meta.url),'utf8');
+ const script=studio.match(/<script type="module">([\\s\\S]*?)<\\/script>/)?.[1];
+ assert.ok(script,'Studio module script missing');
+ const dir=await mkdtemp(join(tmpdir(),'ta-studio-parse-'));
+ try{
+  const file=join(dir,'studio.mjs');await writeFile(file,script);
+  const run=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});
+  assert.equal(run.status,0,run.stderr);
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
