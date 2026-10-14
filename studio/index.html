@@ -645,6 +645,36 @@ document.addEventListener('change',event=>{let el=event.target;
  if(el.id==='imageFile'){importImages([...el.files]).catch(err=>alert('Image error: '+err.message));el.value='';return}
 });
 document.addEventListener('input',event=>{let el=event.target;if(el.id==='recordSearch'||el.id==='assetSearch'){ui.search=el.value;/* Commit filter on Enter or blur to avoid interrupting input. */} });
+
+document.addEventListener('keydown',event=>{
+ const focus=event.target.closest('.structure-select');
+ if(!focus||!structureMode())return;
+ const rows=[...document.querySelectorAll('#structureTree .structure-select')];
+ const index=rows.indexOf(focus);
+ if(index<0)return;
+ const step=event.key==='ArrowDown'?1:event.key==='ArrowUp'?-1:0;
+ if(step){
+  event.preventDefault();
+  const next=rows[Math.max(0,Math.min(rows.length-1,index+step))];
+  selectStudioNode(next.dataset.id);
+  requestAnimationFrame(()=>document.querySelector('#structureTree .structure-select[data-id="'+next.dataset.id+'"]')?.focus());
+  return;
+ }
+ if(event.key==='ArrowRight'||event.key==='ArrowLeft'){
+  event.preventDefault();
+  const id=focus.dataset.id,found=findNode(id),foldable=found?.node.type==='card'&&(found.node.children||[]).length;
+  if(event.key==='ArrowRight'&&foldable&&ui.structureCollapsed.has(id)){
+   ui.structureCollapsed.delete(id);renderStructure();
+  }else if(event.key==='ArrowLeft'&&foldable&&!ui.structureCollapsed.has(id)){
+   ui.structureCollapsed.add(id);renderStructure();
+  }else if(event.key==='ArrowLeft'&&found?.parent){
+   selectStudioNode(found.parent.id);
+  }else if(event.key==='ArrowRight'&&foldable){
+   selectStudioNode(found.node.children[0].id);
+  }
+  requestAnimationFrame(()=>document.querySelector('#structureTree .structure-select[data-id="'+ui.node+'"]')?.focus());
+ }
+});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeModal();$('#inspector').classList.remove('show');$('#sidebar').classList.remove('show')}if(event.key==='Enter'&&(event.target.id==='recordSearch'||event.target.id==='assetSearch')){event.target.blur();renderWork()}});
 function recById(cid,rid){return db.collections.find(c=>c.id===cid)?.records.find(r=>r.id===rid)}
 $('#exportBtn').addEventListener('click',exportJSON);$('#importBtn').addEventListener('click',()=>$('#importFile').click());$('#menuBtn').addEventListener('click',()=>$('#sidebar').classList.toggle('show'));$('#inspectToggle').addEventListener('click',()=>$('#inspector').classList.toggle('show'));$('#inspectClose').addEventListener('click',()=>$('#inspector').classList.remove('show'));
