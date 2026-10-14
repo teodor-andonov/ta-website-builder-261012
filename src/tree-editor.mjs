@@ -31,6 +31,25 @@ function vacantArea(card,children,moved){
  if(rows+h>64)return null;
  return {x1:1,y1:rows+1,x2:1+w,y2:rows+1+h,rows:rows+h};
 }
+// Non-destructive geometry diagnostic. Overlapping grid areas can be intentional
+// (e.g. layering), so the editor warns rather than silently moving/rejecting them.
+// Areas use 1-based grid lines and exclusive end coordinates.
+export function findAreaConflicts(parent,nodeId,area){
+ if(parent?.type!=='card'||!area)return [];
+ const {x1,y1,x2,y2}=area;
+ if(![x1,y1,x2,y2].every(Number.isInteger)||x1<1||y1<1||x2<=x1||y2<=y1)return [];
+ return (parent.children||[]).filter(sibling=>{
+   if(sibling.id===nodeId||!sibling.area)return false;
+   const other=sibling.area;
+   return [other.x1,other.y1,other.x2,other.y2].every(Number.isInteger)
+     &&other.x2>other.x1&&other.y2>other.y1
+     &&x1<other.x2&&x2>other.x1&&y1<other.y2&&y2>other.y1;
+ }).map(sibling=>{
+   const o=sibling.area;
+   return {id:sibling.id,label:sibling.label||sibling.id,
+     cells:(Math.min(x2,o.x2)-Math.max(x1,o.x1))*(Math.min(y2,o.y2)-Math.max(y1,o.y1))};
+ });
+}
 // Public placement helper used by Structure duplicate, matching reparent rules.
 export function findFreeArea(parent,children,node){
  if(!parent||parent.type!=='card'||parent.source||parent.reference)return null;
