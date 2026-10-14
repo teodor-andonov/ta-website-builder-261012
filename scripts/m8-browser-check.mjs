@@ -56,7 +56,7 @@ try{
  await command('Page.enable');await command('Runtime.enable');
  let loaded=false;
  for(let i=0;i<100;i++){
-  loaded=await evaluate('Boolean(window.__TA_STUDIO__&&document.querySelector("#workbody"))');
+  loaded=await evaluate('Boolean(window.__TA_STUDIO__&&document.querySelector("#saved")?.textContent.includes("LOADED"))');
   if(loaded)break;
   await sleep(100);
  }
