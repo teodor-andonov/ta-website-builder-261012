@@ -88,14 +88,15 @@
   <div class="toolbar"><span class="saved" id="saved">JSON FILE · READY</span><button class="btn ghost" id="importBtn">Import JSON</button><button class="btn dark" id="exportBtn">↧ &nbsp;Export JSON</button><input hidden type="file" id="importFile" accept=".json,application/json"><input hidden type="file" id="imageFile" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif" multiple></div>
  </header>
  <aside class="sidebar" id="sidebar"><div class="side-inner" id="sidebarContent"></div><div class="side-bottom">LOCAL FIRST &nbsp;↗<br>FILES · COLLECTIONS · TEMPLATES</div></aside>
- <aside class="structure-pane" id="structurePane" aria-label="Document structure"><div class="structure-head"><span>DOCUMENT STRUCTURE</span><button class="btn ghost sm" data-act="toggle-structure" title="Hide document structure" aria-label="Hide document structure">✕</button></div><div class="structure-summary" id="structureSummary"></div><div class="structure-scroll" id="structureTree" role="tree" aria-label="Cards and Items"></div><div class="structure-footer"><button class="btn sm" data-act="show-blocks" data-inside="no">+ Section</button><button class="btn sm" data-act="show-blocks" data-inside="yes" id="treeAddChild" title="Add Item or Card into selected Card" disabled>+ Child</button><button class="btn ghost sm" data-act="undo-structure" id="treeUndo" title="Undo last structure move" disabled>↶</button></div></aside>
+ <aside class="structure-pane" id="structurePane" aria-label="Document structure"><div class="structure-head"><span>DOCUMENT STRUCTURE</span><button class="btn ghost sm" data-act="toggle-structure" title="Hide document structure" aria-label="Hide document structure">✕</button></div><div class="structure-summary" id="structureSummary"></div><div class="structure-scroll" id="structureTree" role="tree" aria-label="Cards and Items"></div><div class="structure-footer"><button class="btn sm" data-act="show-blocks" data-inside="no">+ Section</button><button class="btn sm" data-act="show-blocks" data-inside="yes" id="treeAddChild" title="Add Item or Card into selected Card" disabled>+ Child</button><button class="btn ghost sm" data-act="undo-structure" id="treeUndo" title="Undo (Ctrl+Z)" disabled>↶ Undo</button><button class="btn ghost sm" data-act="redo-structure" id="treeRedo" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button></div></aside>
  <main class="workspace"><div class="worktop"><div class="breadcrumbs" id="breadcrumbs"></div><div class="workactions"><button class="btn sm structure-toggle" id="structureToggle" data-act="toggle-structure" aria-pressed="true" title="Show or hide document structure">☷ Structure</button><button class="btn sm inspect-toggle" id="inspectToggle">Properties</button><div class="seg" id="modeTabs"></div></div></div><div class="workbody" id="workbody"></div></main>
  <aside class="inspector" id="inspector"><div class="inspect-head"><span id="inspectorTitle">Properties</span><button class="btn ghost sm" id="inspectClose">✕</button></div><div class="inspect-body" id="inspectBody"></div></aside>
 </div>
 <div id="modalHost"></div>
 <script type="module">
 import { renderBlocks as renderSharedBlocks, renderSiteFrame, assetSrc } from "/src/render.mjs";
-import {moveTreeNode} from "/src/tree-editor.mjs";
+import {moveTreeNode,findFreeArea} from "/src/tree-editor.mjs";
+import {createEditorHistory} from "/src/editor-history.mjs";
 (async ()=>{'use strict';
 const SVG_ART={
 field:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 680"><defs><radialGradient id="a"><stop stop-color="#797a74"/><stop offset=".6" stop-color="#d2d3cb"/><stop offset="1" stop-color="#f2f2ec"/></radialGradient><filter id="b"><feGaussianBlur stdDeviation="16"/></filter><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency=".45" numOctaves="2" seed="7" result="n"/><feColorMatrix in="n" type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".07"/></feComponentTransfer></filter></defs><rect width="800" height="680" fill="#e7e8e1"/><g fill="#454640" opacity=".75"><rect x="110" y="102" width="160" height="160" rx="48"/><rect x="294" y="102" width="160" height="160" rx="38"/><rect x="478" y="102" width="160" height="160" rx="62"/><rect x="110" y="286" width="160" height="160" rx="55"/><rect x="294" y="286" width="160" height="160" rx="58"/><rect x="478" y="286" width="160" height="160" rx="47"/><rect x="294" y="470" width="160" height="160" rx="60"/></g><ellipse cx="422" cy="327" rx="260" ry="200" fill="url(#a)" filter="url(#b)" opacity=".85"/><rect width="800" height="680" filter="url(#noise)" opacity=".9"/></svg>`,
@@ -194,7 +195,7 @@ function normalize(d){if(!d||!Array.isArray(d.collections)||!Array.isArray(d.pag
  }
  return d;}
 let db=normalize(seed())
-let ui={section:'dashboard',collection:'projects',record:'p-balkan',page:'home',template:'project-detail',component:'contact-cta',asset:'field',mode:'table',node:null,search:'',format:'all',tableLayout:'table',sample:'p-balkan',jsonMessage:'',notice:'',draftSection:null,structureVisible:true,structureCollapsed:new Set(),treeUndo:null,areaDraft:null,areaDrag:null};
+let ui={section:'dashboard',collection:'projects',record:'p-balkan',page:'home',template:'project-detail',component:'contact-cta',asset:'field',mode:'table',node:null,search:'',format:'all',tableLayout:'table',sample:'p-balkan',jsonMessage:'',notice:'',draftSection:null,structureVisible:true,structureCollapsed:new Set(),areaDraft:null,areaDrag:null};
 let jsonDirty=false;
 const coll=()=>db.collections.find(c=>c.id===ui.collection);
 const rec=()=>coll()?.records.find(r=>r.id===ui.record);
@@ -214,10 +215,34 @@ function persist(){
   $('#saved').textContent='JSON FILE · SAVED';
  }).catch(err=>{$('#saved').textContent='SAVE FAILED · '+err.message;console.error('File save error:',err)});
 }
-function choose(section,id){ui.section=section;ui.node=null;ui.structureCollapsed.clear();ui.treeUndo=null;ui.areaDraft=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'};$('#sidebar').classList.remove('show');renderAll()}
+function choose(section,id){ui.section=section;ui.node=null;ui.structureCollapsed.clear();ui.areaDraft=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'};$('#sidebar').classList.remove('show');renderAll()}
 function visibleModes(){if(ui.section==='collection')return ['table','settings','json'];if(ui.section==='record')return ['preview','fields','json'];if(['page','template','component'].includes(ui.section))return ['design','preview','json'];if(ui.section==='assets')return ['grid','table','json'];return []}
 function currentScope(){if(ui.section==='page')return page();if(ui.section==='template')return tpl();if(ui.section==='component')return component();return null}
 function currentBlocks(){return currentScope()?.blocks||[]}
+// M8 authoring history records only completed Card/Item mutations, never hover
+// state, selection changes, invalid numeric drafts or pending drag gestures.
+const editorHistory=createEditorHistory({limit:40,scopes:16});
+function historyScope(){const scope=currentScope();return scope?ui.section+':'+scope.id:null}
+function snapshotScope(){return clone(currentBlocks())}
+function saveScopeEdit(before,selectedBefore){
+ const key=historyScope();
+ if(!key||!editorHistory.record(key,before,currentBlocks(),selectedBefore,ui.node))return false;
+ persist();renderAll();return true;
+}
+function restoreScopeEdit(direction){
+ const scope=currentScope(),key=historyScope();
+ if(!scope||!key)return false;
+ const restored=direction==='redo'?editorHistory.redo(key):editorHistory.undo(key);
+ if(!restored)return false;
+ scope.blocks=restored.blocks;
+ ui.node=restored.selected&&findNode(restored.selected)?restored.selected:null;
+ ui.areaDraft=null;ui.areaDrag=null;
+ // Reveal previously hidden parents if undo restored a nested selection.
+ const path=ui.node?findNodePath(ui.node):null;
+ for(const node of path?.slice(0,-1)||[])ui.structureCollapsed.delete(node.id);
+ persist();renderAll();return true;
+}
+
 function findNode(id,arr=currentBlocks(),parent=null){for(let i=0;i<arr.length;i++){let n=arr[i];if(n.id===id)return {node:n,arr,index:i,parent};if(n.children){let f=findNode(id,n.children,n);if(f)return f}}return null}
 function setAndRender(fn,all=true){fn();persist();all?renderAll():renderWork()}
 function renderAll(){renderSide();renderTop();renderWork();renderInspector()}
@@ -269,7 +294,8 @@ function renderStructure(){
  const host=$('#structureTree'),prior=host.scrollTop;
  host.innerHTML=active?structureRows():'';
  host.scrollTop=prior;
- $('#treeUndo').disabled=!ui.treeUndo;
+ $('#treeUndo').disabled=!editorHistory.canUndo(historyScope());
+ $('#treeRedo').disabled=!editorHistory.canRedo(historyScope());
  const selected=ui.node?findNode(ui.node)?.node:null;
  $('#treeAddChild').disabled=!(selected?.type==='card'&&!selected.source&&!selected.reference);
  const toggle=$('#structureToggle');toggle.style.display=active?'':'none';toggle.setAttribute('aria-pressed',String(visible));
@@ -411,7 +437,8 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    const raw={};for(const key of ['x1','y1','x2','y2'])raw[key]=Number(document.querySelector('[data-area-value="'+key+'"]')?.value);
    commitArea(raw);break;
  }
- case'undo-structure':if(ui.treeUndo&&ui.treeUndo.scope===currentScope()?.id){currentScope().blocks=clone(ui.treeUndo.blocks);ui.treeUndo=null;persist();renderAll()}break;
+ case'undo-structure':restoreScopeEdit('undo');break;
+ case'redo-structure':restoreScopeEdit('redo');break;
  case'new-page':createModal('page');break;
  case'new-collection':createModal('collection');break;
  case'new-template':ui.draftSection=btn.dataset.collection||coll()?.id||db.collections[0]?.id;createModal('template');break;
