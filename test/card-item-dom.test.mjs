@@ -73,3 +73,38 @@ test('editor uses the shared direct-Card renderer and source Card authoring',asy
  assert.match(studio,/topLevel:true/);
  assert.match(studio,/\.card\.chosen/);
 });
+
+
+test('annotated homepage has one Card per semantic section, with no redundant wrappers',()=>{
+ const sections=home.blocks;
+ assert.equal(sections.length,7);
+ const byId=id=>{const s=sections.find(x=>x.id===id);assert.ok(s,id);return s};
+ const work=byId('m6-work-title');
+ assert.equal(work.children.length,4,'3 header Items + 1 record source Card');
+ assert.equal(work.children.filter(x=>x.type!=='card').length,3);
+ assert.equal(work.children.filter(x=>x.source?.collection==='projects').length,1);
+ const journal=byId('m6-journal-title');
+ assert.equal(journal.children.filter(x=>x.type!=='card').length,3);
+ assert.equal(journal.children.filter(x=>x.source?.collection==='posts').length,1);
+ const disciplines=byId('m6-methods-title');
+ assert.equal(disciplines.children.length,5,'2 heading Items + 3 practice Cards');
+ assert.equal(disciplines.children.filter(x=>x.type==='card').length,3);
+ const approach=byId('m6-approach');
+ assert.equal(approach.children.length,4,'intro and three format Cards');
+ assert.ok(approach.children.every(x=>x.type==='card'));
+ const close=byId('m6-close');
+ assert.equal(close.children.filter(x=>x.type!=='card').length,3);
+ const black=close.children.find(x=>x.type==='card'&&x.background==='black');
+ assert.ok(black&&black.children.length===1&&black.children[0].type==='button');
+ const html=renderPagePreview(data,sections,null,{route:'/'});
+ assert.doesNotMatch(html,/card-nav-links/,'links should occupy the nav Card grid directly');
+ assert.match(html,/card-work-section/);
+ assert.match(html,/card-methods-section/);
+ assert.match(html,/card-journal-section/);
+ assert.match(html,/card-close-black/);
+});
+test('semantic Page, Nav, Main and Footer all have intrinsic rounded corners',async()=>{
+ const css=await readFile(new URL('../src/public.css',import.meta.url),'utf8');
+ assert.match(css,/\.card-page,[\s\S]*?\.card-nav,[\s\S]*?\.card-main,[\s\S]*?\.card-footer\{[\s\S]*?border-radius:var\(--ta-radius\)/);
+ assert.match(css,/\.card-close-black>\.item-button\{[\s\S]*?font:550 2\.5cqw/);
+});
