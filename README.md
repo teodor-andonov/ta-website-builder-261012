@@ -103,3 +103,7 @@ Open the cloned project folder in VS Code and make sure Node.js 20+ is installed
 For the **desktop JSON Content Studio editor**, run the separate **dev** script (`npm run dev`), then visit **http://127.0.0.1:5173/**. This is the authoring interface, not the public static pages. You can run either script from the VS Code NPM SCRIPTS view without typing terminal commands (enable the built-in NPM Scripts view if hidden). Stop the script from VS Code or with Ctrl+C.
 
 Neither local command publishes anything. The official GitHub Pages prototype only updates after changes are merged into `main`.
+
+## M8.1 — Grid editing preview
+
+After fetching the `feature/m8-grid-canvas` branch in VS Code, run `npm run dev` and visit `http://127.0.0.1:5173/`. Select a nested Card or Item in Design mode and click **Edit area on canvas** in the inspector. Drag across its parent Card grid to update the occupied cells. The original numeric grid-area fields still work. This development feature is **not published until its PR merges**; see `docs/M8_GRID_CANVAS.md`.
