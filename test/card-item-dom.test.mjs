@@ -117,5 +117,12 @@ test('Work and Journal index headings share a single Card with their collection 
   assert.equal(children.length,4,id+' should have 3 Items and one source Card');
   assert.equal(children.filter(b=>b.type!=='card').length,3);
   assert.equal(children.filter(b=>b.type==='card'&&b.source).length,1);
+  // One item or Card owns any given top-level grid cell; no accidental overlaps.
+  for(let i=0;i<children.length;i++)for(let j=i+1;j<children.length;j++){
+    const a=children[i].area,b=children[j].area;
+    const collide=Math.max(a.x1,b.x1)<Math.min(a.x2,b.x2)&&
+      Math.max(a.y1,b.y1)<Math.min(a.y2,b.y2);
+    assert.equal(collide,false,id+' overlapping '+children[i].id+' / '+children[j].id);
+  }
  }
 });
