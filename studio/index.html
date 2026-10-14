@@ -192,7 +192,7 @@ function mountSelectedGrid(){
   if(!found||found.parent?.type!=='card')return;
   return mountGridOverlay({
     root:$('#workbody'),parentNode:found.parent,selectedNode:found.node,
-    onCommit(area)=>{
+    onCommit:(area)=>{
       const current=findNode(ui.node);
       if(!current||current.parent?.id!==found.parent.id)return;
       const reason=placementError(current.parent,current.node.id,area);
