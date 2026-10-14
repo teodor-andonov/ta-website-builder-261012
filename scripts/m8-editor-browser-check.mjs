@@ -71,8 +71,8 @@ try{
   console.error('TA_STUDIO_DIAGNOSTIC',await evalJS("({url:location.href,title:document.title,body:document.body?.innerText?.slice(0,420),error:document.querySelector('.workbody')?.innerText?.slice(0,240)})"));
   throw Error('Studio failed to initialise');
  }
- const state=await evalJS("(()=>{const page=document.querySelector('[data-act=\"navigate\"][data-section=\"page\"][data-id=\"home\"]');page?.click();const heading=document.querySelector('[data-node-id=\"m6-work-heading\"]');heading?.click();document.querySelector('[data-act=\"toggle-grid-edit\"]')?.click();const overlay=document.querySelector('.grid-edit-overlay');overlay?.scrollIntoView({block:'center'});return {found:!!overlay,target:overlay?.dataset.gridEditing,columns:overlay?.style.gridTemplateColumns,rows:overlay?.style.gridTemplateRows};})()");
- if(!state?.found||state.target!=='m6-work-heading')throw Error('Could not mount Work grid overlay: '+JSON.stringify(state));
+ const state=await evalJS("(()=>{const page=document.querySelector('[data-act=\"navigate\"][data-section=\"page\"][data-id=\"home\"]');page?.click();const heading=document.querySelector('[data-node-id=\"m6-methods-heading\"]');heading?.click();document.querySelector('[data-act=\"toggle-grid-edit\"]')?.click();const overlay=document.querySelector('.grid-edit-overlay');overlay?.scrollIntoView({block:'center'});return {found:!!overlay,target:overlay?.dataset.gridEditing,columns:overlay?.style.gridTemplateColumns,rows:overlay?.style.gridTemplateRows};})()");
+ if(!state?.found||state.target!=='m6-methods-heading')throw Error('Could not mount practice section grid overlay: '+JSON.stringify(state));
  await sleep(300);
  await mkdir(join(root,'screenshots'),{recursive:true});
  const image=await cmd('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
