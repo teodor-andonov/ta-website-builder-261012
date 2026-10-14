@@ -7,14 +7,14 @@ const project=data.collections.find(c=>c.id==='projects');
 const post=data.collections.find(c=>c.id==='posts');
 const publishedProject=project.records.find(r=>r.slug==='balkan-house');
 const publishedPost=post.records.find(r=>r.slug==='designing-with-code');
-const extractFrame=html=>html.match(/<div class="webpage view(?: show-card-borders)?"(?: style="[^"]*")?>[\s\S]*?<\/footer><\/div>/)?.[0];
+const extractFrame=html=>html.match(/<div class="card card-page webpage view(?: show-card-borders)?"(?: style="[^"]*")?>[\s\S]*?<\/footer><\/div>/)?.[0];
 
 test('browser editor imports the same renderer module used by build',async()=>{
   const html=await readFile(new URL('../studio/index.html',import.meta.url),'utf8');
   assert.match(html,/type="module"/);
   assert.match(html,/from "\/src\/render\.mjs"/);
   assert.doesNotMatch(html,/function renderBlock\(n,ctx,design,depth\)/);
-  assert.match(html,/renderSharedBlocks\(blocks,ctx,db,\{design,selectedId:ui.node\}\)/);
+  assert.match(html,/renderSharedBlocks\(blocks,ctx,db,\{design,selectedId:ui.node,topLevel:true\}\)/);
 });
 
 test('record previews match generated public page DOM shell exactly',()=>{
@@ -40,8 +40,8 @@ test('design overlays preserve the identical content, adding only selection hook
   const plain=renderBlocks(blocks,publishedProject,data);
   const edit=renderBlocks(blocks,publishedProject,data,{design:true,selectedId:first});
   assert.ok(edit.includes(`data-node-id="${first}"`));
-  assert.ok(edit.includes('block chosen'));
-  assert.equal(edit.replace(/ data-node-id="[^"]*" data-kind="[^"]*"/g,'').replace(/block chosen/g,'block'),plain);
+  assert.ok(edit.includes('card')&&edit.includes('chosen'));
+  assert.equal(edit.replace(/ data-node-id="[^"]*" data-kind="[^"]*"/g,'').replace(/ chosen/g,''),plain);
 });
 
 test('shared template changes propagate to studio previews and all public records',()=>{
@@ -82,7 +82,7 @@ test('text payloads, links and image asset paths are escaped or constrained',()=
   assert.match(output,/src="\/assets\/demo\//);
 });
 
-test('recursive component compositions stop at maximum depth',()=>{
+test('component references remain Cards and recursion stops at maximum depth',()=>{
   const draft=structuredClone(data);
   draft.components.push({id:'loop',name:'Loop',blocks:[{id:'loopnode',type:'component',component:'loop'}]});
   const html=renderBlocks([{id:'outer',type:'component',component:'loop'}],null,draft);
