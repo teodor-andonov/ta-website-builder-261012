@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {moveTreeNode,nodePath,findFreeArea} from '../src/tree-editor.mjs';
+import {moveTreeByIntent,moveTreeNode,nodePath,findFreeArea} from '../src/tree-editor.mjs';
 
 const item=(id,area)=>({id,type:'text',text:id,area});
 const card=(id,children,area,columns=2,rows=2)=>({
@@ -77,4 +77,42 @@ test('M8 duplicate refuses non-authorable source Cards and impossible grid sizes
  assert.equal(findFreeArea(g,g.children,item('x',{x1:1,y1:1,x2:2,y2:2})),null);
  const c=card('full',[item('taken',{x1:1,y1:1,x2:2,y2:65})],null,1,64);
  assert.equal(findFreeArea(c,c.children,item('other',{x1:1,y1:1,x2:2,y2:2})),null);
+});
+
+
+test('keyboard Up/Down reorders siblings without changing authored grid areas',()=>{
+ const a=sample();
+ const before=structuredClone(a[0].children[0].children);
+ const up=moveTreeByIntent(a,'b','up');
+ assert.equal(up.ok,true);
+ assert.deepEqual(up.blocks[0].children[0].children.map(n=>n.id),['b','a']);
+ assert.deepEqual(up.blocks[0].children[0].children[0].area,before[1].area);
+ const down=moveTreeByIntent(up.blocks,'b','down');
+ assert.equal(down.ok,true);
+ assert.deepEqual(down.blocks[0].children[0].children.map(n=>n.id),['a','b']);
+ assert.equal(moveTreeByIntent(a,'a','up').ok,false);
+ assert.deepEqual(a[0].children[0].children,before,'pure operation must not mutate input');
+});
+test('keyboard indent nests into preceding editable sibling Card; outdent reverses the parent',()=>{
+ const a=sample();
+ const nested=moveTreeByIntent(a,'empty','indent');
+ assert.equal(nested.ok,true);
+ assert.equal(nested.parentId,'group');
+ assert.equal(nested.blocks[0].children[0].children.at(-1).id,'empty');
+ const lifted=moveTreeByIntent(nested.blocks,'empty','outdent');
+ assert.equal(lifted.ok,true);
+ assert.equal(lifted.parentId,'hero');
+ assert.deepEqual(lifted.blocks[0].children.map(n=>n.id),['group','empty']);
+ assert.equal(lifted.blocks[0].children[1].area.x1>=1,true);
+});
+test('keyboard moves reject illegal indentation, root outdent and unknown intents',()=>{
+ const a=sample();
+ assert.equal(moveTreeByIntent(a,'a','indent').ok,false,'preceding Item is not a Card');
+ assert.equal(moveTreeByIntent(a,'hero','outdent').ok,false);
+ assert.equal(moveTreeByIntent(a,'missing','down').ok,false);
+ assert.equal(moveTreeByIntent(a,'a','weird').ok,false);
+ const d=sample();d[0].children[0].source={collection:'projects'};
+ assert.equal(moveTreeByIntent(d,'empty','indent').ok,false,'cannot drop in data source Card');
+ assert.equal(moveTreeByIntent(a,'a','outdent').ok,true,'outdent to hero parent is allowed');
+ assert.equal(moveTreeByIntent(a,'group','outdent').ok,true,'Card outdent to root is allowed');
 });
