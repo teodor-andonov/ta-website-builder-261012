@@ -17,6 +17,20 @@
 @media(max-width:620px){.topbar .btn.mobile-menu{display:inline-flex}}
 </style>
 <link rel="stylesheet" href="/src/public.css">
+<style>
+/* M8 overlay is editor-only DOM, not a Card or Item and never in published output. */
+.editor-shell .m8-grid-target{position:relative}
+.editor-shell .m8-grid-overlay{position:absolute;display:grid;z-index:40;
+  pointer-events:auto;touch-action:none;overflow:hidden;color:inherit;cursor:crosshair;
+  outline:1px dashed color-mix(in srgb,currentColor 50%,transparent);outline-offset:0}
+.editor-shell .m8-grid-cell{display:block;min-width:0;min-height:0;pointer-events:auto;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 24%,transparent);
+  background:transparent}
+.editor-shell .m8-grid-cell.m8-selected{background:color-mix(in srgb,currentColor 12%,transparent)}
+.editor-shell .m8-grid-cell.m8-drag{background:color-mix(in srgb,currentColor 24%,transparent)}
+.editor-shell .m8-grid-label{font:500 10px var(--mono);letter-spacing:.02em;opacity:.72}
+.editor-shell .m8-grid-help{font:10px/1.5 var(--mono);color:#666;margin:0}
+</style>
 </head>
 <body>
 <div class="app">
@@ -31,6 +45,7 @@
 <div id="modalHost"></div>
 <script type="module">
 import { renderBlocks as renderSharedBlocks, renderSiteFrame, assetSrc } from "/src/render.mjs";
+import { areaFromDrag, moveAreaToCell, childAtCell, cellAtPixel } from "/src/grid-editor.mjs";
 (async ()=>{'use strict';
 const SVG_ART={
 field:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 680"><defs><radialGradient id="a"><stop stop-color="#797a74"/><stop offset=".6" stop-color="#d2d3cb"/><stop offset="1" stop-color="#f2f2ec"/></radialGradient><filter id="b"><feGaussianBlur stdDeviation="16"/></filter><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency=".45" numOctaves="2" seed="7" result="n"/><feColorMatrix in="n" type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".07"/></feComponentTransfer></filter></defs><rect width="800" height="680" fill="#e7e8e1"/><g fill="#454640" opacity=".75"><rect x="110" y="102" width="160" height="160" rx="48"/><rect x="294" y="102" width="160" height="160" rx="38"/><rect x="478" y="102" width="160" height="160" rx="62"/><rect x="110" y="286" width="160" height="160" rx="55"/><rect x="294" y="286" width="160" height="160" rx="58"/><rect x="478" y="286" width="160" height="160" rx="47"/><rect x="294" y="470" width="160" height="160" rx="60"/></g><ellipse cx="422" cy="327" rx="260" ry="200" fill="url(#a)" filter="url(#b)" opacity=".85"/><rect width="800" height="680" filter="url(#noise)" opacity=".9"/></svg>`,
@@ -129,7 +144,7 @@ function normalize(d){if(!d||!Array.isArray(d.collections)||!Array.isArray(d.pag
  }
  return d;}
 let db=normalize(seed())
-let ui={section:'dashboard',collection:'projects',record:'p-balkan',page:'home',template:'project-detail',component:'contact-cta',asset:'field',mode:'table',node:null,search:'',format:'all',tableLayout:'table',sample:'p-balkan',jsonMessage:'',notice:'',draftSection:null};
+let ui={section:'dashboard',collection:'projects',record:'p-balkan',page:'home',template:'project-detail',component:'contact-cta',asset:'field',mode:'table',node:null,search:'',format:'all',tableLayout:'table',sample:'p-balkan',jsonMessage:'',notice:'',draftSection:null,gridEdit:false,gridUndo:null};
 let jsonDirty=false;
 const coll=()=>db.collections.find(c=>c.id===ui.collection);
 const rec=()=>coll()?.records.find(r=>r.id===ui.record);
@@ -149,7 +164,7 @@ function persist(){
   $('#saved').textContent='JSON FILE · SAVED';
  }).catch(err=>{$('#saved').textContent='SAVE FAILED · '+err.message;console.error('File save error:',err)});
 }
-function choose(section,id){ui.section=section;ui.node=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'};$('#sidebar').classList.remove('show');renderAll()}
+function choose(section,id){ui.section=section;ui.node=null;ui.gridUndo=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'};$('#sidebar').classList.remove('show');renderAll()}
 function visibleModes(){if(ui.section==='collection')return ['table','settings','json'];if(ui.section==='record')return ['preview','fields','json'];if(['page','template','component'].includes(ui.section))return ['design','preview','json'];if(ui.section==='assets')return ['grid','table','json'];return []}
 function currentScope(){if(ui.section==='page')return page();if(ui.section==='template')return tpl();if(ui.section==='component')return component();return null}
 function currentBlocks(){return currentScope()?.blocks||[]}
@@ -159,7 +174,103 @@ function renderAll(){renderSide();renderTop();renderWork();renderInspector()}
 function renderSide(){let nav=(name,icon,section,id='',meta='')=>`<button class="nav-item ${ui.section===section&&(id===''||id===(section==='page'?ui.page:section==='template'?ui.template:section==='component'?ui.component:ui.collection))?'active':''}" data-act="navigate" data-section="${section}" data-id="${e(id)}">${ic(icon)}<span class="label">${e(name)}</span>${meta?`<span class="count">${e(meta)}</span>`:''}</button>`;$('#sidebarContent').innerHTML=`<div class="side-head"><div class="upper">WORKSPACE / LOCAL</div><strong>${e(db.site.name)}</strong></div><div class="nav-group"><div class="nav-label">Workspace</div>${nav('Overview','home','dashboard')}</div><div class="nav-group"><div class="nav-label">Pages <button class="nav-add" data-act="new-page" title="Add page">${ic('add')}</button></div>${db.pages.map(p=>nav(p.title,'page','page',p.id)).join('')}</div><div class="nav-group"><div class="nav-label">Collections <button class="nav-add" data-act="new-collection" title="Add collection">${ic('add')}</button></div>${db.collections.map(c=>nav(c.name,'table','collection',c.id,String(c.records.length))).join('')}</div><div class="nav-group"><div class="nav-label">Structure</div>${nav('Templates','template','template','',String(db.templates.length))}${nav('Components','blocks','component','',String(db.components.length))}${nav('Image library','image','assets','',String(db.assets.length))}</div><div class="nav-group"><div class="nav-label">Data</div>${nav('All JSON','code','data')}</div>`}
 function renderTop(){const names={dashboard:'Overview',page:page()?.title||'Page',collection:coll()?.name||'Collection',record:rec()?.title||'Record',template:tpl()?.name||'Templates',component:component()?.name||'Components',assets:'Assets',data:'All site data'};let section=ui.section==='record'?'Collection / '+(coll()?.name||''):ui.section==='template'?'Templates':ui.section==='component'?'Components':ui.section==='assets'?'Library':'Workspace';$('#breadcrumbs').innerHTML=`<span>TA</span><span class="sep">/</span><span>${e(section)}</span><span class="sep">/</span><strong>${e(names[ui.section])}</strong>`;$('#modeTabs').innerHTML=visibleModes().map(mode=>`<button class="${ui.mode===mode?'active':''}" data-act="mode" data-mode="${mode}">${mode[0].toUpperCase()+mode.slice(1)}</button>`).join('')}
 function titleBar(eyebrow,title,description,buttons=''){return `<div class="page-heading"><div><div class="upper" style="margin-bottom:8px">${eyebrow}</div><h1 class="section-title">${e(title)}</h1><p class="section-lead">${e(description)}</p></div><div class="heading-buttons">${buttons}</div></div>`}
-function renderWork(){let body='';if(ui.section==='dashboard')body=dashboard();else if(ui.section==='collection')body=collectionView();else if(ui.section==='record')body=recordView();else if(ui.section==='page'||ui.section==='template'||ui.section==='component')body=designView();else if(ui.section==='assets')body=assetView();else if(ui.section==='data')body=jsonView(db,'all');$('#workbody').innerHTML=body;}
+function renderWork(){let body='';if(ui.section==='dashboard')body=dashboard();else if(ui.section==='collection')body=collectionView();else if(ui.section==='record')body=recordView();else if(ui.section==='page'||ui.section==='template'||ui.section==='component')body=designView();else if(ui.section==='assets')body=assetView();else if(ui.section==='data')body=jsonView(db,'all');const viewport=$('#workbody'),before=viewport.scrollTop;
+ viewport.innerHTML=body;viewport.scrollTop=before;
+ if(ui.gridEdit&&ui.mode==='design'&&['page','template','component'].includes(ui.section))
+   requestAnimationFrame(attachGridOverlay);
+}
+
+/* M8.1: overlay the exact resolved grid of the selected Card or selected
+   child's parent. The overlay is temporary editor chrome, never saved. */
+function attachGridOverlay(){
+ const found=ui.node?findNode(ui.node):null;
+ if(!found || ui.mode!=='design' || !ui.gridEdit)return;
+ const selectedChild=found.node.type==='card'?null:found.node;
+ const parent=selectedChild?found.parent:found.node;
+ if(!parent||parent.type!=='card'||parent.source||parent.reference)return;
+ const target=[...document.querySelectorAll('.editor-shell [data-node-id]')]
+   .find(el=>el.dataset.nodeId===parent.id);
+ if(!target)return;
+ const cols=parent.columns,rows=parent.rows;
+ if(!Number.isInteger(cols)||!Number.isInteger(rows)||cols<1||rows<1||cols>64||rows>64)return;
+ const style=getComputedStyle(target);
+ const overlay=document.createElement('div');
+ overlay.className='m8-grid-overlay';
+ overlay.dataset.m8Grid=parent.id;
+ target.classList.add('m8-grid-target');
+ overlay.style.left=style.paddingLeft;
+ overlay.style.top=style.paddingTop;
+ overlay.style.right=style.paddingRight;
+ overlay.style.bottom=style.paddingBottom;
+ overlay.style.columnGap=style.columnGap;
+ overlay.style.rowGap=style.rowGap;
+ overlay.style.gridTemplateColumns=style.gridTemplateColumns;
+ overlay.style.gridTemplateRows=style.gridTemplateRows;
+ for(let y=1;y<=rows;y++)for(let x=1;x<=cols;x++){
+   const cell=document.createElement('span');
+   cell.className='m8-grid-cell';
+   cell.dataset.x=String(x);cell.dataset.y=String(y);
+   const a=selectedChild?.area;
+   if(a&&x>=a.x1&&x<a.x2&&y>=a.y1&&y<a.y2)cell.classList.add('m8-selected');
+   overlay.append(cell);
+ }
+ target.append(overlay);
+ let start=null,last=null,moved=false,pointerId=null;
+ const parseSizes=(value,n,available,gap)=>{
+   const parts=value.trim().split(/\s+/).map(x=>Number.parseFloat(x)).filter(Number.isFinite);
+   return parts.length===n?parts:Array(n).fill(Math.max(1,(available-gap*(n-1))/n));
+ };
+ const coordAt=event=>{
+   const bounds=overlay.getBoundingClientRect(),css=getComputedStyle(overlay);
+   const gx=Number.parseFloat(css.columnGap)||0,gy=Number.parseFloat(css.rowGap)||0;
+   const widths=parseSizes(css.gridTemplateColumns,cols,bounds.width,gx);
+   const heights=parseSizes(css.gridTemplateRows,rows,bounds.height,gy);
+   return cellAtPixel(event.clientX-bounds.left,event.clientY-bounds.top,widths,heights,gx,gy);
+ };
+ const updateDraft=()=>{
+   const area=areaFromDrag(start,last,cols,rows);
+   for(const el of overlay.children){
+     const x=Number(el.dataset.x),y=Number(el.dataset.y);
+     el.classList.toggle('m8-drag',Boolean(area&&x>=area.x1&&x<area.x2&&y>=area.y1&&y<area.y2));
+   }
+ };
+ overlay.addEventListener('click',event=>event.stopPropagation());
+ overlay.addEventListener('pointerdown',event=>{
+   if(event.button!==0)return;
+   event.preventDefault();event.stopPropagation();
+   start=coordAt(event);last=start;moved=false;pointerId=event.pointerId;
+   overlay.setPointerCapture(event.pointerId);updateDraft();
+ });
+ overlay.addEventListener('pointermove',event=>{
+   if(pointerId!==event.pointerId||!start)return;
+   const at=coordAt(event);
+   if(at.x!==start.x||at.y!==start.y)moved=true;
+   last=at;updateDraft();
+ });
+ overlay.addEventListener('pointercancel',()=>{
+   start=null;last=null;moved=false;pointerId=null;updateDraft();
+ });
+ overlay.addEventListener('pointerup',event=>{
+   if(pointerId!==event.pointerId||!start)return;
+   event.preventDefault();event.stopPropagation();
+   last=coordAt(event);
+   if(last.x!==start.x||last.y!==start.y)moved=true;
+   if(!selectedChild){
+     const picked=childAtCell(parent.children,start);
+     if(picked){ui.node=picked.id;renderWork();renderInspector();showInspector();}
+   }else{
+     const next=moved?areaFromDrag(start,last,cols,rows):
+       moveAreaToCell(selectedChild.area,start,cols,rows);
+     if(next&&JSON.stringify(next)!==JSON.stringify(selectedChild.area)){
+       ui.gridUndo={nodeId:selectedChild.id,area:{...selectedChild.area}};
+       selectedChild.area=next;
+       persist();renderWork();renderInspector();
+     }
+   }
+   start=null;last=null;pointerId=null;moved=false;
+ });
+}
+
 function dashboard(){let count=db.collections.reduce((a,c)=>a+c.records.length,0);return `<div class="content-wrap">${titleBar('STUDIO / OVERVIEW','Your content, structured.','Pages, records and metadata live in JSON; images are stored as files.',`<button class="btn" data-act="navigate" data-section="page" data-id="home">Open website ${ic('arrow')}</button>`)}<div class="stats"><div class="stat"><span class="upper">Records</span><b>${count}</b><span class="muted">across ${db.collections.length} collections</span></div><div class="stat"><span class="upper">Generated pages</span><b>${count}</b><span class="muted">one route per record</span></div><div class="stat"><span class="upper">Design system</span><b>${db.templates.length+db.components.length}</b><span class="muted">templates + components</span></div></div><div class="dashboard-grid"><div class="panel"><div class="panel-head">Collections <button class="btn sm" data-act="new-collection">${ic('add')} New</button></div>${db.collections.map(c=>`<button class="panel-row" data-act="navigate" data-section="collection" data-id="${e(c.id)}">${ic('table')} ${e(c.name)} <span class="summary">${c.records.length} records ↗</span></button>`).join('')}</div><div class="panel"><div class="panel-head">Authoring <span class="upper">FILE FIRST</span></div><button class="panel-row" data-act="navigate" data-section="page" data-id="home">${ic('page')} Design landing page <span class="summary">Canvas ↗</span></button><button class="panel-row" data-act="navigate" data-section="template" data-id="project-detail">${ic('template')} Edit a shared template <span class="summary">Visual ↗</span></button><button class="panel-row" data-act="navigate" data-section="collection" data-id="posts">${ic('table')} Write a post <span class="summary">Table ↗</span></button><button class="panel-row" data-act="navigate" data-section="assets">${ic('image')} Manage image metadata <span class="summary">Library ↗</span></button></div></div><p class="help" style="margin-top:20px">JSON stores content and asset metadata; uploaded images live under assets/uploads/ · Back up both files and JSON.</p></div>`}
 function valText(v){return Array.isArray(v)?v.join(', '):typeof v==='boolean'?String(v):String(v??'')}
 function fieldCell(c,r,f){let v=r[f.key],id=e(r.id),k=e(f.key);if(f.type==='boolean')return `<input type="checkbox" data-cell="1" data-id="${id}" data-key="${k}" ${v?'checked':''} aria-label="${e(f.label)}">`;if(f.type==='select')return `<select class="cell" data-cell="1" data-id="${id}" data-key="${k}">${(f.options||'').split(',').map(x=>x.trim()).concat(!((f.options||'').split(',').map(x=>x.trim()).includes(String(v||'')))?[String(v||'')]:[]).filter(Boolean).map(x=>`<option value="${e(x)}" ${x===v?'selected':''}>${e(x)}</option>`).join('')}</select>`;if(f.type==='asset')return `<select class="cell" data-cell="1" data-id="${id}" data-key="${k}"><option value="">— none —</option>${db.assets.map(a=>`<option value="${e(a.id)}" ${v===a.id?'selected':''}>${e(a.name)}</option>`).join('')}</select>`;return `<input class="cell ${f.key==='title'?'long':''} ${['date','year'].includes(f.key)?'short':''}" data-cell="1" data-id="${id}" data-key="${k}" type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" value="${e(valText(v))}" title="${e(f.label)}" placeholder="—">`}
@@ -170,7 +281,7 @@ function templateFor(c,r){let id=c?.formatTemplates?.[r?.[c.formatField]]||c?.de
 // Shared rendering contract: the preview and the published build import the same module.
 function renderBlocks(blocks,ctx=null,design=false){return renderSharedBlocks(blocks,ctx,db,{design,selectedId:ui.node,topLevel:true})}
 function siteFrame(content,design=false){let route='/';if(ui.section==='record'){const c=coll(),r=rec();if(c&&r)route=c.base+'/'+r.slug+'/'}else if(ui.section==='page')route=page()?.slug||'/';else if(ui.section==='template'){const c=db.collections.find(c=>c.id===tpl()?.collection),r=c?.records.find(r=>r.id===ui.sample);if(c&&r)route=c.base+'/'+r.slug+'/'}return renderSiteFrame(content,db,{design,route})}
-function designView(){let isT=ui.section==='template',isC=ui.section==='component',s=currentScope();if(!s)return `<div class="content-wrap"><div class="empty">Nothing selected.</div></div>`;if(ui.mode==='json')return jsonView(s,ui.section);let context=null;if(isT){let c=db.collections.find(c=>c.id===s.collection);context=c?.records.find(r=>r.id===ui.sample)||c?.records[0];}let design=ui.mode==='design';let pick=isT?db.templates:isC?db.components:db.pages;let modeText=isT?'TEMPLATE':isC?'COMPONENT':'CUSTOM PAGE';return `<div class="editor-shell"><div class="editor-meta"><div><div class="upper" style="margin-bottom:6px">${modeText} / ${isT?'AUTO GENERATED':isC?'REUSABLE':'UNIQUE'}</div><h1>${e(s.name||s.title)}</h1><small>${e(isT?db.collections.find(c=>c.id===s.collection)?.base+'/{slug}':isC?'Any page / template':s.slug)} · ${s.blocks.length} root objects</small></div><div class="editor-tools">${isT?`<select class="control" id="samplePicker" style="max-width:160px;font-size:11px" title="Preview with record">${(db.collections.find(c=>c.id===s.collection)?.records||[]).map(r=>`<option value="${e(r.id)}" ${context?.id===r.id?'selected':''}>${e(r.title)}</option>`).join('')}</select>`:''}${isT||isC?`<select class="control" id="scopePicker" style="max-width:160px;font-size:11px">${pick.map(x=>`<option value="${e(x.id)}" ${x.id===s.id?'selected':''}>${e(x.name||x.title)}</option>`).join('')}</select><button class="btn sm" data-act="new-${isT?'template':'component'}">${ic('add')}</button>`:''}</div></div>${siteFrame(renderBlocks(s.blocks,context,design),design)}${design?`<div class="add-area"><button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section / object</button></div>`:''}${!isC?`<div class="help" style="margin:17px 3px">${isT?'Bound values like {{title}} resolve against the selected sample record. Editing the template changes every generated page using it.':'All repeatable content comes from Collections. Query blocks display matching records using a shared component.'}</div>`:''}</div>`}
+function designView(){let isT=ui.section==='template',isC=ui.section==='component',s=currentScope();if(!s)return `<div class="content-wrap"><div class="empty">Nothing selected.</div></div>`;if(ui.mode==='json')return jsonView(s,ui.section);let context=null;if(isT){let c=db.collections.find(c=>c.id===s.collection);context=c?.records.find(r=>r.id===ui.sample)||c?.records[0];}let design=ui.mode==='design';let pick=isT?db.templates:isC?db.components:db.pages;let modeText=isT?'TEMPLATE':isC?'COMPONENT':'CUSTOM PAGE';return `<div class="editor-shell"><div class="editor-meta"><div><div class="upper" style="margin-bottom:6px">${modeText} / ${isT?'AUTO GENERATED':isC?'REUSABLE':'UNIQUE'}</div><h1>${e(s.name||s.title)}</h1><small>${e(isT?db.collections.find(c=>c.id===s.collection)?.base+'/{slug}':isC?'Any page / template':s.slug)} · ${s.blocks.length} root objects</small></div><div class="editor-tools">${design?'<button class="btn sm '+(ui.gridEdit?'dark':'')+'" data-act="toggle-grid" aria-pressed="'+ui.gridEdit+'" title="Show the selected Card grid and edit child areas">▦ '+(ui.gridEdit?'Grid editing on':'Edit grid')+'</button>':''}${design&&ui.gridUndo?'<button class="btn sm" data-act="grid-undo" title="Undo last grid placement">↶ Undo area</button>':''}${isT?`<select class="control" id="samplePicker" style="max-width:160px;font-size:11px" title="Preview with record">${(db.collections.find(c=>c.id===s.collection)?.records||[]).map(r=>`<option value="${e(r.id)}" ${context?.id===r.id?'selected':''}>${e(r.title)}</option>`).join('')}</select>`:''}${isT||isC?`<select class="control" id="scopePicker" style="max-width:160px;font-size:11px">${pick.map(x=>`<option value="${e(x.id)}" ${x.id===s.id?'selected':''}>${e(x.name||x.title)}</option>`).join('')}</select><button class="btn sm" data-act="new-${isT?'template':'component'}">${ic('add')}</button>`:''}</div></div>${siteFrame(renderBlocks(s.blocks,context,design),design)}${design?`<div class="add-area"><button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section / object</button></div>`:''}${!isC?`<div class="help" style="margin:17px 3px">${isT?'Bound values like {{title}} resolve against the selected sample record. Editing the template changes every generated page using it.':'All repeatable content comes from Collections. Query blocks display matching records using a shared component.'}</div>`:''}</div>`}
 function recordFieldHtml(f,r){let v=r[f.key],k=e(f.key);if(f.type==='boolean')return `<div class="field" style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-record-field="${k}" ${v?'checked':''} id="fld_${k}"><label for="fld_${k}" style="margin:0">${e(f.label)}</label></div>`;if(f.type==='select')return `<div class="field"><label>${e(f.label)}</label><select class="control" data-record-field="${k}">${(f.options||'').split(',').map(x=>x.trim()).map(x=>`<option value="${e(x)}" ${v===x?'selected':''}>${e(x)}</option>`).join('')}</select></div>`;if(f.type==='asset')return `<div class="field"><label>${e(f.label)}</label><select class="control" data-record-field="${k}"><option value="">— no image —</option>${db.assets.map(a=>`<option value="${e(a.id)}" ${v===a.id?'selected':''}>${e(a.name)}</option>`).join('')}</select></div>`;if(f.type==='textarea')return `<div class="field"><label>${e(f.label)}</label><textarea class="control tall" data-record-field="${k}" rows="${f.key==='body'?'13':'4'}">${e(valText(v))}</textarea></div>`;return `<div class="field"><label>${e(f.label)}</label><input class="control" data-record-field="${k}" type="${f.type==='date'?'date':f.type==='number'?'number':'text'}" value="${e(valText(v))}"></div>`}
 function inputField(label,val,scope,key,type='text'){return `<div class="field"><label>${e(label)}</label><input class="control" data-edit="${e(scope)}" data-key="${e(key)}" type="${type}" value="${e(valText(val))}"></div>`}
 function assetView(){if(ui.mode==='json')return jsonView(db.assets,'assets');let assets=db.assets.filter(a=>!ui.search||(a.name+' '+a.tags.join(' ')).toLowerCase().includes(ui.search.toLowerCase()));if(ui.mode==='table')return `<div class="content-wrap">${titleBar('LIBRARY / ASSETS','Image properties','Files are stored separately from editable image metadata.',`<button class="btn dark" data-act="upload">${ic('add')} Upload</button>`)}<div class="table-wrap"><table><thead><tr><th>IMAGE</th><th>NAME</th><th>ALT TEXT</th><th>CAPTION</th><th>CREDIT</th><th>TAGS</th></tr></thead><tbody>${assets.map(a=>`<tr><td><button data-act="asset-select" data-id="${e(a.id)}"><img class="small-thumb" src="${e(src(a))}" alt=""></button></td>${['name','alt','caption','credit','tags'].map(k=>`<td><input class="cell long" data-asset-cell="${k}" data-id="${e(a.id)}" value="${e(valText(a[k]))}"></td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;return `<div class="content-wrap">${titleBar('LIBRARY / ASSETS','Image library','Uploaded image files, descriptions, captions, tags and custom properties.',`<button class="btn" data-act="new-asset">${ic('add')} Reference</button><button class="btn dark" data-act="upload">${ic('add')} Upload image</button>`)}<div class="table-toolbar"><input class="search" id="assetSearch" placeholder="Search images and tags…" value="${e(ui.search)}"><span class="upper">${assets.length} ASSETS · PNG / JPEG / WEBP / GIF · MAX 12 MB</span></div><div class="asset-grid">${assets.map(a=>`<button class="asset-card ${ui.asset===a.id?'selected':''}" data-act="asset-select" data-id="${e(a.id)}"><img src="${e(src(a))}" alt="${e(a.alt||'')}"><div class="asset-info"><strong>${e(a.name)}</strong><small>${e(a.tags.join(' / '))}</small></div></button>`).join('')}</div></div>`}
@@ -193,6 +304,7 @@ else {let n=found.node;h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+`
  if(n.type==='image')h+=nodeField('Image source or {{cover}}','source',n.source)+nodeField('Fit','fit',n.fit,[['cover','Cover'],['contain','Contain']])+nodeField('Show caption','caption',!!n.caption,[['true','Yes'],['false','No']]);
  if(n.type!=='card')h+=nodeField('Overflow','overflow',n.overflow||'clip',[['clip','Clip to grid cell (default)'],['scroll','Scroll inside item']]);
  if(found.parent?.type==='card'){
+ h+='<p class="m8-grid-help">Canvas: select this Item or Card, enable <strong>Edit grid</strong>, then drag across cells to set its new area. Click a cell to move while retaining its current span.</p>';
  const a=n.area||{x1:1,y1:1,x2:2,y2:2};
  h+=`<div class="rule"></div><div class="upper">GRID AREA IN PARENT CARD</div>`+
  nodeField('X1 · start line','area.x1',a.x1)+nodeField('Y1 · start line','area.y1',a.y1)+
@@ -288,6 +400,12 @@ function setRecordValue(r,key,value,field){if(field?.type==='boolean')value=Bool
 function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'navigate':{let sec=btn.dataset.section;if(sec==='template')choose('template',id||ui.template);else if(sec==='component')choose('component',id||ui.component);else choose(sec,id);break}
  case'mode':ui.mode=btn.dataset.mode;ui.jsonMessage='';renderTop();renderWork();renderInspector();break;
+ case'toggle-grid':ui.gridEdit=!ui.gridEdit;renderWork();renderInspector();break;
+ case'grid-undo':{
+   const old=ui.gridUndo,found=old?findNode(old.nodeId):null;
+   if(found&&old.area){found.node.area={...old.area};ui.node=old.nodeId;persist();ui.gridUndo=null;renderWork();renderInspector();}
+   break;
+ }
  case'new-page':createModal('page');break;
  case'new-collection':createModal('collection');break;
  case'new-template':ui.draftSection=btn.dataset.collection||coll()?.id||db.collections[0]?.id;createModal('template');break;
