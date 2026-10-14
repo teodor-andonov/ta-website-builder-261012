@@ -222,16 +222,41 @@ const page=()=>db.pages.find(p=>p.id===ui.page);
 const asset=()=>db.assets.find(a=>a.id===ui.asset);
 const getAsset=id=>db.assets.find(a=>a.id===id);
 const src=a=>assetSrc(a);
-let saveQueue=Promise.resolve();
-function persist(){
- const snapshot=JSON.stringify(db);
- $('#saved').textContent='SAVING TO FILE…';
- saveQueue=saveQueue.catch(()=>{}).then(async ()=>{
-  const response=await fetch('/api/data',{method:'PUT',headers:{'Content-Type':'application/json'},body:snapshot});
-  if(!response.ok){const result=await response.json().catch(()=>({}));throw Error(result.error||'Save failed: '+response.status)}
-  $('#saved').textContent='JSON FILE · SAVED';
- }).catch(err=>{$('#saved').textContent='SAVE FAILED · '+err.message;console.error('File save error:',err)});
+// Keep one ordered local write queue, including asset uploads. Never overwrite
+// another tab's version silently; on conflict retain the unsaved in-memory JSON
+// for manual export and reconciliation instead of retrying with stale data.
+let saveQueue=Promise.resolve(),savedRevision=null,saveBlocked=false;
+function markSaveFailure(error){
+ saveBlocked=true;
+ const indicator=$('#saved');
+ indicator.textContent='UNSAVED CHANGES · EXPORT JSON';
+ indicator.title=error.message+' — Export JSON before reloading; the file on disk was not overwritten.';
+ console.error('File save stopped:',error);
 }
+function persist(){
+ if(saveBlocked)return saveQueue;
+ $('#saved').textContent='SAVING TO FILE…';
+ saveQueue=saveQueue.then(async ()=>{
+  if(saveBlocked)return;
+  try{
+   // Snapshot at execution time so edits made while an image uploads are not
+   // saved from an older copy that would drop newly uploaded metadata.
+   const response=await fetch('/api/data',{method:'PUT',headers:{
+    'Content-Type':'application/json','If-Match':savedRevision
+   },body:JSON.stringify(db)});
+   if(!response.ok){const result=await response.json().catch(()=>({}));throw Error(result.error||'Save failed: '+response.status)}
+   const nextRevision=response.headers.get('etag');
+   if(!nextRevision)throw Error('Server did not return a save revision');
+   savedRevision=nextRevision;
+   $('#saved').textContent='JSON FILE · SAVED';
+   $('#saved').title='';
+  }catch(error){markSaveFailure(error)}
+ });
+ return saveQueue;
+}
+window.addEventListener('beforeunload',event=>{
+ if(saveBlocked){event.preventDefault();event.returnValue='';}
+});
 function choose(section,id){ui.section=section;ui.node=null;ui.structureCollapsed.clear();ui.areaDraft=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'};$('#sidebar').classList.remove('show');renderAll()}
 function visibleModes(){if(ui.section==='collection')return ['table','settings','json'];if(ui.section==='record')return ['preview','fields','json'];if(['page','template','component'].includes(ui.section))return ['design','preview','json'];if(ui.section==='assets')return ['grid','table','json'];return []}
 function currentScope(){if(ui.section==='page')return page();if(ui.section==='template')return tpl();if(ui.section==='component')return component();return null}
@@ -528,29 +553,45 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'export':exportJSON();break;
  }}
 function showInspector(){$('#inspector').classList.add('show')}
-async function importImages(files){
+function importImages(files){
+ const job=saveQueue.then(()=>runImageImport(files));
+ // Serialise uploads with JSON writes, while preserving a rejecting job for UI.
+ saveQueue=job.catch(()=>{});
+ return job;
+}
+async function runImageImport(files){
  const allowed=new Set(['image/png','image/jpeg','image/webp','image/gif']);
- await saveQueue;
- if($('#saved').textContent.includes('FAILED'))throw Error('Save the pending edits before uploading assets.');
+ if(saveBlocked||!savedRevision)throw Error('Unsaved changes. Export JSON before reloading; uploads are paused.');
  const errors=[];let added=0;
  for(const f of files){
   if(!allowed.has(f.type)){errors.push(`${f.name}: only PNG, JPEG, WebP and GIF are supported`);continue}
   if(f.size>12*1024*1024){errors.push(`${f.name}: exceeds 12 MB`);continue}
   $('#saved').textContent=`UPLOADING IMAGE ${added+1}…`;
   try{
-   const response=await fetch('/api/assets?filename='+encodeURIComponent(f.name),{method:'POST',headers:{'Content-Type':f.type},body:f});
+   const response=await fetch('/api/assets?filename='+encodeURIComponent(f.name),{
+    method:'POST',headers:{'Content-Type':f.type,'If-Match':savedRevision},body:f
+   });
    const result=await response.json();
-   if(!response.ok)throw Error(result.error||`Upload failed (${response.status})`);
+   if(!response.ok){
+    const error=Error(result.error||`Upload failed (${response.status})`);
+    if(response.status===409||response.status===428)markSaveFailure(error);
+    throw error;
+   }
+   const nextRevision=response.headers.get('etag');
+   if(!nextRevision){markSaveFailure(Error('Upload response lacked a file revision'));throw Error('Upload state uncertain: export JSON before reloading');}
+   savedRevision=nextRevision;
    db.assets.push(result.asset);
    ui.asset=result.asset.id;
    added++;
-  }catch(err){errors.push(`${f.name}: ${err.message}`)}
+  }catch(err){
+   errors.push(`${f.name}: ${err.message}`);
+   if(saveBlocked)break;
+  }
  }
- $('#saved').textContent=errors.length?'UPLOAD COMPLETED WITH ERRORS':'JSON FILE · SAVED';
+ if(!saveBlocked)$('#saved').textContent=errors.length?'UPLOAD COMPLETED WITH ERRORS':'JSON FILE · SAVED';
  if(added){choose('assets',ui.asset);showInspector()}
- if(errors.length)alert('Could not import:\n'+errors.join('\n'));
+ if(errors.length)alert('Could not import:\\n'+errors.join('\\n'));
 }
-
 
 
 function areaRect(start,end){
@@ -816,7 +857,10 @@ window.__TA_STUDIO__={getData:()=>clone(db),reset:()=>{db=normalize(seed());pers
 try {
  const response=await fetch('/api/data',{cache:'no-store'});
  if(!response.ok)throw Error('Loading content failed ('+response.status+')');
- db=normalize(await response.json());
+ const payload=await response.json();
+ savedRevision=response.headers.get('etag');
+ if(!savedRevision)throw Error('Local server did not provide a file revision');
+ db=normalize(payload);
  $('#saved').textContent='JSON FILE · LOADED';
 } catch(err){
  $('#saved').textContent='LOAD FAILED';
