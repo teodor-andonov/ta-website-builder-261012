@@ -67,6 +67,8 @@ const server = http.createServer(async (req,res)=>{
     if(req.method==='GET' && pathname==='/src/public.css')
       return respond(res,200,await readFile(path.join(root,'src','public.css')),'text/css; charset=utf-8');
     // Explicit helper allowlist for Studio-only tree editing logic.
+    if(req.method==='GET' && pathname==='/src/editor-history.mjs')
+      return respond(res,200,await readFile(path.join(root,'src','editor-history.mjs')),'text/javascript; charset=utf-8');
     if(req.method==='GET' && pathname==='/src/tree-editor.mjs')
       return respond(res,200,await readFile(path.join(root,'src','tree-editor.mjs')),'text/javascript; charset=utf-8');
     // Allow the editor to import the *same* ESM renderer that the static build uses.
