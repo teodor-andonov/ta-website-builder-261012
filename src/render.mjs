@@ -140,7 +140,10 @@ function renderBlock(node, context, data, options, depth) {
       const nodes=component?.blocks||[];
       card={...card,columns:1,rows:Math.max(1,nodes.length)};
       settings=gridOptions(card,options);
-      inner=renderBlocks(nodes.map((child,i)=>({...child,area:{x1:1,y1:i+1,x2:2,y2:i+2}})),context,data,{...settings,design:false},depth+1);
+      const stack=options.referenceStack||[];
+      inner=stack.includes(card.reference)?
+        '<div class="item item-placeholder placeholder">Circular component reference</div>':
+        renderBlocks(nodes.map((child,i)=>({...child,area:{x1:1,y1:i+1,x2:2,y2:i+2}})),context,data,{...settings,design:false,referenceStack:[...stack,card.reference]},depth+1);
     }else{
       inner=renderBlocks(card.children,context,data,settings,depth+1);
     }
