@@ -56,7 +56,7 @@ test('inline Studio JavaScript is syntactically valid as an ES module',async()=>
  const {tmpdir}=await import('node:os');
  const {join}=await import('node:path');
  const studio=await readFile(new URL('../studio/index.html',import.meta.url),'utf8');
- const script=studio.match(/<script type="module">([\\s\\S]*?)<\\/script>/)?.[1];
+ const script=studio.split('<script type="module">')[1]?.split('</script>')[0];
  assert.ok(script,'Studio module script missing');
  const dir=await mkdtemp(join(tmpdir(),'ta-studio-parse-'));
  try{
