@@ -30,6 +30,22 @@ jobs:
           test -f dist/posts/designing-with-code/index.html
           test -f dist/work/balkan-house/index.html
           test -f dist/site.css
+      - name: Verify one-command localhost preview serves public routes
+        run: |
+          set -euo pipefail
+          TA_PREVIEW_PORT=4173 npm run preview > /tmp/ta-preview-local.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" || true' EXIT
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:4173/ -o /tmp/ta-preview-home.html; then break; fi
+            sleep 1
+          done
+          test -s /tmp/ta-preview-home.html
+          grep -q 'card card-page' /tmp/ta-preview-home.html
+          curl -fsS http://127.0.0.1:4173/work/ | grep -q 'Selected work'
+          curl -fsS http://127.0.0.1:4173/posts/ | grep -q 'Notes, news'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/studio/)" = "404"
+          echo "Local preview serves generated public routes and excludes editor."
       - name: Verify GitHub Pages project-path build
         env:
           TA_BASE_PATH: /ta-website-builder-261012/
