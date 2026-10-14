@@ -87,6 +87,18 @@ try{
  await sleep(600);
  const again=titleIn(JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8')));
  if(again.area.y1!==2||again.area.y2!==6)throw Error('Atomic rectangle restore failed');
+
+ const pickerPoints=await evaluate('(()=>{const grid=document.querySelector("#areaGrid");grid.scrollIntoView({block:"center"});const point=y=>{const cell=grid.querySelector("[data-area-x=\\"1\\"][data-area-y=\\""+y+"\\"]");if(!cell)return null;const r=cell.getBoundingClientRect();return {x:Math.round(r.left+r.width/2),y:Math.round(r.top+r.height/2)}};return {a:point(3),b:point(4)}})()');
+ if(!pickerPoints?.a||!pickerPoints?.b)throw Error('Grid picker cell coordinates missing');
+ await command('Input.dispatchMouseEvent',{type:'mouseMoved',...pickerPoints.a});
+ await command('Input.dispatchMouseEvent',{type:'mousePressed',...pickerPoints.a,button:'left',clickCount:1});
+ await command('Input.dispatchMouseEvent',{type:'mouseMoved',...pickerPoints.b,buttons:1});
+ await command('Input.dispatchMouseEvent',{type:'mouseReleased',...pickerPoints.b,button:'left',clickCount:1});
+ await sleep(650);
+ const pickerSaved=titleIn(JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8')));
+ if(pickerSaved.area.y1!==3||pickerSaved.area.y2!==5)throw Error('Mini picker pointer drag did not commit a rectangle');
+ await evaluate('(()=>{for(const [key,value] of Object.entries({x1:1,y1:2,x2:2,y2:6}))document.querySelector("[data-area-value="+key+"]").value=String(value);document.querySelector("[data-act=apply-area]").click();return true})()');
+ await sleep(650);
  const reparented=await evaluate('(()=>{const source=document.querySelector(".structure-handle[data-drag-id=m6-hero-title]"),row=document.querySelector(".structure-row[data-row-id=m6-hero-graphic]");if(!source||!row)return false;row.scrollIntoView({block:"center"});const r=row.getBoundingClientRect(),dt=new DataTransfer();source.dispatchEvent(new DragEvent("dragstart",{bubbles:true,cancelable:true,dataTransfer:dt}));row.dispatchEvent(new DragEvent("dragover",{bubbles:true,cancelable:true,dataTransfer:dt,clientY:r.top+r.height/2}));row.dispatchEvent(new DragEvent("drop",{bubbles:true,cancelable:true,dataTransfer:dt,clientY:r.top+r.height/2}));return true})()');
  if(!reparented)throw Error('Tree drag-and-drop controls missing');
  await sleep(750);
