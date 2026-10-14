@@ -59,3 +59,8 @@ See `docs/IMPLEMENTATION_PLAN.md` for sequencing.
 - Repeated collections are **Cards with a data source**, using a reusable record Card template. Every Work and Journal result is itself a Card grouping the image and all metadata Items; never render bare `q-entry` elements or anonymous query rows.
 - Content outside an assigned cell is **clipped by default**. `Item.overflow='scroll'` is optional, uses hidden scrollbar, and chains scrolling to the document. Never reintroduce universal `overflow:auto` on Card children or `overscroll-behavior:contain` that traps wheel scroll over the page.
 - Keep these invariants in the Studio editor, canonical JSON, shared renderer and static output. Reference `docs/M7_CARD_ITEM_DOM.md`.
+
+## Minimum grid divisions and M8 editing
+- Prefer the **smallest number of equal rows/columns** that expresses a Card's actual composition; avoid twelve-column grids when two would do.
+- Visual grid edits must set the selected Card/Item's **own** area in canonical JSON; don't add Block wrappers, create hidden geometry offsets or duplicate the renderer.
+- The new Studio overlay is editor-only and must not ship to GitHub Pages. Preserve selection/inspector sync, explicit bounds, overlap checks and file-backed autosave. Do not merge large UI changes without screenshot review.
