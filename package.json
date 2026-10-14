@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node src/server.mjs",
     "test": "node --test test/*.test.mjs",
-    "build": "node src/build.mjs"
+    "build": "node src/build.mjs",
+    "preview": "node scripts/preview.mjs"
   },
   "engines": {
     "node": ">=20"
