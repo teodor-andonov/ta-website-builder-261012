@@ -232,6 +232,40 @@ try{
  await mkdir(join(root,'screenshots'),{recursive:true});
  const screenshot=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
  await writeFile(join(root,'screenshots','m8-structure-editor.png'),Buffer.from(screenshot.data,'base64'));
+ // Another browser tab (or a script) changes the file: Studio must refuse a
+ // stale overwrite, keep local changes in memory and expose Export JSON recovery.
+ const remoteSave=await evaluate(`(async()=>{
+   const current=await fetch('/api/data',{cache:'no-store'});
+   const tag=current.headers.get('etag'),external=await current.json();
+   external.site.name='M8 external tab update';
+   const result=await fetch('/api/data',{method:'PUT',headers:{
+     'Content-Type':'application/json','If-Match':tag
+   },body:JSON.stringify(external)});
+   if(!result.ok)return {error:await result.text()};
+   window.__TA_STUDIO__.navigate('page','home');
+   document.querySelector('#structurePane [data-act="select-node"][data-id="m6-hero-title"]')?.click();
+   const label=document.querySelector('[data-node-prop="label"]');
+   if(!label)return {error:'Label field missing'};
+   label.value='Local unsaved label';
+   label.dispatchEvent(new Event('change',{bubbles:true}));
+   return {externalSaved:true};
+ })()`);
+ if(!remoteSave.externalSaved)throw Error('Conflict simulation failed: '+JSON.stringify(remoteSave));
+ await sleep(650);
+ const conflictUi=await evaluate(`(()=>({
+  message:document.querySelector('#saved')?.textContent,
+  exportAvailable:!!document.querySelector('#exportBtn'),
+  inMemory:window.__TA_STUDIO__.getData().pages.find(p=>p.id==='home').blocks
+    .find(b=>b.id==='m6-hero').children.find(b=>b.id==='m6-hero-copy').children
+    .find(b=>b.id==='m6-hero-title').label
+ }))()`);
+ if(!conflictUi.message.includes('UNSAVED CHANGES')||!conflictUi.exportAvailable||conflictUi.inMemory!=='Local unsaved label')
+   throw Error('Studio did not preserve an exportable unsaved edit: '+JSON.stringify(conflictUi));
+ const disk=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
+ const diskNode=titleIn(disk);
+ if(disk.site.name!=='M8 external tab update'||diskNode.label==='Local unsaved label')
+   throw Error('Conflict overwrote the external file');
+ console.log('M8_SAVE_CONFLICT_OK revision mismatch, file preserved, local JSON export available');
  console.log('M8_STRUCTURE_OK '+JSON.stringify({before,selected,selectedItem,fold,unfold,hidden,shown}));
 }finally{
  ws?.close();chrome?.kill('SIGKILL');server.kill('SIGTERM');
