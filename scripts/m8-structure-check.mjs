@@ -111,6 +111,25 @@ try{
  const restored=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
  if(!restored.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.find(x=>x.id==='m6-hero-copy').children.some(x=>x.id==='m6-hero-title'))throw Error('Structure Undo failed to restore source parent');
  console.log('M8_TREE_AREA_OK atomic four-value Apply, validation, reparent and Undo');
+ // Traverse earlier rectangle edits: reparent undo restored the previous document.
+ const invoke=async name=>{
+   const ok=await evaluate('(()=>{const e=document.querySelector("[data-act='+name+']");if(!e||e.disabled)return false;e.click();return true})()');
+   if(!ok)throw Error('History button unavailable: '+name);
+   await sleep(300);
+   return titleIn(JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8')));
+ };
+ const older=await invoke('undo-structure');
+ if(older.area.y1!==3||older.area.y2!==5)throw Error('First history Undo did not restore the previous area');
+ const oldest=await invoke('undo-structure');
+ if(oldest.area.y1!==2||oldest.area.y2!==6)throw Error('Second history Undo did not restore the older area');
+ const newer=await invoke('redo-structure');
+ if(newer.area.y1!==3||newer.area.y2!==5)throw Error('First Redo did not restore the newer area');
+ const newest=await invoke('redo-structure');
+ if(newest.area.y1!==2||newest.area.y2!==6)throw Error('Second Redo did not return to current area');
+ const noRedo=await evaluate('document.querySelector("[data-act=redo-structure]").disabled');
+ if(!noRedo)throw Error('Redo should be exhausted after the last redo');
+ console.log('M8_HISTORY_OK multi-step Undo x2, Redo x2, persisted JSON matches');
+
  const fold=await evaluate("(()=>{const el=document.querySelector('#structurePane [data-act=\"structure-fold\"][data-id=\"m6-hero\"]');if(!el)return false;el.click();return !document.querySelector('#structurePane [data-id=\"m6-hero-title\"]');})()");
  if(!fold)throw Error('Structure collapsing failed');
  const unfold=await evaluate("(()=>{document.querySelector('#structurePane [data-act=\"structure-fold\"][data-id=\"m6-hero\"]').click();return !!document.querySelector('#structurePane [data-id=\"m6-hero-title\"]');})()");
