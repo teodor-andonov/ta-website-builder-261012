@@ -171,3 +171,45 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .item:not(.item-scroll){overflow:clip}
 :is(.published-site,.editor-shell) .item.item-scroll{overflow:auto;scrollbar-width:none;overscroll-behavior:auto}
 :is(.published-site,.editor-shell) .item.item-scroll::-webkit-scrollbar{display:none}
+
+/* M7 annotated review: the Page, Nav and Main are all true rounded Cards. */
+:is(.published-site,.editor-shell) .card-page,
+:is(.published-site,.editor-shell) .card-nav,
+:is(.published-site,.editor-shell) .card-main,
+:is(.published-site,.editor-shell) .card-footer{
+  border-radius:var(--ta-radius);
+}
+/* The navigation contains direct link Items in its twelve-column grid.
+   No extra inner navigation Card or secondary visible outline. */
+:is(.published-site,.editor-shell) .card-nav>.item-link{
+  align-self:center;justify-self:center;
+  font:500 .78cqw/1.3 var(--ta-mono);
+  text-transform:uppercase;letter-spacing:.03em;
+  color:var(--ta-grey-600);text-decoration:none;
+  padding:.35cqw 0;white-space:nowrap;
+}
+:is(.published-site,.editor-shell) .card-nav>.item-link.is-active{color:var(--ta-ink);font-weight:600}
+:is(.published-site,.editor-shell) .card-nav>.item-logo{grid-column:1/4;grid-row:1}
+:is(.published-site,.editor-shell) .card-work-section>.item,
+:is(.published-site,.editor-shell) .card-journal-section>.item,
+:is(.published-site,.editor-shell) .card-methods-section>.item{align-content:center}
+/* One composed Work/Journal section each: header Items and record-source Card
+   occupy explicit cells of one parent grid, no separate header section. */
+:is(.published-site,.editor-shell) .card-work-section>.card-query,
+:is(.published-site,.editor-shell) .card-journal-section>.card-query{height:100%;min-height:0}
+/* Four direct children of the Ways-of-Working section (intro plus 3 formats).
+   No extra Options grouping Card. */
+:is(.published-site,.editor-shell) .card-approach>.card{height:100%}
+/* Closing composition: three direct text Items and a black Card with one
+   large link Item. This is a deliberate print-style two-column arrangement. */
+:is(.published-site,.editor-shell) .card-closer>.item{align-content:center}
+:is(.published-site,.editor-shell) .card-close-black{align-items:stretch}
+:is(.published-site,.editor-shell) .card-close-black>.item-button{
+  display:grid;place-items:center;
+  height:100%;width:100%;margin:0;padding:var(--ta-pad);
+  background:transparent;color:#fff;white-space:normal;text-align:center;
+  border-radius:var(--ta-radius);
+  font:550 2.5cqw/1.22 var(--ta-mono);letter-spacing:-.055em;
+}
+:is(.published-site,.editor-shell) .card-close-black>.item-button:hover{background:#222222}
+:is(.published-site,.editor-shell) .card-closer>.item-text.heading{font-size:2.65cqw}
