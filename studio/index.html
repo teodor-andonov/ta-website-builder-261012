@@ -166,7 +166,7 @@ function recordFieldHtml(f,r){let v=r[f.key],k=e(f.key);if(f.type==='boolean')re
 function inputField(label,val,scope,key,type='text'){return `<div class="field"><label>${e(label)}</label><input class="control" data-edit="${e(scope)}" data-key="${e(key)}" type="${type}" value="${e(valText(val))}"></div>`}
 function assetView(){if(ui.mode==='json')return jsonView(db.assets,'assets');let assets=db.assets.filter(a=>!ui.search||(a.name+' '+a.tags.join(' ')).toLowerCase().includes(ui.search.toLowerCase()));if(ui.mode==='table')return `<div class="content-wrap">${titleBar('LIBRARY / ASSETS','Image properties','Files are stored separately from editable image metadata.',`<button class="btn dark" data-act="upload">${ic('add')} Upload</button>`)}<div class="table-wrap"><table><thead><tr><th>IMAGE</th><th>NAME</th><th>ALT TEXT</th><th>CAPTION</th><th>CREDIT</th><th>TAGS</th></tr></thead><tbody>${assets.map(a=>`<tr><td><button data-act="asset-select" data-id="${e(a.id)}"><img class="small-thumb" src="${e(src(a))}" alt=""></button></td>${['name','alt','caption','credit','tags'].map(k=>`<td><input class="cell long" data-asset-cell="${k}" data-id="${e(a.id)}" value="${e(valText(a[k]))}"></td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;return `<div class="content-wrap">${titleBar('LIBRARY / ASSETS','Image library','Uploaded image files, descriptions, captions, tags and custom properties.',`<button class="btn" data-act="new-asset">${ic('add')} Reference</button><button class="btn dark" data-act="upload">${ic('add')} Upload image</button>`)}<div class="table-toolbar"><input class="search" id="assetSearch" placeholder="Search images and tags…" value="${e(ui.search)}"><span class="upper">${assets.length} ASSETS · PNG / JPEG / WEBP / GIF · MAX 12 MB</span></div><div class="asset-grid">${assets.map(a=>`<button class="asset-card ${ui.asset===a.id?'selected':''}" data-act="asset-select" data-id="${e(a.id)}"><img src="${e(src(a))}" alt="${e(a.alt||'')}"><div class="asset-info"><strong>${e(a.name)}</strong><small>${e(a.tags.join(' / '))}</small></div></button>`).join('')}</div></div>`}
 function jsonView(data,scope){return `<div class="content-wrap">${titleBar('SOURCE / STRUCTURED DATA',scope==='all'?'Site JSON':'JSON · '+scope,'Direct source editing. Apply validated JSON to update the visual views.',`<button class="btn" data-act="export">${ic('external')} Export all</button>`)}<textarea class="file-json" spellcheck="false" id="jsonEditor">${e(JSON.stringify(data,null,2))}</textarea><div class="json-controls"><button class="btn dark" data-act="apply-json" data-scope="${e(scope)}">Apply JSON</button><button class="btn" data-act="copy-json">Copy</button><span class="notice ${ui.jsonMessage.startsWith('Error')?'error':'ok'}" id="jsonNotice">${e(ui.jsonMessage)}</span></div></div>`}
-function treeRows(blocks=currentBlocks(),depth=0){return (blocks||[]).map(n=>`<button class="tree-row ${ui.node===n.id?'active':''}" data-act="select-node" data-id="${e(n.id)}" style="padding-left:${7+depth*13}px">${ic(n.type==='card'?'template':n.type==='query'?'table':n.type==='component'?'blocks':'text')}<span>${e(n.type==='text'?n.text.slice(0,34):n.type==='component'?'Component: '+n.component:n.type==='query'?'Query: '+n.collection:n.type)}</span></button>${n.children?treeRows(n.children,depth+1):''}`).join('')}
+function treeRows(blocks=currentBlocks(),depth=0){return (blocks||[]).map(n=>`<button class="tree-row ${ui.node===n.id?'active':''}" data-act="select-node" data-id="${e(n.id)}" style="padding-left:${7+depth*13}px">${ic(n.type==='card'?(n.source?'table':n.reference?'blocks':'template'):'text')}<span>${e(n.type==='text'?n.text.slice(0,34):n.type==='card'&&n.source?'Collection: '+n.source.collection:n.type==='card'&&n.reference?'Component: '+n.reference:n.type)}</span></button>${n.children?treeRows(n.children,depth+1):''}`).join('')}
 function optionsHtml(options,value){return options.map(([v,label])=>`<option value="${e(v)}" ${String(v)===String(value)?'selected':''}>${e(label)}</option>`).join('')}
 function nodeField(label,key,value,choices=null,multiline=false){if(choices)return `<div class="field"><label>${label}</label><select class="control" data-node-prop="${e(key)}">${optionsHtml(choices,value)}</select></div>`;return `<div class="field"><label>${label}</label>${multiline?`<textarea rows="5" class="control tall ${key==='source'?'mono':''}" data-node-prop="${e(key)}">${e(value)}</textarea>`:`<input class="control" data-node-prop="${e(key)}" value="${e(valText(value))}">`}</div>`}
 function inspectorEmpty(title,desc){return `<h2 class="info-title">${e(title)}</h2><p class="info-sub">${e(desc)}</p>`}
@@ -182,6 +182,7 @@ else if(['page','template','component'].includes(ui.section)){let scope=currentS
 else {let n=found.node;h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+`<div style="display:flex;gap:5px;margin:0 0 22px"><button class="btn sm" data-act="move-node" data-delta="-1" title="Move up">${ic('up')}</button><button class="btn sm" data-act="move-node" data-delta="1" title="Move down">${ic('down')}</button><button class="btn sm" data-act="duplicate-node" title="Duplicate">${ic('duplicate')}</button><button class="btn sm" data-act="delete-node" title="Delete">${ic('trash')}</button></div>`;
  if(n.type==='text')h+=nodeField('Text · supports {{property}}','text',n.text,null,true)+nodeField('Typography','style',n.style,[['display','Display'],['heading','Heading'],['body','Body'],['eyebrow','Eyebrow'],['caption','Caption']]);
  if(n.type==='image')h+=nodeField('Image source or {{cover}}','source',n.source)+nodeField('Fit','fit',n.fit,[['cover','Cover'],['contain','Contain']])+nodeField('Show caption','caption',!!n.caption,[['true','Yes'],['false','No']]);
+ if(n.type!=='card')h+=nodeField('Overflow','overflow',n.overflow||'clip',[['clip','Clip to grid cell (default)'],['scroll','Scroll inside item']]);
  if(found.parent?.type==='card'){
  const a=n.area||{x1:1,y1:1,x2:2,y2:2};
  h+=`<div class="rule"></div><div class="upper">GRID AREA IN PARENT CARD</div>`+
@@ -198,8 +199,16 @@ else {let n=found.node;h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+`
  nodeField('Constrain height','constrainHeight',String(Boolean(n.constrainHeight)),[['false','No · content height'],['true','Yes · width × factor']])+
  (n.constrainHeight?nodeField('Height factor (e.g. 0.5)','heightFactor',n.heightFactor||.5):'')+
  `<p class="help">Equal grid cells. Child areas use integer grid lines. Constrained height = Card width × factor.</p><button class="btn" data-act="show-blocks" data-inside="yes">${ic('add')} Add child object</button>`;
- if(n.type==='component')h+=nodeField('Reusable component','component',n.component,db.components.map(c=>[c.id,c.name]))+`<button class="btn" data-act="edit-component" data-id="${e(n.component)}">Edit definition ↗</button>`;
- if(n.type==='query'){let cc=db.collections.find(c=>c.id===n.collection);h+=nodeField('Collection','collection',n.collection,db.collections.map(c=>[c.id,c.name]))+nodeField('Record component','component',n.component,db.components.map(c=>[c.id,c.name]))+nodeField('Layout','layout',n.layout,[['grid','Grid 2'],['three','Grid 3'],['list','List']])+nodeField('Filter','filter',n.filter,[['all','All'],['featured','Featured'],['published','Published'],...(cc?.fields.find(f=>f.key==='format')?.options||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>['format:'+x,'Format: '+x])])+nodeField('Sort','sort',n.sort,[['newest','Newest first'],['original','Original order']])+nodeField('Maximum records','count',n.count)+`<button class="btn" data-act="edit-component" data-id="${e(n.component)}">Edit record component ↗</button>`;}
+ if(n.type==='card'&&n.reference)h+=nodeField('Reusable component','reference',n.reference,db.components.map(c=>[c.id,c.name]))+`<button class="btn" data-act="edit-component" data-id="${e(n.reference)}">Edit definition ↗</button>`;
+ if(n.type==='card'&&n.source){let src=n.source,cc=db.collections.find(c=>c.id===src.collection);h+=`<div class="rule"></div><div class="upper">DATA SOURCE · GENERATES RECORD CARDS</div>`+
+ nodeField('Collection','source.collection',src.collection,db.collections.map(c=>[c.id,c.name]))+
+ nodeField('Record Card template','source.template',src.template,db.components.map(c=>[c.id,c.name]))+
+ nodeField('Arrangement','source.layout',src.layout,[['grid','2 columns'],['three','3 columns'],['list','1 column']])+
+ nodeField('Filter','source.filter',src.filter,[['all','All'],['featured','Featured'],['published','Published'],...(cc?.fields.find(f=>f.key==='format')?.options||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>['format:'+x,'Format: '+x])])+
+ nodeField('Sort','source.sort',src.sort,[['newest','Newest first'],['original','Original order']])+
+ nodeField('Maximum records','source.count',src.count)+
+ `<button class="btn" data-act="edit-component" data-id="${e(src.template)}">Edit record Card ↗</button>`;
+ }
  if(n.type==='rich')h+=nodeField('Markdown body source','source',n.source)+`<p class="help">Use {{body}} for a record’s long-form content.</p>`;
  if(n.type==='button')h+=nodeField('Label','text',n.text)+nodeField('Destination','href',n.href);
  h+=`<div class="rule"></div><div class="upper">DOCUMENT STRUCTURE</div><div class="structure">${treeRows()}</div>`;
@@ -235,7 +244,16 @@ function moveNode(delta){let f=findNode(ui.node);if(!f)return;let j=f.index+delt
 function setNodeField(key,value){
  let f=findNode(ui.node);if(!f)return;
  const n=f.node;
- if(key.startsWith('area.')){
+ if(key.startsWith('source.')){
+   if(n.type!=='card'||!n.source)return;
+   const field=key.slice(7);
+   if(field==='count'){const count=Number(value);if(!Number.isInteger(count)||count<1||count>200){alert('Choose 1–200 records.');return;}n.source.count=count;}
+   else if(field==='layout'){n.source.layout=value;n.columns=value==='three'?3:value==='list'?1:2;}
+   else n.source[field]=value;
+ }else if(key==='overflow'){
+   if(!['clip','scroll'].includes(value))return;
+   n.overflow=value;
+ } else if(key.startsWith('area.')){
    if(!f.parent||f.parent.type!=='card')return;
    const coord=key.slice(5),next={...(n.area||{x1:1,y1:1,x2:2,y2:2}),[coord]:Number(value)};
    if(![next.x1,next.y1,next.x2,next.y2].every(Number.isInteger)||next.x1<1||next.y1<1||next.x2<=next.x1||next.y2<=next.y1||next.x2>f.parent.columns+1||next.y2>f.parent.rows+1){alert('Grid area must fit the parent Card divisions, using x1 < x2 and y1 < y2.');renderInspector();return;}
