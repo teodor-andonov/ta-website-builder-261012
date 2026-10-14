@@ -99,7 +99,16 @@ function normalize(d){if(!d||!Array.isArray(d.collections)||!Array.isArray(d.pag
  d.site.design.pad=Number.isFinite(d.site.design.pad)&&d.site.design.pad>0?d.site.design.pad:1;
  d.site.design.gap=Number.isFinite(d.site.design.gap)&&d.site.design.gap>0?d.site.design.gap:1;
  function upgradeBlocks(blocks){
-   for(const b of blocks){
+   for(let i=0;i<blocks.length;i++){
+     let b=blocks[i];
+     if(b.type==='query'){
+       const cols=b.layout==='three'?3:b.layout==='grid'?2:1;
+       b={id:b.id,type:'card',area:b.area,variant:b.variant,columns:cols,rows:1,gap:'x1',padding:'x1',background:'transparent',border:false,constrainHeight:false,heightFactor:.5,children:[],source:{collection:b.collection,layout:b.layout,template:b.component,filter:b.filter||'all',sort:b.sort||'newest',count:Number(b.count)||4}};
+       blocks[i]=b;
+     }else if(b.type==='component'){
+       b={id:b.id,type:'card',area:b.area,variant:b.variant,columns:1,rows:1,gap:'x1',padding:'x1',background:'transparent',border:false,constrainHeight:false,heightFactor:.5,children:[],reference:b.component};
+       blocks[i]=b;
+     }
      if(b.type!=='card')continue;
      b.columns=Number.isInteger(b.columns)&&b.columns>0?b.columns:({split:2,grid:2,three:3})[b.layout]||1;
      b.rows=Number.isInteger(b.rows)&&b.rows>0?b.rows:Math.max(1,Math.ceil((b.children||[]).length/b.columns));
