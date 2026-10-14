@@ -13,7 +13,7 @@
 - **Deployed baseline:** `main` publishes the M7 site and earlier M8 canvas-grid experiment. The M8 branch backs out that experiment in favour of tree-based authoring; **do not merge/deploy until M8 acceptance**.
 - **Local editor:** `npm run dev` → http://127.0.0.1:5173/ ; **local static preview:** `npm run preview` → http://127.0.0.1:4173/.
 - **Public demonstration:** https://teodor-andonov.github.io/ta-website-builder-261012/ — placeholder content, deliberately `noindex`, **not** the production launch.
-- **Recent evidence:** 68/68 automated tests plus Chromium browser interaction/screenshot checks passed on the M8 branch (2026-10-14), including multi-step Undo/Redo, grid edits, duplicate/delete history, and keyboard Structure reorder/indent/undo with focus retention. Re-run on further changes.
+- **Recent evidence:** 71/71 automated tests and Chromium interaction/screenshot checks passed on the M8 branch (2026-10-14), including multi-step Undo/Redo, grid edits, keyboard Structure moves, overlap warnings, and stale-tab conflict recovery. Re-run on further changes.
 
 ## Roadmap at a glance
 
@@ -45,10 +45,12 @@
 - Contextual Add Child/Add Section, collision-avoiding duplication, delete controls and optional authoring labels.
 - Compact grid-area picker in Properties, including real pointer selection and a separate **atomic X1/Y1/X2/Y2 Apply all** operation; invalid intermediate coordinates are never persisted.
 - Shared JSON renderer and local-only persistence preserved. Browser checks use disposable JSON data.
+- Nonblocking overlapping-cell feedback in Properties: striped occupied cells in the mini grid, immediate warnings for numeric drafts and drag placement, and pure geometry tests. Layering remains possible without silent layout changes.
+- Revision-checked JSON and image writes prevent one browser tab from overwriting another: the local API returns strong ETags, serialises mutations, and rejects missing/stale revisions (428/409). On a save conflict, Studio stops further writes and retains unsaved edits in memory for **Export JSON** before reload/manual reconciliation; browser tests cover this failure path.
 
 **Remaining before M8 sign-off**
-1. **Structural usability:** exercise add/duplicate/delete/nest on larger real-world trees, verify keyboard restructuring with assistive technologies, and add clear collision feedback for hand-edited grid-area overlaps. The new multi-step history is in-memory (up to 40 edits per scope, across at most 16 recent scopes) and intentionally does not survive a full reload.
-2. **Editor UX QA:** verify layout at 1600×1000 and 1280×800, scroll/focus management, Card/Item selection, larger documents, and generated/referenced Cards. Check save-failure recovery and multiple simultaneous editor tabs before claiming production-ready authoring.
+1. **Structural usability:** exercise add/duplicate/delete/nest on larger real-world trees and verify keyboard restructuring with assistive technologies. Overlap warnings are implemented; deliberate visual layering is still allowed. Multi-step history remains in-memory (up to 40 edits per scope, across at most 16 recent scopes) and does not survive a full reload.
+2. **Editor UX QA:** verify layout at 1600×1000 and 1280×800, scroll/focus management, Card/Item selection, larger documents, and generated/referenced Cards. Stale-tab writes now fail safely in automated tests; manually exercise Export JSON/reconcile/reload, disconnected-server failures and image uploads before production acceptance.
 3. **Acceptance:** inspect final diff for data-loss/security pitfalls, run `npm test`, `npm run build`, `node scripts/smoke-check.mjs`, Pages path audit and real Chromium interactions. Share screenshots and limitations with user.
 4. **Release:** only after user review, squash-merge **one M8 PR** into `main`, verify GitHub Pages deployment, delete merged branch, then start a new branch for the next cycle.
 
