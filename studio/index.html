@@ -376,6 +376,7 @@ function makeBlock(type){if(type==='text')return tb('A new text object.','body')
 function addBlockModal(inside){if(!currentScope())return;if(inside){const parent=ui.node?findNode(ui.node)?.node:null;if(!parent||parent.type!=='card'||parent.source||parent.reference)return;}ui.draftSection=inside;let items=[['text','Text','Paragraph or label'],['heading','Heading','Large editorial title'],['image','Image','Asset or record binding'],['card','Card / layout','Stack, split or grid'],['query','Collection feed','Filtered, repeatable records'],['component','Component','Reusable design fragment'],['rich','Markdown body','Long-form content'],['button','Button','Link or action'],['divider','Divider','Visual separator']];modal(inside?'Add child object':'Add object','Choose a block. Use the inspector to customise or bind its properties.',`<div class="choices">${items.map(([id,name,desc])=>`<button class="choice" data-act="insert-block" data-type="${id}">${ic(id==='query'?'table':id==='component'?'blocks':id==='image'?'image':'text')}<span><strong>${name}</strong><small>${desc}</small></span></button>`).join('')}</div>`,'' )}
 function regenIds(node){node.id=uid('b');(node.children||[]).forEach(regenIds);return node}
 function insertNode(type){
+ const before=snapshotScope(),selectedBefore=ui.node;
  let n=makeBlock(type),parent=ui.draftSection&&findNode(ui.node)?.node;
  if(parent?.type==='card'){
    const arr=parent.children||(parent.children=[]);let taken=new Set();
@@ -389,12 +390,13 @@ function insertNode(type){
    if(n.type!=='card')n=card([n],'stack','clear','none');
    currentBlocks().push(n);
  }
- ui.node=n.id;closeModal();persist();renderAll();
+ ui.node=n.id;closeModal();saveScopeEdit(before,selectedBefore);
  document.querySelector('.card.chosen, .item.chosen')?.scrollIntoView({block:'center',behavior:'smooth'});showInspector();
 }
-function moveNode(delta){let f=findNode(ui.node);if(!f)return;let j=f.index+delta;if(j<0||j>=f.arr.length)return;[f.arr[f.index],f.arr[j]]=[f.arr[j],f.arr[f.index]];persist();renderAll()}
+function moveNode(delta){let f=findNode(ui.node);if(!f)return;let j=f.index+delta;if(j<0||j>=f.arr.length)return;const before=snapshotScope(),selectedBefore=ui.node;[f.arr[f.index],f.arr[j]]=[f.arr[j],f.arr[f.index]];saveScopeEdit(before,selectedBefore)}
 function setNodeField(key,value){
  let f=findNode(ui.node);if(!f)return;
+ const before=snapshotScope(),selectedBefore=ui.node;
  const n=f.node;
  if(key.startsWith('source.')){
    if(n.type!=='card'||!n.source)return;
@@ -421,7 +423,7 @@ function setNodeField(key,value){
  } else if(['border','constrainHeight','caption'].includes(key))n[key]=value==='true';
  else if(key==='count')n[key]=Math.max(1,Number(value)||1);
  else n[key]=value;
- persist();renderAll();
+ saveScopeEdit(before,selectedBefore);
 }
 function openRecord(recordId,collectionId){if(collectionId)ui.collection=collectionId;ui.record=recordId;choose('record',{collection:ui.collection,record:recordId})}
 function download(name,text,type='application/json'){let blob=new Blob([text],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
@@ -547,8 +549,9 @@ function commitArea(area){
   const status=$('#areaError');if(status)status.textContent='Invalid rectangle for this Card grid';
   return false;
  }
+ const before=snapshotScope(),selectedBefore=ui.node;
  found.node.area={...area};ui.areaDraft=null;
- persist();renderWork();renderInspector();return true;
+ saveScopeEdit(before,selectedBefore);return true;
 }
 function pointerAreaCell(event){
  const cell=document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-area-x]');
@@ -621,11 +624,10 @@ document.addEventListener('drop',event=>{
  event.preventDefault();
  const result=moveTreeNode(currentBlocks(),id,row.dataset.rowId,mode);
  if(!result.ok){alert(result.error);return}
- const scope=currentScope();
- ui.treeUndo={scope:scope.id,blocks:clone(scope.blocks)};
+ const scope=currentScope(),before=snapshotScope(),selectedBefore=ui.node;
  scope.blocks=result.blocks;ui.node=id;
  if(result.parentId)ui.structureCollapsed.delete(result.parentId);
- persist();renderAll();
+ saveScopeEdit(before,selectedBefore);
 });
 document.addEventListener('dragend',()=>{draggingId=null;clearTreeDrag()});
 
