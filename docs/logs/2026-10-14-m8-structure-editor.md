@@ -22,3 +22,14 @@ At the last verified M8 checkpoint: **57/57 automated tests passed**, as did rea
 **Not complete:** multi-step undo/redo, complex Card operations, large-tree performance, accessibility of drag/reparent actions and final user visual acceptance. Remaining acceptance criteria and next steps live exclusively in the [implementation plan](../IMPLEMENTATION_PLAN.md), with detailed editor interaction decisions in [M8 design](../M8_EDITOR_PLAN.md).
 
 **Housekeeping this cycle:** made the implementation plan the delivery-status source of truth; introduced dated logs; updated agent instructions and obsolete starter docs. These documentation changes are staged **on the same M8 feature branch**, so publishing stays unchanged.
+
+## Documentation and branch inventory — housekeeping pass
+
+- Chose a concise, always-current `docs/IMPLEMENTATION_PLAN.md` for progress/acceptance/next steps and dated `docs/logs/` entries as the durable historical record. `AGENTS.md` now requires reading/updating both each development run; technical `docs/M*.md` remain separate specifications.
+- Replaced stale pre-M1 planning in `docs/ARCHITECTURE.md` and outdated deployment/quickstart text in `README.md`. Corrected stale overflow wording in `docs/M7_PRINT_GRID.md`. Removed `AGENT_TASK.md` (the original first task was completed in PR #1).
+- Closed obsolete, unmerged [PR #19](https://github.com/teodor-andonov/ta-website-builder-261012/pull/19) as superseded by current draft PR #23; its independent minimum-grid refinement is [Issue #22](https://github.com/teodor-andonov/ta-website-builder-261012/issues/22).
+- Branch inventory at the start of this pass: `main`; **active/unmerged** `feature/m8-advanced-editor`; **obsolete/unmerged** `feature/m8-grid-canvas` (closed PR #19); **merged but not deleted** `feature/card-item-dom-refactor` (PR #17) and `feature/m8-grid-canvas-controls` (PR #21).
+- GitHub's built-in **Automatically delete head branches** is currently **off**. This connected GitHub interface cannot change the repository setting or delete refs directly; the owner must enable it once in **Settings → General → Pull Requests**. The two already-merged branches can be deleted with their PRs' **Delete branch** action. Do **not** delete the unmerged PR #19 branch under a merged-only policy.
+- This run updates the **draft M8 branch only**; stable `main` and live Pages are intentionally unchanged pending milestone acceptance.
+
+**Verification:** documentation was reviewed against the GitHub branch/PR API and actual repository tree; CI status for the final housekeeping commit should be recorded on draft PR #23 once it completes.
