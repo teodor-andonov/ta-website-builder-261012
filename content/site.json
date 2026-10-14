@@ -2002,16 +2002,17 @@
       "status": "Published",
       "blocks": [
         {
-          "id": "m7_work_0",
+          "id": "work-index-section",
           "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
+          "variant": "work-index",
+          "columns": 12,
+          "rows": 16,
           "padding": "x1",
+          "gap": "x1",
           "background": "transparent",
           "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
+          "constrainHeight": true,
+          "heightFactor": 1.27,
           "children": [
             {
               "id": "b_rfoptf",
@@ -2021,24 +2022,10 @@
               "area": {
                 "x1": 1,
                 "y1": 1,
-                "x2": 2,
+                "x2": 13,
                 "y2": 2
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_work_1",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_6o0c4y",
               "type": "text",
@@ -2046,25 +2033,11 @@
               "style": "display",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
+                "y1": 2,
+                "x2": 13,
+                "y2": 4
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_work_2",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_bseqsf",
               "type": "text",
@@ -2072,34 +2045,20 @@
               "style": "body",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
+                "y1": 4,
+                "x2": 13,
+                "y2": 5
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_work_3",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_73h0n0",
               "type": "card",
               "variant": "collection",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
+                "y1": 5,
+                "x2": 13,
+                "y2": 17
               },
               "columns": 2,
               "rows": 1,
@@ -2130,16 +2089,17 @@
       "status": "Published",
       "blocks": [
         {
-          "id": "m7_journal_0",
+          "id": "journal-index-section",
           "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
+          "variant": "journal-index",
+          "columns": 12,
+          "rows": 9,
           "padding": "x1",
+          "gap": "x1",
           "background": "transparent",
           "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
+          "constrainHeight": true,
+          "heightFactor": 0.46,
           "children": [
             {
               "id": "b_h4y8s6",
@@ -2149,24 +2109,10 @@
               "area": {
                 "x1": 1,
                 "y1": 1,
-                "x2": 2,
+                "x2": 13,
                 "y2": 2
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_journal_1",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_fal1dt",
               "type": "text",
@@ -2175,24 +2121,10 @@
               "area": {
                 "x1": 1,
                 "y1": 1,
-                "x2": 2,
+                "x2": 13,
                 "y2": 2
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_journal_2",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_njlbt9",
               "type": "text",
@@ -2200,34 +2132,20 @@
               "style": "body",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
+                "y1": 2,
+                "x2": 13,
+                "y2": 3
               }
-            }
-          ]
-        },
-        {
-          "id": "m7_journal_3",
-          "type": "card",
-          "columns": 1,
-          "rows": 1,
-          "gap": "x1",
-          "padding": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": false,
-          "heightFactor": 0.5,
-          "children": [
+            },
             {
               "id": "b_nue5t9",
               "type": "card",
               "variant": "collection",
               "area": {
                 "x1": 1,
-                "y1": 1,
-                "x2": 2,
-                "y2": 2
+                "y1": 3,
+                "x2": 13,
+                "y2": 10
               },
               "columns": 1,
               "rows": 1,
