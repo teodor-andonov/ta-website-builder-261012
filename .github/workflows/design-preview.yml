@@ -53,6 +53,12 @@ jobs:
           set -euo pipefail
           export CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           node scripts/real-wheel-check.mjs
+      - name: Exercise visual grid editing in desktop Studio
+        run: |
+          set -euo pipefail
+          export CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          node scripts/m8-editor-browser-check.mjs
+          test -s screenshots/05-studio-grid-editor.png
       - name: Store screenshot previews (not in repo)
         uses: actions/upload-artifact@v4
         with:
