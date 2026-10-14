@@ -45,7 +45,7 @@ jobs:
           for i in 1 2 3 4 5 6 7 8; do curl -fsS http://127.0.0.1:4174/__layoutcheck.html >/dev/null && break || sleep 1; done
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           "$CHROME" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=3000 --window-size=1400,850 --dump-dom http://127.0.0.1:4174/__layoutcheck.html >/tmp/ta-dom-check-output.html
-          grep 'TA_DOM_OK' /tmp/ta-dom-check-output.html || { grep 'TA_DOM_FAIL' /tmp/ta-dom-check-output.html || true; exit 1; }
+          grep '<pre id="ta-dom-result">TA_DOM_OK' /tmp/ta-dom-check-output.html || { grep '<pre id="ta-dom-result">' /tmp/ta-dom-check-output.html || true; exit 1; }
           echo "Browser verified direct Cards, record Cards, clipping, page scroll and fixed grid tracks."
 
       - name: Store screenshot previews (not in repo)
