@@ -17,15 +17,55 @@
 @media(max-width:620px){.topbar .btn.mobile-menu{display:inline-flex}}
 </style>
 <link rel="stylesheet" href="/src/public.css">
+
+<style id="m8-studio-css">
+:root{--m8-blue:#525cbb;--m8-blue-soft:rgba(82,92,187,.10)}
+.app.structure-open{grid-template-columns:208px 242px minmax(0,1fr) 284px}
+.structure-pane{display:none;grid-column:2;grid-row:2;min-width:0;min-height:0;background:var(--panel);border-right:1px solid var(--line);flex-direction:column}
+.app.structure-open .structure-pane{display:flex}
+.app.structure-open .workspace{grid-column:3}
+.app.structure-open .inspector{grid-column:4}
+.structure-head{height:58px;min-height:58px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:0 12px 0 17px;font:600 10px var(--mono);letter-spacing:.055em}
+.structure-summary{font:10px/1.5 var(--mono);padding:14px 17px 10px;color:var(--muted)}
+.structure-scroll{flex:1;min-height:0;overflow:auto;padding:4px 9px 18px;scrollbar-width:thin}
+.structure-row{display:flex;align-items:center;min-width:0;min-height:32px;border-radius:6px;position:relative;margin:1px 0;border:1px solid transparent}
+.structure-row:hover{background:var(--m8-blue-soft)}
+.structure-row.is-active{background:var(--m8-blue-soft);border-color:rgba(82,92,187,.25)}
+.structure-select{flex:1;display:flex;align-items:center;gap:7px;min-width:0;text-align:left;height:29px;padding:3px 5px;border-radius:5px;font-size:11px;color:#555b62}
+.structure-row.is-active .structure-select,.structure-row.is-active .structure-select .icon{color:var(--m8-blue);font-weight:600}
+.structure-row:hover .structure-select{color:var(--m8-blue)}
+.structure-select .icon{width:13px;height:13px;flex:none;color:#8a8e9a}
+.structure-label{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.structure-arrow{width:18px;min-width:18px;height:25px;padding:0;display:grid;place-items:center;color:#858997;border-radius:4px;font-size:11px}
+.structure-arrow:hover{background:rgba(82,92,187,.13);color:var(--m8-blue)}
+.structure-arrow:focus-visible,.structure-select:focus-visible,.structure-toggle:focus-visible{outline:2px solid var(--m8-blue);outline-offset:-2px}
+.structure-footer{border-top:1px solid var(--line);padding:12px;display:flex;justify-content:space-between;align-items:center;gap:4px;color:var(--muted);font:9px var(--mono)}
+.structure-toggle{font-family:var(--mono);color:var(--m8-blue);border-color:rgba(82,92,187,.3)}
+.structure-toggle[aria-pressed="true"]{background:var(--m8-blue-soft)}
+.editor-shell .design [data-node-id]:hover:not(:has([data-node-id]:hover)){outline:1px solid var(--m8-blue)!important;outline-offset:-1px}
+.editor-shell .design [data-node-id].chosen{outline:2px solid var(--m8-blue)!important;outline-offset:-2px;z-index:3}
+.editor-shell .design [data-node-id].chosen:after{background:var(--m8-blue);color:#fff}
+.inspector .selection-path{display:flex;flex-wrap:wrap;align-items:center;gap:3px;margin:0 0 16px}
+.inspector .selection-path button{font:10px var(--mono);color:var(--m8-blue);padding:4px 5px;border-radius:4px}
+.inspector .selection-path button:hover{background:var(--m8-blue-soft)}
+.inspector .selection-path .sep{color:#9b9da8}
+@media(max-width:1280px){.app.structure-open{grid-template-columns:190px 212px minmax(0,1fr) 255px}}
+@media(max-width:1060px){.app.structure-open{grid-template-columns:190px minmax(0,1fr) 255px}
+  .app.structure-open .structure-pane{position:absolute;left:190px;top:56px;bottom:0;width:230px;z-index:15;box-shadow:8px 12px 32px #0001}
+  .app.structure-open .workspace{grid-column:2}.app.structure-open .inspector{grid-column:3}}
+@media(max-width:850px){.app.structure-open{grid-template-columns:195px minmax(0,1fr)}
+  .app.structure-open .structure-pane{left:195px}.app.structure-open .inspector{grid-column:3}}
+</style>
 </head>
 <body>
-<div class="app">
+<div class="app" id="studioApp">
  <header class="topbar">
   <div class="brand"><button class="btn ghost icononly mobile-menu" id="menuBtn" aria-label="Open menu">☰</button><div class="mark">TA</div><div><strong>TA / CONTENT STUDIO</strong><span class="version">FILE ASSETS · M3</span></div></div>
   <div class="toolbar"><span class="saved" id="saved">JSON FILE · READY</span><button class="btn ghost" id="importBtn">Import JSON</button><button class="btn dark" id="exportBtn">↧ &nbsp;Export JSON</button><input hidden type="file" id="importFile" accept=".json,application/json"><input hidden type="file" id="imageFile" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif" multiple></div>
  </header>
  <aside class="sidebar" id="sidebar"><div class="side-inner" id="sidebarContent"></div><div class="side-bottom">LOCAL FIRST &nbsp;↗<br>FILES · COLLECTIONS · TEMPLATES</div></aside>
- <main class="workspace"><div class="worktop"><div class="breadcrumbs" id="breadcrumbs"></div><div class="workactions"><button class="btn sm inspect-toggle" id="inspectToggle">Properties</button><div class="seg" id="modeTabs"></div></div></div><div class="workbody" id="workbody"></div></main>
+ <aside class="structure-pane" id="structurePane" aria-label="Document structure"><div class="structure-head"><span>DOCUMENT STRUCTURE</span><button class="btn ghost sm" data-act="toggle-structure" title="Hide document structure" aria-label="Hide document structure">✕</button></div><div class="structure-summary" id="structureSummary"></div><div class="structure-scroll" id="structureTree" role="tree" aria-label="Cards and Items"></div><div class="structure-footer"><button class="btn sm" data-act="show-blocks" data-inside="no">+ Section</button><span>More editing soon</span></div></aside>
+ <main class="workspace"><div class="worktop"><div class="breadcrumbs" id="breadcrumbs"></div><div class="workactions"><button class="btn sm structure-toggle" id="structureToggle" data-act="toggle-structure" aria-pressed="true" title="Show or hide document structure">☷ Structure</button><button class="btn sm inspect-toggle" id="inspectToggle">Properties</button><div class="seg" id="modeTabs"></div></div></div><div class="workbody" id="workbody"></div></main>
  <aside class="inspector" id="inspector"><div class="inspect-head"><span id="inspectorTitle">Properties</span><button class="btn ghost sm" id="inspectClose">✕</button></div><div class="inspect-body" id="inspectBody"></div></aside>
 </div>
 <div id="modalHost"></div>
