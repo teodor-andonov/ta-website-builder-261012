@@ -55,6 +55,15 @@
   .app.structure-open .workspace{grid-column:2}.app.structure-open .inspector{grid-column:3}}
 @media(max-width:850px){.app.structure-open{grid-template-columns:195px minmax(0,1fr)}
   .app.structure-open .structure-pane{left:195px}.app.structure-open .inspector{grid-column:3}}
+
+/* Dragging a structure row is an authoring operation, not a position edit. */
+.structure-handle{width:20px;height:28px;flex:none;display:grid;place-items:center;color:#a2a6b3;cursor:grab;font:15px var(--mono);user-select:none}
+.structure-handle:hover{color:var(--m8-blue)}
+.structure-handle:active{cursor:grabbing}
+.structure-row.drop-before::before,.structure-row.drop-after::after{content:"";height:2px;background:var(--m8-blue);position:absolute;left:8px;right:8px;z-index:2}
+.structure-row.drop-before::before{top:-2px}.structure-row.drop-after::after{bottom:-2px}
+.structure-row.drop-inside{outline:2px solid var(--m8-blue);outline-offset:-2px;background:var(--m8-blue-soft)}
+.structure-row.is-dragging{opacity:.35}
 </style>
 </head>
 <body>
@@ -64,13 +73,14 @@
   <div class="toolbar"><span class="saved" id="saved">JSON FILE · READY</span><button class="btn ghost" id="importBtn">Import JSON</button><button class="btn dark" id="exportBtn">↧ &nbsp;Export JSON</button><input hidden type="file" id="importFile" accept=".json,application/json"><input hidden type="file" id="imageFile" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif" multiple></div>
  </header>
  <aside class="sidebar" id="sidebar"><div class="side-inner" id="sidebarContent"></div><div class="side-bottom">LOCAL FIRST &nbsp;↗<br>FILES · COLLECTIONS · TEMPLATES</div></aside>
- <aside class="structure-pane" id="structurePane" aria-label="Document structure"><div class="structure-head"><span>DOCUMENT STRUCTURE</span><button class="btn ghost sm" data-act="toggle-structure" title="Hide document structure" aria-label="Hide document structure">✕</button></div><div class="structure-summary" id="structureSummary"></div><div class="structure-scroll" id="structureTree" role="tree" aria-label="Cards and Items"></div><div class="structure-footer"><button class="btn sm" data-act="show-blocks" data-inside="no">+ Section</button><span>More editing soon</span></div></aside>
+ <aside class="structure-pane" id="structurePane" aria-label="Document structure"><div class="structure-head"><span>DOCUMENT STRUCTURE</span><button class="btn ghost sm" data-act="toggle-structure" title="Hide document structure" aria-label="Hide document structure">✕</button></div><div class="structure-summary" id="structureSummary"></div><div class="structure-scroll" id="structureTree" role="tree" aria-label="Cards and Items"></div><div class="structure-footer"><button class="btn sm" data-act="show-blocks" data-inside="no">+ Section</button><button class="btn ghost sm" data-act="undo-structure" id="treeUndo" title="Undo last structure move" disabled>↶ Undo</button></div></aside>
  <main class="workspace"><div class="worktop"><div class="breadcrumbs" id="breadcrumbs"></div><div class="workactions"><button class="btn sm structure-toggle" id="structureToggle" data-act="toggle-structure" aria-pressed="true" title="Show or hide document structure">☷ Structure</button><button class="btn sm inspect-toggle" id="inspectToggle">Properties</button><div class="seg" id="modeTabs"></div></div></div><div class="workbody" id="workbody"></div></main>
  <aside class="inspector" id="inspector"><div class="inspect-head"><span id="inspectorTitle">Properties</span><button class="btn ghost sm" id="inspectClose">✕</button></div><div class="inspect-body" id="inspectBody"></div></aside>
 </div>
 <div id="modalHost"></div>
 <script type="module">
 import { renderBlocks as renderSharedBlocks, renderSiteFrame, assetSrc } from "/src/render.mjs";
+import {moveTreeNode} from "/src/tree-editor.mjs";
 (async ()=>{'use strict';
 const SVG_ART={
 field:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 680"><defs><radialGradient id="a"><stop stop-color="#797a74"/><stop offset=".6" stop-color="#d2d3cb"/><stop offset="1" stop-color="#f2f2ec"/></radialGradient><filter id="b"><feGaussianBlur stdDeviation="16"/></filter><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency=".45" numOctaves="2" seed="7" result="n"/><feColorMatrix in="n" type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".07"/></feComponentTransfer></filter></defs><rect width="800" height="680" fill="#e7e8e1"/><g fill="#454640" opacity=".75"><rect x="110" y="102" width="160" height="160" rx="48"/><rect x="294" y="102" width="160" height="160" rx="38"/><rect x="478" y="102" width="160" height="160" rx="62"/><rect x="110" y="286" width="160" height="160" rx="55"/><rect x="294" y="286" width="160" height="160" rx="58"/><rect x="478" y="286" width="160" height="160" rx="47"/><rect x="294" y="470" width="160" height="160" rx="60"/></g><ellipse cx="422" cy="327" rx="260" ry="200" fill="url(#a)" filter="url(#b)" opacity=".85"/><rect width="800" height="680" filter="url(#noise)" opacity=".9"/></svg>`,
@@ -169,7 +179,7 @@ function normalize(d){if(!d||!Array.isArray(d.collections)||!Array.isArray(d.pag
  }
  return d;}
 let db=normalize(seed())
-let ui={section:'dashboard',collection:'projects',record:'p-balkan',page:'home',template:'project-detail',component:'contact-cta',asset:'field',mode:'table',node:null,search:'',format:'all',tableLayout:'table',sample:'p-balkan',jsonMessage:'',notice:'',draftSection:null,structureVisible:true,structureCollapsed:new Set()};
+let ui={section:'dashboard',collection:'projects',record:'p-balkan',page:'home',template:'project-detail',component:'contact-cta',asset:'field',mode:'table',node:null,search:'',format:'all',tableLayout:'table',sample:'p-balkan',jsonMessage:'',notice:'',draftSection:null,structureVisible:true,structureCollapsed:new Set(),treeUndo:null};
 let jsonDirty=false;
 const coll=()=>db.collections.find(c=>c.id===ui.collection);
 const rec=()=>coll()?.records.find(r=>r.id===ui.record);
@@ -189,7 +199,7 @@ function persist(){
   $('#saved').textContent='JSON FILE · SAVED';
  }).catch(err=>{$('#saved').textContent='SAVE FAILED · '+err.message;console.error('File save error:',err)});
 }
-function choose(section,id){ui.section=section;ui.node=null;ui.structureCollapsed.clear();ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'};$('#sidebar').classList.remove('show');renderAll()}
+function choose(section,id){ui.section=section;ui.node=null;ui.structureCollapsed.clear();ui.treeUndo=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'};$('#sidebar').classList.remove('show');renderAll()}
 function visibleModes(){if(ui.section==='collection')return ['table','settings','json'];if(ui.section==='record')return ['preview','fields','json'];if(['page','template','component'].includes(ui.section))return ['design','preview','json'];if(ui.section==='assets')return ['grid','table','json'];return []}
 function currentScope(){if(ui.section==='page')return page();if(ui.section==='template')return tpl();if(ui.section==='component')return component();return null}
 function currentBlocks(){return currentScope()?.blocks||[]}
@@ -231,7 +241,7 @@ function structureRows(nodes=currentBlocks(),depth=0){
   const selected=ui.node===n.id,indent=6+depth*13;
   const arrow=children?'<button class="structure-arrow" data-act="structure-fold" data-id="'+e(n.id)+'" aria-label="'+(collapsed?'Expand':'Collapse')+' '+e(structureLabel(n))+'" aria-expanded="'+(!collapsed)+'">'+(collapsed?'▸':'▾')+'</button>':'<span class="structure-arrow"></span>';
   const button='<button class="structure-select" data-act="select-node" data-id="'+e(n.id)+'" role="treeitem" aria-level="'+(depth+1)+'" aria-selected="'+selected+'" title="'+e(n.id)+'">'+ic(card?'template':n.type==='image'?'image':n.type==='button'?'arrow':'text')+'<span class="structure-label">'+e(structureLabel(n))+'</span></button>';
-  return '<div class="structure-row'+(selected?' is-active':'')+'" style="padding-left:'+indent+'px" role="presentation">'+arrow+button+'</div>'+(children&&!collapsed?structureRows(n.children,depth+1):'');
+  return '<div class="structure-row'+(selected?' is-active':'')+'" data-row-id="'+e(n.id)+'" style="padding-left:'+indent+'px" role="presentation">'+arrow+button+'<span class="structure-handle" draggable="true" data-drag-id="'+e(n.id)+'" title="Drag to reorder or move into another Card" aria-label="Drag '+e(structureLabel(n))+'">⠿</span></div>'+(children&&!collapsed?structureRows(n.children,depth+1):'');
  }).join('');
 }
 function renderStructure(){
@@ -243,6 +253,7 @@ function renderStructure(){
  const host=$('#structureTree'),prior=host.scrollTop;
  host.innerHTML=active?structureRows():'';
  host.scrollTop=prior;
+ $('#treeUndo').disabled=!ui.treeUndo;
  const toggle=$('#structureToggle');toggle.style.display=active?'':'none';toggle.setAttribute('aria-pressed',String(visible));
 }
 function findNodePath(id,nodes=currentBlocks(),trail=[]){
@@ -372,6 +383,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'mode':ui.mode=btn.dataset.mode;ui.jsonMessage='';renderTop();renderWork();renderInspector();break;
  case'toggle-structure':ui.structureVisible=!ui.structureVisible;renderStructure();break;
  case'structure-fold':if(ui.structureCollapsed.has(id))ui.structureCollapsed.delete(id);else ui.structureCollapsed.add(id);renderStructure();break;
+ case'undo-structure':if(ui.treeUndo&&ui.treeUndo.scope===currentScope()?.id){currentScope().blocks=clone(ui.treeUndo.blocks);ui.treeUndo=null;persist();renderAll()}break;
  case'new-page':createModal('page');break;
  case'new-collection':createModal('collection');break;
  case'new-template':ui.draftSection=btn.dataset.collection||coll()?.id||db.collections[0]?.id;createModal('template');break;
@@ -426,6 +438,55 @@ async function importImages(files){
  if(added){choose('assets',ui.asset);showInspector()}
  if(errors.length)alert('Could not import:\n'+errors.join('\n'));
 }
+
+
+let draggingId=null;
+function treeDropMode(row,event){
+ const id=row?.dataset.rowId,n=id&&findNode(id)?.node;
+ if(!n)return null;
+ const r=row.getBoundingClientRect();
+ const ratio=(event.clientY-r.top)/Math.max(1,r.height);
+ return n.type==='card'&&ratio>=.28&&ratio<=.72?'inside':ratio<.5?'before':'after';
+}
+function clearTreeDrag(){
+ for(const row of document.querySelectorAll('.structure-row')){
+  row.classList.remove('drop-before','drop-after','drop-inside','is-dragging');
+ }
+}
+document.addEventListener('dragstart',event=>{
+ const handle=event.target.closest('.structure-handle');
+ if(!handle||!structureMode())return;
+ draggingId=handle.dataset.dragId;
+ event.dataTransfer?.setData('text/plain',draggingId);
+ if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
+ handle.closest('.structure-row')?.classList.add('is-dragging');
+});
+document.addEventListener('dragover',event=>{
+ if(!draggingId)return;
+ const row=event.target.closest('.structure-row'),mode=treeDropMode(row,event);
+ clearTreeDrag();
+ if(!row||!mode)return;
+ const trial=moveTreeNode(currentBlocks(),draggingId,row.dataset.rowId,mode);
+ if(!trial.ok){if(event.dataTransfer)event.dataTransfer.dropEffect='none';return}
+ event.preventDefault();
+ if(event.dataTransfer)event.dataTransfer.dropEffect='move';
+ row.classList.add('drop-'+mode);
+});
+document.addEventListener('drop',event=>{
+ if(!draggingId)return;
+ const row=event.target.closest('.structure-row'),mode=treeDropMode(row,event);
+ const id=draggingId;draggingId=null;clearTreeDrag();
+ if(!row||!mode)return;
+ event.preventDefault();
+ const result=moveTreeNode(currentBlocks(),id,row.dataset.rowId,mode);
+ if(!result.ok){alert(result.error);return}
+ const scope=currentScope();
+ ui.treeUndo={scope:scope.id,blocks:clone(scope.blocks)};
+ scope.blocks=result.blocks;ui.node=id;
+ if(result.parentId)ui.structureCollapsed.delete(result.parentId);
+ persist();renderAll();
+});
+document.addEventListener('dragend',()=>{draggingId=null;clearTreeDrag()});
 
 document.addEventListener('click',event=>{let target=event.target.closest('[data-act]');if(target){handleAction(target);return}let n=event.target.closest('[data-node-id]');if(n&&ui.mode==='design'){event.preventDefault();ui.node=n.dataset.nodeId;renderWork();renderInspector();showInspector();return}let g=event.target.closest('[data-open-generated]');if(g&&ui.mode!=='design'){event.preventDefault();openRecord(g.dataset.openGenerated,g.dataset.forCollection);return}let nav=event.target.closest('[data-site-route]');if(nav){event.preventDefault();let p=db.pages.find(p=>p.slug===nav.dataset.siteRoute);if(p)choose('page',p.id);return}if(event.target.id==='modalBack')closeModal()});
 document.addEventListener('change',event=>{let el=event.target;
