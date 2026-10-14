@@ -19,7 +19,7 @@ test('M6 homepage expresses integrated identity using the existing JSON blocks',
   assert.match(b.id,/^[a-zA-Z0-9_-]+$/);
   assert.ok(!ids.has(b.id),'duplicate block id: '+b.id);
   ids.add(b.id);
-  assert.ok(['text','card','image','button','component','query','divider','rich'].includes(b.type));
+  assert.ok(['text','card','image','button','divider','rich'].includes(b.type));
   if(b.type==='card')visit(b.children||[]);
  }}
  visit(home.blocks);
