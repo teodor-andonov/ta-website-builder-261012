@@ -57,13 +57,20 @@ test('M8 returns ancestral IDs useful for selection breadcrumbs',()=>{
  assert.equal(nodePath(sample(),'missing'),null);
 });
 
-test('M8 duplicate placement finds a non-overlapping cell and extends rows when necessary',()=>{
+test('M8 duplicate placement finds an existing free cell before extending rows',()=>{
  const t=sample(),group=t[0].children[0],original=group.children[0];
  const slot=findFreeArea(group,group.children,original);
  assert.ok(slot);
+ assert.deepEqual(slot.area,{x1:1,y1:2,x2:2,y2:3});
+ assert.equal(slot.rows,2);
+ assert.deepEqual(t[0].children[0].children.map(x=>x.id),['a','b']);
+});
+test('M8 duplicate expands a full target by the copied Item height',()=>{
+ const source=item('a',{x1:1,y1:1,x2:2,y2:2});
+ const full=card('full',[source,item('b',{x1:1,y1:2,x2:2,y2:3})],null,1,2);
+ const slot=findFreeArea(full,full.children,source);
  assert.deepEqual(slot.area,{x1:1,y1:3,x2:2,y2:4});
  assert.equal(slot.rows,3);
- assert.deepEqual(t[0].children[0].children.map(x=>x.id),['a','b']);
 });
 test('M8 duplicate refuses non-authorable source Cards and impossible grid sizes',()=>{
  const t=sample(),g=t[0].children[1];g.reference='reusable';
