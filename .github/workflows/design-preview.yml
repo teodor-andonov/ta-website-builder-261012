@@ -53,6 +53,11 @@ jobs:
           set -euo pipefail
           export CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           node scripts/real-wheel-check.mjs
+      - name: Test Content Studio grid editing and capture editor screenshot
+        run: |
+          set -euo pipefail
+          export CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          node scripts/m8-browser-check.mjs
       - name: Store screenshot previews (not in repo)
         uses: actions/upload-artifact@v4
         with:
