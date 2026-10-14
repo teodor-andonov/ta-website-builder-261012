@@ -106,5 +106,16 @@ test('annotated homepage has one Card per semantic section, with no redundant wr
 test('semantic Page, Nav, Main and Footer all have intrinsic rounded corners',async()=>{
  const css=await readFile(new URL('../src/public.css',import.meta.url),'utf8');
  assert.match(css,/\.card-page,[\s\S]*?\.card-nav,[\s\S]*?\.card-main,[\s\S]*?\.card-footer\{[\s\S]*?border-radius:var\(--ta-radius\)/);
- assert.match(css,/\.card-close-black>\.item-button\{[\s\S]*?font:550 2\.5cqw/);
+ assert.match(css,/\.card-close-black>\.item-button\{[\s\S]*?font:550 3\.3cqw/);
+});
+
+test('Work and Journal index headings share a single Card with their collection Card',()=>{
+ for(const id of ['work','journal']){
+  const page=data.pages.find(p=>p.id===id);
+  assert.equal(page.blocks.length,1,id+' should use one compositional section');
+  const children=page.blocks[0].children;
+  assert.equal(children.length,4,id+' should have 3 Items and one source Card');
+  assert.equal(children.filter(b=>b.type!=='card').length,3);
+  assert.equal(children.filter(b=>b.type==='card'&&b.source).length,1);
+ }
 });
