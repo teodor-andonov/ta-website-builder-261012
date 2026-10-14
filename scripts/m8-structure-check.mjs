@@ -126,9 +126,23 @@ try{
  if(newer.area.y1!==3||newer.area.y2!==5)throw Error('First Redo did not restore the newer area');
  const newest=await invoke('redo-structure');
  if(newest.area.y1!==2||newest.area.y2!==6)throw Error('Second Redo did not return to current area');
+ // The previously undone Card reparent is still redoable at this point.
+ const pendingRedo=await evaluate('!document.querySelector("[data-act=redo-structure]").disabled');
+ if(!pendingRedo)throw Error('The undone tree move should still be available to Redo');
+ await invoke('redo-structure');
+ const redoMove=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
+ if(!redoMove.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+   .children.find(x=>x.id==='m6-hero-graphic').children.some(x=>x.id==='m6-hero-title'))
+   throw Error('Redo of the earlier tree move failed');
+ await invoke('undo-structure');
+ await evaluate('(()=>{for(const [key,value] of Object.entries({x1:1,y1:4,x2:2,y2:6}))document.querySelector("[data-area-value="+key+"]").value=String(value);document.querySelector("[data-act=apply-area]").click();return true})()');
+ await sleep(500);
  const noRedo=await evaluate('document.querySelector("[data-act=redo-structure]").disabled');
- if(!noRedo)throw Error('Redo should be exhausted after the last redo');
- console.log('M8_HISTORY_OK multi-step Undo x2, Redo x2, persisted JSON matches');
+ if(!noRedo)throw Error('New atomic edit must invalidate the abandoned Redo path');
+ const afterNew=titleIn(JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8')));
+ if(afterNew.area.y1!==4)throw Error('New edited area was not saved');
+ await invoke('undo-structure'); // Restore the visual reference for screenshots.
+ console.log('M8_HISTORY_OK multi-step area Undo/Redo, tree Redo, new-edit branch invalidation');
 
  const fold=await evaluate("(()=>{const el=document.querySelector('#structurePane [data-act=\"structure-fold\"][data-id=\"m6-hero\"]');if(!el)return false;el.click();return !document.querySelector('#structurePane [data-id=\"m6-hero-title\"]');})()");
  if(!fold)throw Error('Structure collapsing failed');
