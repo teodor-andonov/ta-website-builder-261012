@@ -69,6 +69,8 @@ const server = http.createServer(async (req,res)=>{
     // Allow the editor to import the *same* ESM renderer that the static build uses.
     if(req.method==='GET' && pathname==='/src/render.mjs')
       return respond(res,200,await readFile(path.join(root,'src','render.mjs')),'text/javascript; charset=utf-8');
+    if(req.method==='GET' && pathname==='/src/grid-editor.mjs')
+      return respond(res,200,await readFile(path.join(root,'src','grid-editor.mjs')),'text/javascript; charset=utf-8');
     // Uploaded files are served read-only by opaque, server-generated filenames.
     if(req.method==='GET' && /^\/assets\/uploads\/[a-f0-9]{32}\.(png|jpg|webp|gif)$/.test(pathname)) {
       const name=path.posix.basename(pathname);
