@@ -20,8 +20,9 @@ test('development server serves shared ESM and demo assets but no arbitrary file
       await delay(80);
     }
     assert.ok(ready,'Dev server did not start');
-    const [module,css,svg,deny,missing]=await Promise.all([
+    const [module,gridModule,css,svg,deny,missing]=await Promise.all([
       fetch(`${url}/src/render.mjs`),
+      fetch(`${url}/src/grid-editor.mjs`),
       fetch(`${url}/src/public.css`),
       fetch(`${url}/assets/demo/house.svg`),
       fetch(`${url}/.env`),
@@ -30,6 +31,8 @@ test('development server serves shared ESM and demo assets but no arbitrary file
     assert.equal(module.status,200);
     assert.match(module.headers.get('content-type'),/text\/javascript/);
     assert.match(await module.text(),/export function renderBlocks/);
+    assert.equal(gridModule.status,200);
+    assert.match(await gridModule.text(),/export function mountGridOverlay/);
     assert.equal(css.status,200);
     assert.match(css.headers.get('content-type'),/text\/css/);
     assert.match(await css.text(),/M7 \/ Print-native Card system/);
