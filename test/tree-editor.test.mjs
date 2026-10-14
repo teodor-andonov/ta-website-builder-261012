@@ -116,3 +116,25 @@ test('keyboard moves reject illegal indentation, root outdent and unknown intent
  assert.equal(moveTreeByIntent(a,'a','outdent').ok,true,'outdent to hero parent is allowed');
  assert.equal(moveTreeByIntent(a,'group','outdent').ok,true,'Card outdent to root is allowed');
 });
+
+test('M8 collision diagnostics report overlapping sibling areas without changing the tree',()=>{
+ const original=sample(),parent=original[0].children[0];
+ parent.children[0].label='First Item';
+ const exact=findAreaConflicts(parent,'b',{x1:1,y1:1,x2:3,y2:2});
+ assert.deepEqual(exact,[{id:'a',label:'First Item',cells:1}]);
+ assert.deepEqual(parent.children.map(x=>x.id),['a','b']);
+ assert.deepEqual(findAreaConflicts(parent,'b',{x1:2,y1:2,x2:3,y2:3}),[],
+   'adjacent edges must not count as overlap');
+});
+test('M8 collision diagnostics can report several overlaps and skip malformed siblings',()=>{
+ const p=card('p',[
+  item('a',{x1:1,y1:1,x2:3,y2:3}),
+  item('b',{x1:2,y1:2,x2:4,y2:4}),
+  item('bad',{x1:NaN,y1:1,x2:2,y2:2})
+ ],null,4,4);
+ assert.deepEqual(findAreaConflicts(p,'new',{x1:2,y1:2,x2:3,y2:3}),[
+  {id:'a',label:'a',cells:1},{id:'b',label:'b',cells:1}
+ ]);
+ assert.deepEqual(findAreaConflicts(p,'new',{x1:2.5,y1:2,x2:3,y2:3}),[]);
+ assert.deepEqual(findAreaConflicts(null,'new',{x1:1,y1:1,x2:2,y2:2}),[]);
+});
