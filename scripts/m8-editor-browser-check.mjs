@@ -26,6 +26,15 @@ await writeFile(home,JSON.stringify(source,null,2)+'\n');
 const server=spawn(process.execPath,['src/server.mjs'],{
  cwd:root,env:{...process.env,TA_DATA_ROOT:dir,PORT:String(port)},stdio:'ignore'
 });
+
+let serverReady=false;
+for(let attempt=0;attempt<100;attempt++){
+ try{const response=await fetch('http://127.0.0.1:'+port+'/api/data');
+  if(response.ok){serverReady=true;break;}
+ }catch{}
+ await sleep(100);
+}
+if(!serverReady){server.kill('SIGTERM');throw Error('Temporary Studio server did not become ready');}
 const chrome=spawn(process.env.CHROME||'chromium',[
  '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
  '--remote-allow-origins=*','--remote-debugging-port=0',
@@ -58,7 +67,10 @@ try{
  };
  await cmd('Page.enable');await cmd('Runtime.enable');
  for(let i=0;i<80;i++){if(await evalJS('Boolean(window.__TA_STUDIO__)'))break;await sleep(100)}
- if(!await evalJS('Boolean(window.__TA_STUDIO__)'))throw Error('Studio failed to initialise');
+ if(!await evalJS('Boolean(window.__TA_STUDIO__)')){
+  console.error('TA_STUDIO_DIAGNOSTIC',await evalJS("({url:location.href,title:document.title,body:document.body?.innerText?.slice(0,420),error:document.querySelector('.workbody')?.innerText?.slice(0,240)})"));
+  throw Error('Studio failed to initialise');
+ }
  const state=await evalJS("(()=>{const page=document.querySelector('[data-act=\"navigate\"][data-section=\"page\"][data-id=\"home\"]');page?.click();const heading=document.querySelector('[data-node-id=\"m6-work-heading\"]');heading?.click();document.querySelector('[data-act=\"toggle-grid-edit\"]')?.click();const overlay=document.querySelector('.grid-edit-overlay');overlay?.scrollIntoView({block:'center'});return {found:!!overlay,target:overlay?.dataset.gridEditing,columns:overlay?.style.gridTemplateColumns,rows:overlay?.style.gridTemplateRows};})()");
  if(!state?.found||state.target!=='m6-work-heading')throw Error('Could not mount Work grid overlay: '+JSON.stringify(state));
  await sleep(300);
