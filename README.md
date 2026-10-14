@@ -91,3 +91,7 @@ This means public mobile pages **do not rearrange** their grids; they scale like
 ### Spacing/fill refinement
 
 All Cards—including transparent, single-item and semantic grouping Cards—have positive padding. The two configurable masters are `site.design.pad` and `site.design.gap` in page-width units `u`; each Card selects 1×, 2× or 4× independently, defaulting to 1×. Nested Cards fill their grid cell, and their own padding creates interior breathing room. The Page itself is the master padded grid; header, main sections and footer no longer use arbitrary different horizontal insets. Grid and spacing controls are available from Content Studio's page and Card inspector.
+
+## Direct Card/Item DOM (M7 refinement)
+
+The canonical composition now consists of **Cards** (nestable equal-grid containers) and **Items** (atomic payloads) only. The renderer attaches grid areas and editor selection IDs to each real Card or Item, without Block wrappers. Page, Nav, Main and Footer are semantic Cards. Data-driven Work and Journal entries are linked record Cards whose cover/title/metadata are direct Items, generated from reusable Card templates. Items clip overflow by default; internal scroll is opt-in and does not trap normal document scrolling. See `docs/M7_CARD_ITEM_DOM.md`.
