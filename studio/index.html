@@ -590,7 +590,7 @@ async function runImageImport(files){
  }
  if(!saveBlocked)$('#saved').textContent=errors.length?'UPLOAD COMPLETED WITH ERRORS':'JSON FILE · SAVED';
  if(added){choose('assets',ui.asset);showInspector()}
- if(errors.length)alert('Could not import:\\n'+errors.join('\\n'));
+ if(errors.length)alert('Could not import:\n'+errors.join('\n'));
 }
 
 
