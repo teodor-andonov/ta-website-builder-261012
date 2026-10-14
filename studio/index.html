@@ -64,6 +64,21 @@
 .structure-row.drop-before::before{top:-2px}.structure-row.drop-after::after{bottom:-2px}
 .structure-row.drop-inside{outline:2px solid var(--m8-blue);outline-offset:-2px;background:var(--m8-blue-soft)}
 .structure-row.is-dragging{opacity:.35}
+
+/* Atomic grid-area picker: only Studio chrome, not part of the published tree. */
+.area-editor{margin:19px 0;border-top:1px solid var(--line);padding-top:16px}
+.area-title{font:600 10px var(--mono);letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin-bottom:9px}
+.area-grid{width:100%;max-height:365px;overflow:auto;display:grid;gap:2px;padding:6px;border-radius:8px;border:1px solid var(--line);background:#f2f3f6;touch-action:none}
+.area-grid-cell{aspect-ratio:1;border-radius:3px;border:1px solid #d9dbe5;background:#fff;min-width:0;padding:0;cursor:crosshair;display:block}
+.area-grid-cell.is-other{background:#edeef3}
+.area-grid-cell.is-selected{background:var(--m8-blue);border-color:var(--m8-blue)}
+.area-grid-cell.is-draft{background:var(--m8-blue);border-color:var(--m8-blue)}
+.area-grid-cell:hover{outline:2px solid var(--m8-blue);outline-offset:-1px}
+.area-values{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:11px}
+.area-values label{display:block;font:9px var(--mono);color:#7b7f90}
+.area-values input{width:100%;min-width:0;border:1px solid var(--line);border-radius:5px;padding:8px 4px;margin-top:3px;text-align:center;font:12px var(--mono);background:white}
+.area-actions{display:flex;gap:7px;align-items:center;justify-content:space-between;margin-top:9px}
+.area-error{color:#a54040;font:10px/1.5 var(--mono);min-height:15px}
 </style>
 </head>
 <body>
@@ -179,7 +194,7 @@ function normalize(d){if(!d||!Array.isArray(d.collections)||!Array.isArray(d.pag
  }
  return d;}
 let db=normalize(seed())
-let ui={section:'dashboard',collection:'projects',record:'p-balkan',page:'home',template:'project-detail',component:'contact-cta',asset:'field',mode:'table',node:null,search:'',format:'all',tableLayout:'table',sample:'p-balkan',jsonMessage:'',notice:'',draftSection:null,structureVisible:true,structureCollapsed:new Set(),treeUndo:null};
+let ui={section:'dashboard',collection:'projects',record:'p-balkan',page:'home',template:'project-detail',component:'contact-cta',asset:'field',mode:'table',node:null,search:'',format:'all',tableLayout:'table',sample:'p-balkan',jsonMessage:'',notice:'',draftSection:null,structureVisible:true,structureCollapsed:new Set(),treeUndo:null,areaDraft:null,areaDrag:null};
 let jsonDirty=false;
 const coll=()=>db.collections.find(c=>c.id===ui.collection);
 const rec=()=>coll()?.records.find(r=>r.id===ui.record);
@@ -199,7 +214,7 @@ function persist(){
   $('#saved').textContent='JSON FILE · SAVED';
  }).catch(err=>{$('#saved').textContent='SAVE FAILED · '+err.message;console.error('File save error:',err)});
 }
-function choose(section,id){ui.section=section;ui.node=null;ui.structureCollapsed.clear();ui.treeUndo=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'};$('#sidebar').classList.remove('show');renderAll()}
+function choose(section,id){ui.section=section;ui.node=null;ui.structureCollapsed.clear();ui.treeUndo=null;ui.areaDraft=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'};$('#sidebar').classList.remove('show');renderAll()}
 function visibleModes(){if(ui.section==='collection')return ['table','settings','json'];if(ui.section==='record')return ['preview','fields','json'];if(['page','template','component'].includes(ui.section))return ['design','preview','json'];if(ui.section==='assets')return ['grid','table','json'];return []}
 function currentScope(){if(ui.section==='page')return page();if(ui.section==='template')return tpl();if(ui.section==='component')return component();return null}
 function currentBlocks(){return currentScope()?.blocks||[]}
@@ -287,9 +302,7 @@ else {let n=found.node;h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+`
  if(n.type!=='card')h+=nodeField('Overflow','overflow',n.overflow||'clip',[['clip','Clip to grid cell (default)'],['scroll','Scroll inside item']]);
  if(found.parent?.type==='card'){
  const a=n.area||{x1:1,y1:1,x2:2,y2:2};
- h+=`<div class="rule"></div><div class="upper">GRID AREA IN PARENT CARD</div>`+
- nodeField('X1 · start line','area.x1',a.x1)+nodeField('Y1 · start line','area.y1',a.y1)+
- nodeField('X2 · end line','area.x2',a.x2)+nodeField('Y2 · end line','area.y2',a.y2);
+ h+=areaInputMarkup(n,found.parent);
  }
  if(n.type==='card')h+=`<div class="rule"></div><div class="upper">EQUAL GRID DIVISIONS</div>`+
  nodeField('Columns','columns',n.columns||1)+nodeField('Rows','rows',n.rows||1)+
@@ -383,6 +396,10 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'mode':ui.mode=btn.dataset.mode;ui.jsonMessage='';renderTop();renderWork();renderInspector();break;
  case'toggle-structure':ui.structureVisible=!ui.structureVisible;renderStructure();break;
  case'structure-fold':if(ui.structureCollapsed.has(id))ui.structureCollapsed.delete(id);else ui.structureCollapsed.add(id);renderStructure();break;
+ case'apply-area':{
+   const raw={};for(const key of ['x1','y1','x2','y2'])raw[key]=Number(document.querySelector('[data-area-value="'+key+'"]')?.value);
+   commitArea(raw);break;
+ }
  case'undo-structure':if(ui.treeUndo&&ui.treeUndo.scope===currentScope()?.id){currentScope().blocks=clone(ui.treeUndo.blocks);ui.treeUndo=null;persist();renderAll()}break;
  case'new-page':createModal('page');break;
  case'new-collection':createModal('collection');break;
@@ -406,7 +423,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'remove-field':{let c=coll(),key=btn.dataset.key;if(confirm('Remove property "'+key+'" from schema and every record?')){c.fields=c.fields.filter(f=>f.key!==key);c.records.forEach(r=>delete r[key]);persist();renderAll()}break}
  case'insert-block':insertNode(btn.dataset.type);break;
  case'show-blocks':addBlockModal(btn.dataset.inside==='yes');break;
- case'select-node':ui.node=id;renderWork();renderInspector();showInspector();break;
+ case'select-node':ui.node=id;ui.areaDraft=null;renderWork();renderInspector();showInspector();break;
  case'move-node':moveNode(Number(btn.dataset.delta));break;
  case'duplicate-node':{let f=findNode(ui.node);if(f){let n=regenIds(clone(f.node));f.arr.splice(f.index+1,0,n);ui.node=n.id;persist();renderAll()}break}
  case'delete-node':{let f=findNode(ui.node);if(f&&confirm('Delete this object and its children?')){f.arr.splice(f.index,1);ui.node=null;persist();renderAll()}break}
@@ -439,6 +456,92 @@ async function importImages(files){
  if(errors.length)alert('Could not import:\n'+errors.join('\n'));
 }
 
+
+
+function areaRect(start,end){
+ return {x1:Math.min(start.x,end.x),y1:Math.min(start.y,end.y),
+ x2:Math.max(start.x,end.x)+1,y2:Math.max(start.y,end.y)+1};
+}
+function validArea(a,parent){
+ return parent?.type==='card'&&[a.x1,a.y1,a.x2,a.y2].every(Number.isInteger)&&
+  a.x1>=1&&a.y1>=1&&a.x2>a.x1&&a.y2>a.y1&&
+  a.x2<=parent.columns+1&&a.y2<=parent.rows+1;
+}
+function areaInputMarkup(node,parent){
+ const area=ui.areaDraft?.id===node.id?ui.areaDraft.area:node.area;
+ const cols=parent.columns,rows=parent.rows;
+ const usePicker=Number.isInteger(cols)&&Number.isInteger(rows)&&cols<=20&&rows<=24&&cols*rows<=400;
+ let grid='';
+ if(usePicker){
+  const taken=new Set();
+  for(const sibling of parent.children||[])if(sibling.id!==node.id&&sibling.area)
+   for(let y=sibling.area.y1;y<sibling.area.y2;y++)for(let x=sibling.area.x1;x<sibling.area.x2;x++)taken.add(x+':'+y);
+  const cells=[];
+  for(let y=1;y<=rows;y++)for(let x=1;x<=cols;x++){
+   const selected=x>=area.x1&&x<area.x2&&y>=area.y1&&y<area.y2;
+   cells.push('<button type="button" class="area-grid-cell'+(selected?' is-selected':'')+(taken.has(x+':'+y)?' is-other':'')+'" data-area-x="'+x+'" data-area-y="'+y+'" title="Column '+x+', row '+y+'" aria-label="Cell '+x+', '+y+'" aria-pressed="'+selected+'"></button>');
+  }
+  grid='<div id="areaGrid" class="area-grid" style="grid-template-columns:repeat('+cols+',minmax(0,1fr))" aria-label="Drag to select a grid rectangle">'+cells.join('')+'</div>';
+ }else grid='<p class="help">Large grid · use the four values below and Apply all.</p>';
+ const inputs=['x1','y1','x2','y2'].map(k=>'<label>'+k.toUpperCase()+'<input class="control" type="number" step="1" min="1" data-area-value="'+k+'" value="'+area[k]+'"></label>').join('');
+ return '<div class="area-editor"><div class="area-title">Grid area in parent · '+cols+' × '+rows+'</div>'+
+ '<p class="help">Drag across cells to set a rectangle, or edit all four values and press Apply. No partial invalid saves.</p>'+
+ grid+'<div class="area-values">'+inputs+'</div><div class="area-actions"><span id="areaError" class="area-error" role="status"></span><button class="btn sm" data-act="apply-area">Apply all</button></div></div>';
+}
+function writeAreaDraft(nodeId,area){
+ ui.areaDraft={id:nodeId,area};
+ const grid=$('#areaGrid');
+ if(grid)for(const cell of grid.querySelectorAll('.area-grid-cell')){
+  const x=Number(cell.dataset.areaX),y=Number(cell.dataset.areaY);
+  const yes=x>=area.x1&&x<area.x2&&y>=area.y1&&y<area.y2;
+  cell.classList.toggle('is-draft',yes);
+  cell.classList.toggle('is-selected',yes);
+  cell.setAttribute('aria-pressed',String(yes));
+ }
+ for(const key of ['x1','y1','x2','y2']){
+  const input=document.querySelector('[data-area-value="'+key+'"]');
+  if(input)input.value=area[key];
+ }
+}
+function commitArea(area){
+ const found=ui.node?findNode(ui.node):null;
+ if(!found?.parent||!validArea(area,found.parent)){
+  const status=$('#areaError');if(status)status.textContent='Invalid rectangle for this Card grid';
+  return false;
+ }
+ found.node.area={...area};ui.areaDraft=null;
+ persist();renderWork();renderInspector();return true;
+}
+function pointerAreaCell(event){
+ const cell=document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-area-x]');
+ return cell&&$('#areaGrid')?.contains(cell)?{x:Number(cell.dataset.areaX),y:Number(cell.dataset.areaY)}:null;
+}
+document.addEventListener('pointerdown',event=>{
+ if(event.button!==0)return;
+ const cell=event.target.closest('[data-area-x]');
+ if(!cell)return;
+ const grid=$('#areaGrid');if(!grid)return;
+ event.preventDefault();
+ const start={x:Number(cell.dataset.areaX),y:Number(cell.dataset.areaY)};
+ ui.areaDrag={start,last:start,pointerId:event.pointerId,nodeId:ui.node};
+ grid.setPointerCapture(event.pointerId);
+ writeAreaDraft(ui.node,areaRect(start,start));
+});
+document.addEventListener('pointermove',event=>{
+ const drag=ui.areaDrag;if(!drag||drag.pointerId!==event.pointerId)return;
+ const hit=pointerAreaCell(event);
+ if(!hit)return;
+ drag.last=hit;
+ writeAreaDraft(drag.nodeId,areaRect(drag.start,drag.last));
+});
+document.addEventListener('pointerup',event=>{
+ const drag=ui.areaDrag;if(!drag||drag.pointerId!==event.pointerId)return;
+ const hit=pointerAreaCell(event);
+ if(hit)drag.last=hit;
+ ui.areaDrag=null;
+ commitArea(areaRect(drag.start,drag.last));
+});
+document.addEventListener('pointercancel',()=>{ui.areaDrag=null;ui.areaDraft=null;renderInspector()});
 
 let draggingId=null;
 function treeDropMode(row,event){
@@ -488,7 +591,7 @@ document.addEventListener('drop',event=>{
 });
 document.addEventListener('dragend',()=>{draggingId=null;clearTreeDrag()});
 
-document.addEventListener('click',event=>{let target=event.target.closest('[data-act]');if(target){handleAction(target);return}let n=event.target.closest('[data-node-id]');if(n&&ui.mode==='design'){event.preventDefault();ui.node=n.dataset.nodeId;renderWork();renderInspector();showInspector();return}let g=event.target.closest('[data-open-generated]');if(g&&ui.mode!=='design'){event.preventDefault();openRecord(g.dataset.openGenerated,g.dataset.forCollection);return}let nav=event.target.closest('[data-site-route]');if(nav){event.preventDefault();let p=db.pages.find(p=>p.slug===nav.dataset.siteRoute);if(p)choose('page',p.id);return}if(event.target.id==='modalBack')closeModal()});
+document.addEventListener('click',event=>{let target=event.target.closest('[data-act]');if(target){handleAction(target);return}let n=event.target.closest('[data-node-id]');if(n&&ui.mode==='design'){event.preventDefault();ui.node=n.dataset.nodeId;ui.areaDraft=null;renderWork();renderInspector();showInspector();return}let g=event.target.closest('[data-open-generated]');if(g&&ui.mode!=='design'){event.preventDefault();openRecord(g.dataset.openGenerated,g.dataset.forCollection);return}let nav=event.target.closest('[data-site-route]');if(nav){event.preventDefault();let p=db.pages.find(p=>p.slug===nav.dataset.siteRoute);if(p)choose('page',p.id);return}if(event.target.id==='modalBack')closeModal()});
 document.addEventListener('change',event=>{let el=event.target;
  if(el.dataset.cell){let r=recById(ui.collection,el.dataset.id),f=coll()?.fields.find(x=>x.key===el.dataset.key);if(r){setRecordValue(r,el.dataset.key,el.type==='checkbox'?el.checked:el.value,f);persist();queueMicrotask(renderAll)}return}
  if(el.dataset.recordField){let r=rec(),f=coll()?.fields.find(x=>x.key===el.dataset.recordField);if(r){setRecordValue(r,el.dataset.recordField,el.type==='checkbox'?el.checked:el.value,f);persist();queueMicrotask(renderAll)}return}
