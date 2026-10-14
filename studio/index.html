@@ -279,6 +279,14 @@ function findNodePath(id,nodes=currentBlocks(),trail=[]){
  }
  return null;
 }
+function selectStudioNode(id){
+ if(!findNode(id))return;
+ ui.node=id;ui.areaDraft=null;
+ const ancestry=findNodePath(id)||[];
+ for(const n of ancestry.slice(0,-1))ui.structureCollapsed.delete(n.id);
+ renderWork();renderInspector();showInspector();
+ requestAnimationFrame(()=>document.querySelector('#structurePane .structure-row.is-active')?.scrollIntoView({block:'nearest'}));
+}
 function selectionPath(id){
  const path=id?findNodePath(id):null;
  return path?'<div class="selection-path" aria-label="Selected node ancestry">'+path.map((n,i)=>(i?'<span class="sep">/</span>':'')+'<button data-act="select-node" data-id="'+e(n.id)+'" title="'+e(n.id)+'">'+e(structureLabel(n))+'</button>').join('')+'</div>':'';
@@ -423,7 +431,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'remove-field':{let c=coll(),key=btn.dataset.key;if(confirm('Remove property "'+key+'" from schema and every record?')){c.fields=c.fields.filter(f=>f.key!==key);c.records.forEach(r=>delete r[key]);persist();renderAll()}break}
  case'insert-block':insertNode(btn.dataset.type);break;
  case'show-blocks':addBlockModal(btn.dataset.inside==='yes');break;
- case'select-node':ui.node=id;ui.areaDraft=null;renderWork();renderInspector();showInspector();break;
+ case'select-node':selectStudioNode(id);break;
  case'move-node':moveNode(Number(btn.dataset.delta));break;
  case'duplicate-node':{let f=findNode(ui.node);if(f){let n=regenIds(clone(f.node));f.arr.splice(f.index+1,0,n);ui.node=n.id;persist();renderAll()}break}
  case'delete-node':{let f=findNode(ui.node);if(f&&confirm('Delete this object and its children?')){f.arr.splice(f.index,1);ui.node=null;persist();renderAll()}break}
@@ -591,7 +599,7 @@ document.addEventListener('drop',event=>{
 });
 document.addEventListener('dragend',()=>{draggingId=null;clearTreeDrag()});
 
-document.addEventListener('click',event=>{let target=event.target.closest('[data-act]');if(target){handleAction(target);return}let n=event.target.closest('[data-node-id]');if(n&&ui.mode==='design'){event.preventDefault();ui.node=n.dataset.nodeId;ui.areaDraft=null;renderWork();renderInspector();showInspector();return}let g=event.target.closest('[data-open-generated]');if(g&&ui.mode!=='design'){event.preventDefault();openRecord(g.dataset.openGenerated,g.dataset.forCollection);return}let nav=event.target.closest('[data-site-route]');if(nav){event.preventDefault();let p=db.pages.find(p=>p.slug===nav.dataset.siteRoute);if(p)choose('page',p.id);return}if(event.target.id==='modalBack')closeModal()});
+document.addEventListener('click',event=>{let target=event.target.closest('[data-act]');if(target){handleAction(target);return}let n=event.target.closest('[data-node-id]');if(n&&ui.mode==='design'){event.preventDefault();selectStudioNode(n.dataset.nodeId);return}let g=event.target.closest('[data-open-generated]');if(g&&ui.mode!=='design'){event.preventDefault();openRecord(g.dataset.openGenerated,g.dataset.forCollection);return}let nav=event.target.closest('[data-site-route]');if(nav){event.preventDefault();let p=db.pages.find(p=>p.slug===nav.dataset.siteRoute);if(p)choose('page',p.id);return}if(event.target.id==='modalBack')closeModal()});
 document.addEventListener('change',event=>{let el=event.target;
  if(el.dataset.cell){let r=recById(ui.collection,el.dataset.id),f=coll()?.fields.find(x=>x.key===el.dataset.key);if(r){setRecordValue(r,el.dataset.key,el.type==='checkbox'?el.checked:el.value,f);persist();queueMicrotask(renderAll)}return}
  if(el.dataset.recordField){let r=rec(),f=coll()?.fields.find(x=>x.key===el.dataset.recordField);if(r){setRecordValue(r,el.dataset.recordField,el.type==='checkbox'?el.checked:el.value,f);persist();queueMicrotask(renderAll)}return}
