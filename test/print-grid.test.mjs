@@ -88,3 +88,57 @@ test('global and per-Card outlines are translucent, non-layout, and configurable
  assert.doesNotMatch(offHtml,/show-card-borders/);
  assert.match(offHtml,/has-border/,'single Card override remains available');
 });
+
+
+test('every Card has nonzero 1x/2x/4x padding and gap, including single-object wrappers',async()=>{
+ const data=validate(await load());
+ assert.equal(data.site.design.pad,1);
+ assert.equal(data.site.design.gap,1);
+ let single=0,cards=0;
+ for(const scope of [...data.pages,...data.templates,...data.components]){
+  const visit=blocks=>{for(const b of blocks){
+   if(b.type!=='card')continue;
+   cards++;
+   assert.ok(['x1','x2','x4'].includes(b.padding),b.id+' padding '+b.padding);
+   assert.ok(['x1','x2','x4'].includes(b.gap),b.id+' gap '+b.gap);
+   if(b.children.length===1){single++;assert.notEqual(b.padding,'none',b.id)}
+   visit(b.children);
+  }};
+  visit(scope.blocks);
+ }
+ assert.ok(cards>30);
+ assert.ok(single>5);
+});
+
+test('site pad and gap scale independently; Card items and nested Cards fill grid cells',async()=>{
+ const data=validate(await load()),home=data.pages.find(p=>p.id==='home');
+ const css=await readFile(path.join(root,'src/public.css'),'utf8');
+ const html=renderPagePreview(data,home.blocks,null,{route:'/'});
+ assert.match(html,/--ta-pad:1cqw;--ta-gap:1cqw/);
+ for(const cls of ['pad-x1','pad-x2','gap-x1','gap-x2'])assert.ok(html.includes(cls),cls);
+ for(const expr of [
+  /--ta-pad:1cqw/,/--ta-gap:1cqw/,
+  /\.b-card\.pad-x1\{padding:var\(--ta-pad\)\}/,
+  /\.b-card\.pad-x2\{padding:calc\(2 \* var\(--ta-pad\)\)\}/,
+  /\.b-card\.pad-x4\{padding:calc\(4 \* var\(--ta-pad\)\)\}/,
+  /\.b-card\.gap-x1\{gap:var\(--ta-gap\)\}/,
+  /\.b-card\.gap-x2\{gap:calc\(2 \* var\(--ta-gap\)\)\}/,
+  /\.b-card\.gap-x4\{gap:calc\(4 \* var\(--ta-gap\)\)\}/,
+  /\.grid-card>\.block>\.b-card\{width:100%;height:100%\}/,
+  /\.grid-card>\.block\{[\s\S]*?width:100%;height:100%/,
+  /\.web-content\.semantic-page\{[\s\S]*?padding:var\(--ta-pad\)/
+ ])assert.match(css,expr,String(expr));
+ const mutated=clone(data);
+ mutated.site.design.pad=1.5;mutated.site.design.gap=0.75;
+ const other=renderPagePreview(mutated,mutated.pages.find(p=>p.id==='home').blocks,null,{route:'/'});
+ assert.match(other,/--ta-pad:1.5cqw;--ta-gap:0.75cqw/);
+ assert.doesNotMatch(css,/@media|@container|clamp\(/);
+});
+
+test('master spacing rejects negative, zero, infinite, and oversized values',async()=>{
+ const good=validate(await load());
+ for(const [key,value] of [['pad',0],['gap',-1],['pad',5],['gap',Infinity]]){
+  const d=clone(good);d.site.design[key]=value;
+  assert.throws(()=>validate(d),/Invalid master/,key+' '+value);
+ }
+});
