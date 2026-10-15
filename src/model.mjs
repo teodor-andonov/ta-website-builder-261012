@@ -118,6 +118,34 @@ export function validate(data) {
     }
   };
   for(const p of [...data.pages,...data.templates,...data.components])checkBlocks(p.blocks,p.id);
+  // Reusable component references (including query tile sources) must form an acyclic graph.
+  // The renderer cannot expand cycles safely; reject them before storing canonical JSON.
+  const edges=new Map(data.components.map(component=>[component.id,new Set()]));
+  for(const component of data.components){
+    const targets=edges.get(component.id);
+    const walk=blocks=>{
+      for(const block of blocks){
+        if(block?.type!=='card')continue;
+        if(block.reference)targets.add(block.reference);
+        if(block.source?.template)targets.add(block.source.template);
+        if(Array.isArray(block.children))walk(block.children);
+      }
+    };
+    walk(component.blocks);
+  }
+  const visited=new Set(),active=new Set();
+  const visit=(id,path=[])=>{
+    if(active.has(id))fail('Circular component reference: '+[...path,id].join(' -> '));
+    if(visited.has(id))return;
+    active.add(id);
+    for(const child of edges.get(id)||[]){
+      if(!edges.has(child))fail('Unknown component reference: '+child);
+      visit(child,[...path,id]);
+    }
+    active.delete(id);
+    visited.add(id);
+  };
+  for(const id of edges.keys())visit(id);
   for (const template of data.templates) if (!Array.isArray(template.blocks)) fail(`Invalid template ${template.id}`);
   for (const component of data.components) if (!Array.isArray(component.blocks)) fail(`Invalid component ${component.id}`);
   const templateIds = new Set(data.templates.map(t=>t.id));
