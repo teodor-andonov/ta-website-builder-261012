@@ -1,7 +1,7 @@
 // Browser end-to-end test for the local visual grid editor. Uses a disposable
 // copy of site.json: neither the user's content nor GitHub Pages is modified.
 import {spawn} from 'node:child_process';
-import {mkdtemp,mkdir,copyFile,readFile,writeFile,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,copyFile,readFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {setTimeout as sleep} from 'node:timers/promises';
@@ -155,7 +155,7 @@ try{
  if(!noRedo)throw Error('New atomic edit must invalidate the abandoned Redo path');
  const afterNew=titleIn(JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8')));
  if(afterNew.area.y1!==4)throw Error('New edited area was not saved');
- await invoke('undo-structure'); // Restore the visual reference for screenshots.
+ await invoke('undo-structure'); // Restore the prior document for subsequent checks.
  console.log('M8_HISTORY_OK multi-step area Undo/Redo, tree Redo, new-edit branch invalidation');
  // Duplicate and delete must each be a single undoable transaction, without
  // overlapping the original Card area or creating a different canonical ID.
@@ -229,9 +229,27 @@ try{
  const hidden=await evaluate("(()=>{document.querySelector('#structureToggle').click();return !document.querySelector('#studioApp').classList.contains('structure-open');})()");
  const shown=await evaluate("(()=>{document.querySelector('#structureToggle').click();return document.querySelector('#studioApp').classList.contains('structure-open');})()");
  if(!hidden||!shown)throw Error('Structure pane toggle failed');
- await mkdir(join(root,'screenshots'),{recursive:true});
- const screenshot=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
- await writeFile(join(root,'screenshots','m8-structure-editor.png'),Buffer.from(screenshot.data,'base64'));
+ // Verify desktop composition and keyboard-visible Structure tree at both QA widths.
+ await command('Emulation.setDeviceMetricsOverride',{width:1280,height:800,deviceScaleFactor:1,mobile:false});
+ const compact=await evaluate(`(()=>{
+   const ids=['#structurePane','.workspace','.inspector'];
+   const widths=ids.map(s=>document.querySelector(s)?.getBoundingClientRect().width||0);
+   const tree=document.querySelector('#structureTree');
+   return {viewport:innerWidth,widths,treeRole:tree?.getAttribute('role'),
+     treeItems:tree?.querySelectorAll('[role="treeitem"]').length,
+     badLevels:[...tree?.querySelectorAll('[role="treeitem"]')||[]].filter(x=>!Number(x.getAttribute('aria-level'))).length};
+ })()`);
+ if(compact.viewport!==1280||compact.widths.some(w=>w<120)||compact.treeRole!=='tree'||compact.treeItems<20||compact.badLevels)
+   throw Error('Structure desktop QA failed at 1280×800: '+JSON.stringify(compact));
+ await command('Emulation.setDeviceMetricsOverride',{width:1600,height:1000,deviceScaleFactor:1,mobile:false});
+ const spacious=await evaluate(`(()=>({viewport:innerWidth,
+   widths:['#structurePane','.workspace','.inspector'].map(s=>document.querySelector(s)?.getBoundingClientRect().width||0),
+   activeItems:document.querySelectorAll('#structureTree [aria-selected="true"]').length
+ }))()`);
+ if(spacious.viewport!==1600||spacious.widths.some(w=>w<120)||spacious.activeItems!==1)
+   throw Error('Structure desktop QA failed at 1600×1000: '+JSON.stringify(spacious));
+ await command('Emulation.clearDeviceMetricsOverride');
+ console.log('M8_VIEWPORT_A11Y_OK 1280×800, 1600×1000, tree roles/levels/selection');
  // Another browser tab (or a script) changes the file: Studio must refuse a
  // stale overwrite, keep local changes in memory and expose Export JSON recovery.
  const remoteSave=await evaluate(`(async()=>{
