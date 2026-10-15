@@ -17,7 +17,7 @@ async function walk(dir){
 await walk(root);
 for(const file of checked){
   const content=await readFile(file,'utf8');
-  if(!content.includes('content="noindex'))failures.push(`${file}: missing noindex`);
+  if(!file.endsWith('404.html') && !content.includes('name="robots" content="index, follow"'))failures.push(`${file}: missing public robots metadata`);
   for(const [,attr,href] of content.matchAll(/\b(href|src|poster|action)="([^"]+)"/g)){
     if(!href.startsWith('/') || href.startsWith('//'))continue;
     if(!href.startsWith(base)) {failures.push(`${file}: wrong-base ${attr}=${href}`);continue;}
