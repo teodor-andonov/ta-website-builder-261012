@@ -6,6 +6,7 @@ import {join} from 'node:path';
 import {inflateRawSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {packageSite} from '../scripts/package-site.mjs';
+import {verifySiteArchive,verifySitePackage} from '../scripts/verify-site-package.mjs';
 
 // Decode the central directory with Node, independently of the ZIP writer.
 // This verifies the delivered bytes, not only the source file inventory.
@@ -37,7 +38,15 @@ test('M11 packages the actual preview site as a standalone noindex ZIP with SHA-
   const result=await packageSite({dist,destination,env:{...process.env,TA_ENABLE_INDEXING:'0',TA_PUBLIC_ORIGIN:'https://example.com'}});
   assert.equal(result.indexable,false);
   assert.ok(result.files>14);
-  const archive=unpack(await readFile(destination));
+  const archiveBytes=await readFile(destination);
+  const verified=await verifySitePackage(destination);
+  assert.equal(verified.indexable,false);
+  assert.equal(verified.valid,true);
+  assert.equal(verified.files,result.files);
+  const damaged=Buffer.from(archiveBytes);
+  damaged[36]^=0xff;
+  assert.throws(()=>verifySiteArchive(damaged),/Unsafe ZIP path|local and central|checksum|corrupt|ZIP/);
+  const archive=unpack(archiveBytes);
   assert.ok(archive.has('index.html'));
   assert.ok(archive.has('work/balkan-house/index.html'));
   assert.ok(archive.has('assets/placeholder/field.svg'));
