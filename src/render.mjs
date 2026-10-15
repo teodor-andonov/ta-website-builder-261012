@@ -238,7 +238,7 @@ export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
     '><a class="skip-link" href="#main-content">Skip to content</a>'+
     '<nav class="card card-nav web-nav grid-card semantic-header bg-transparent"'+frameHeight('header')+' aria-label="Main navigation">'+
     logo+links+'</nav>'+
-    '<main id="main-content" class="card card-main web-content semantic-page bg-transparent">'+content+'</main>'+
+    '<main id="main-content" tabindex="-1" class="card card-main web-content semantic-page bg-transparent">'+content+'</main>'+
     '<footer class="card card-footer web-footer grid-card semantic-footer bg-transparent"'+frameHeight('footer')+'>'+
     '<span class="item item-footer">'+escapeHtml(data.site.name)+'</span>'+
     '<span class="item item-footer">© '+new Date().getUTCFullYear()+'</span></footer></div>';
