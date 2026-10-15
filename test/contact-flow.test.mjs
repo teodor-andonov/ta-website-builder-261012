@@ -13,7 +13,7 @@ test('M9 homepage keeps agreed services, three arrangements and one contact CTA'
   const d=copy();
   assert.doesNotThrow(()=>validate(d));
   const html=renderBlocks(home(d).blocks,null,d);
-  for(const label of ['FACADES & RESEARCH','HOW WE WORK','FIXED PACKAGES','SUBSCRIPTION','CUSTOM PROJECT'])
+  for(const label of ['FACADES &amp; RESEARCH','HOW WE WORK','FIXED PACKAGES','SUBSCRIPTION','CUSTOM PROJECT'])
     assert.ok(html.includes(label),label);
   assert.equal(home(d).blocks.filter(b=>b.reference==='contact-cta').length,1);
 });
