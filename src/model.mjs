@@ -1,3 +1,4 @@
+import {assertSlotTemplate,slotsIn} from './page-assembly.mjs';
 // Shared data contract for the local editor API and static build.
 export function validate(data) {
   // Expose validation failures as HTTP 400, rather than a misleading server error.
@@ -193,6 +194,30 @@ export function validate(data) {
     if (collection.defaultTemplate && !templateIds.has(collection.defaultTemplate)) fail(`Missing default template ${collection.defaultTemplate}`);
     for (const id of Object.values(collection.formatTemplates ?? {}))
       if (!templateIds.has(id)) fail(`Missing format template ${id}`);
+  }
+  // M12 is opt-in: V1 pages and record-detail templates remain untouched.
+  for(const template of data.templates){
+    if(template.layoutMode===undefined){
+      if(slotsIn(template.blocks).length)fail('Legacy template cannot contain a main slot: '+template.id);
+    }else if(template.layoutMode==='slot'){
+      try{assertSlotTemplate(template)}catch(e){fail(e.message)}
+    }else fail('Unsupported template layout mode: '+template.id);
+  }
+  for(const component of data.components)
+    if(slotsIn(component.blocks).length)fail('Component cannot own a page slot: '+component.id);
+  for(const page of data.pages){
+    if(slotsIn(page.blocks).length)fail('Page authoring cannot contain a template slot: '+page.id);
+    if(page.template!==undefined || page.composition!==undefined){
+      if(typeof page.template!=='string'||!templateIds.has(page.template))
+        fail('Page requires a known slot template: '+page.id);
+      const template=data.templates.find(t=>t.id===page.template);
+      if(template.layoutMode!=='slot')fail('Page template is not slot based: '+page.id);
+      if(page.blocks.length)fail('Page must not duplicate blocks when using a composition: '+page.id);
+      if(!page.composition||page.composition.type!=='card'||page.composition.area!==undefined||
+         slotsIn([page.composition]).length)
+        fail('Page requires exactly one root Card without area or slot: '+page.id);
+      checkBlocks([page.composition],page.id+' composition');
+    }
   }
   return data;
 }
