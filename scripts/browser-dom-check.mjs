@@ -14,6 +14,12 @@ window.addEventListener('load',()=>{
     const main=page?.querySelector(':scope > .card.card-main');
     const footer=page?.querySelector(':scope > .card.card-footer');
     checks.semanticCards=Boolean(page&&nav&&main&&footer);
+    const skip=document.querySelector('.skip-link');
+    skip?.focus();
+    checks.skipKeyboardFocus=Boolean(skip&&document.activeElement===skip&&skip.getAttribute('href')==='#main-content');
+    checks.focusableMain=main?.getAttribute('tabindex')==='-1'&&main.id==='main-content';
+    checks.singleMainHeading=document.querySelectorAll('main h1').length===1;
+    checks.navNamed=nav?.getAttribute('aria-label')==='Main navigation';
     checks.directSections=(main?.querySelectorAll(':scope > .card.card-section').length||0)===8;
     checks.roundedShell=[page,nav,main,footer].every(el=>el&&parseFloat(getComputedStyle(el).borderTopLeftRadius)>0);
     checks.directNavLinks=nav?.querySelectorAll(':scope > .item.item-link').length===3 && !nav.querySelector('.card-nav-links');
