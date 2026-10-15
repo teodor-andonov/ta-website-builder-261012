@@ -23,7 +23,7 @@ npm run package:verify
 npm run release:rehearse
 ```
 
-GitHub CI runs these alongside screenshot-free Chromium checks and the repository-prefix Pages route audit. The output is a draft **unindexed static site**. Production indexing stays disabled, and the shared site data remains JSON.
+GitHub CI runs these alongside screenshot-free Chromium checks and the repository-prefix Pages route audit. PR checks also attach a verified, nonindexed ZIP as `ta-v1-staging-preview` (7-day retention), available in the **Artifacts** area at the bottom of the successful GitHub Actions workflow run. This permits actual manual preview without merging or deploying. The output is a draft **unindexed static site**. Production indexing stays disabled, and the shared site data remains JSON.
 
 ## Remaining release prerequisites — do not silently mark complete
 
