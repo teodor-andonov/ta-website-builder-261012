@@ -17,5 +17,6 @@ Short, dated records of **completed or active development cycles**. These comple
 | 2026-10-13–14 | [M5–M7 — GitHub Pages, Soft Precision, print-native Cards](2026-10-13-to-14-design-and-deploy.md) |
 | 2026-10-14 | [M8 — structure-first editor, current feature branch](2026-10-14-m8-structure-editor.md) |
 | 2026-10-15 | [Post-V1 planning — unified templates, collections and contextual asset queries](2026-10-15-post-v1-planning.md) |
+| 2026-10-15 | [Autonomous development — long-lived V1/post-V1 branches and approval gates](2026-10-15-autonomous-dev-protocol.md) |
 
 Older `docs/M*_*.md` files are **technical references and milestone snapshots**, not competing plans.
