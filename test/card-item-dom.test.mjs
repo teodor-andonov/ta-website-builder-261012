@@ -24,7 +24,7 @@ test('semantic Page/Nav/Main/Footer and authored Cards occupy real DOM nodes',()
  const html=renderPagePreview(data,home.blocks,null,{route:'/'});
  assert.match(html,/<div class="card card-page webpage view/);
  assert.match(html,/<nav class="card card-nav /);
- assert.match(html,/<main id="main-content" class="card card-main /);
+ assert.match(html,/<main id="main-content" tabindex="-1" class="card card-main /);
  assert.match(html,/<footer class="card card-footer /);
  assert.match(html,/<section class="card grid-card /);
  assert.match(html,/<div class="item item-text b-text /);
