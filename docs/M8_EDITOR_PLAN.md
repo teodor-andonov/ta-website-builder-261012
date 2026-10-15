@@ -3,7 +3,7 @@
 ## Decision (2026-10-14)
 The direct-on-canvas grid editing experiment M8.1 was judged overly complex and made Card selection less clear. Restore the previous simple clickable canvas selection, then build editing primarily around an interactive **Document Structure tree**, with a separate Properties inspector. Do not re-introduce permanent grid overlays in the canvas.
 
-**Long-lived branch:** `feature/m8-advanced-editor` is the one working branch for the entire M8 effort. Commit, push, run tests, take local screenshots and preview this branch, but **do not squash-merge into main / auto-deploy until M8 is fully reviewed**.
+**Rolling V1 branch:** `feature/m8-advanced-editor` is the single working branch for **all M8–M11** development. Commit, push, run tests and preview this branch; after M8 technical QA, continue M9 **without a merge**. **Do not squash-merge into `main` or deploy until the whole V1 has been accepted by the user.**
 
 ## Layout
 Four desktop regions: (1) existing left Workspace navigation; (2) collapsible/resizable Document Structure panel to its right; (3) largest central Canvas, preview/selection only; (4) Properties on far right. On narrower desktop windows, structure can overlay rather than squeeze the canvas. No new permanent editing chrome in the public website. Separate the saved graphic tree from incidental editor UI.
@@ -30,7 +30,7 @@ Four desktop regions: (1) existing left Workspace navigation; (2) collapsible/re
 2. Drag reorder + reparent nested Cards/Items, with guards, highlights and stable IDs.
 3. Mini grid rectangle picker + atomic numeric area editing.
 4. Add/duplicate/delete/nest workflows, keyboard navigation and undo/redo.
-5. Full browser interaction checks, CI, visual screenshots, accessibility and final review. **Then one squash merge and one public-site deployment.**
+5. Full browser interaction checks, CI, visual screenshots, accessibility and internal M8 technical sign-off. **Then proceed to M9 on this same V1 branch; no interim squash merge or deployment.**
 
 ## Constraints
 JSON remains canonical. Cards only contain Cards and atomic Items, no graphical Block wrappers. Keep the shared renderer, equal grids, page-width-scaled print layout, grayscale public site, component templates/queries, intrinsic padding and optional 20%-opacity outlines. The Content Studio editor is desktop only, the static public website never exposes writable APIs.
@@ -39,4 +39,4 @@ JSON remains canonical. Cards only contain Cards and atomic Items, no graphical 
 
 This document specifies the **M8 interaction design**. For implemented/checkpoint status, acceptance criteria and next work, see the [living implementation plan](IMPLEMENTATION_PLAN.md). For the detailed development record and tests, see the [2026-10-14 M8 implementation log](logs/2026-10-14-m8-structure-editor.md).
 
-**Branch:** `feature/m8-advanced-editor` · **[Draft PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23)**. Do not merge or publish until complete M8 visual review and acceptance.
+**Branch:** `feature/m8-advanced-editor` · **[Draft PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23)**. This branch continues through M8–M11; no merge/publish until complete V1 acceptance. **Never delete branches.**
