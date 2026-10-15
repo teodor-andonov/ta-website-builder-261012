@@ -146,10 +146,20 @@ try{
  if(!restored.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.find(x=>x.id==='m6-hero-copy').children.some(x=>x.id==='m6-hero-title'))throw Error('Structure Undo failed to restore source parent');
  console.log('M8_TREE_AREA_OK atomic four-value Apply, validation, reparent and Undo');
  // Traverse earlier rectangle edits: reparent undo restored the previous document.
+ // Allow an actual atomic file write to finish: fixed sleeps race on large trees.
+ const waitForSaved=async()=>{
+   for(let i=0;i<70;i++){
+     const status=await evaluate("document.querySelector('#saved')?.textContent||''");
+     if(status==='JSON FILE · SAVED')return;
+     if(status.includes('UNSAVED CHANGES'))throw Error('Save blocked during browser QA: '+status);
+     await sleep(100);
+   }
+   throw Error('Timed out waiting for local editor save');
+ };
  const invoke=async name=>{
    const ok=await evaluate('(()=>{const e=document.querySelector("[data-act='+name+']");if(!e||e.disabled)return false;e.click();return true})()');
    if(!ok)throw Error('History button unavailable: '+name);
-   await sleep(300);
+   await waitForSaved();
    return titleIn(JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8')));
  };
  const older=await invoke('undo-structure');
