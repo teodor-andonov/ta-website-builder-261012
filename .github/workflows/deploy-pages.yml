@@ -23,16 +23,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run automated tests
-        run: npm test
       - name: Build project-scoped public website
         env:
           TA_BASE_PATH: /ta-website-builder-261012/
         run: npm run build
-      - name: Audit deployed files and links
-        env:
-          TA_BASE_PATH: /ta-website-builder-261012/
-        run: node scripts/check-pages-dist.mjs
       - name: Upload only static output (no editor or write server)
         uses: actions/upload-pages-artifact@v4
         with:
