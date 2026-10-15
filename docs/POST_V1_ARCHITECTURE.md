@@ -24,7 +24,7 @@ JSON is canonical (initially one site.json; split into a few broad files only if
 | **Template** | An authored Card/Item composition wrapping **one main-content slot**, using referenced components | The unique content inserted into that slot |
 | **Page** | URL/metadata, template selection and unique composition | Duplicated copies of template header/footer |
 | **Collection** | Field schema, typed records, optional detail-page configuration | The grid shown on a page |
-| **Asset** | Real file reference and metadata (including tags and relations) | A duplicated file per usage |
+| **Asset** | Real file reference and queryable metadata (including tags and project code) | A duplicated file per usage |
 | **Style** | Reusable appearance definition for Cards or Items | A graphic structure or content record |
 
 Only Cards and Items are authored graphical node types. A template slot, component reference and data-driven Card are **behaviours of a Card**, not additional authored graphic kinds. A record composition has **one root Card**. Pages, records, templates and components are edited in *isolation*; a separate preview assembles the whole result.
@@ -54,22 +54,31 @@ A **style** defines appearance; a **component** defines reusable graphic structu
 
 Collections are edited under one expandable **Collections** Workspace section. Users create a collection, define typed fields, add/edit records, optionally configure generated detail pages, and insert a *collection-driven Card* into any valid composition. Its settings describe source, validated filters, sort, limit and the Card component used for each result. Individual collections do not need separate permanent top-level Studio tabs.
 
-Proposed initial typed fields: text, rich text, number, boolean, date, select, tags, asset reference(s) and relation reference(s). Optional record composition field uses the same Card model. Record fields and schema must be validated; changes should not silently delete values. Collections such as Projects and Posts are examples, not engine-only special cases.
+Proposed initial typed fields: text, rich text, number, boolean, date, select, tags and asset reference(s). Optional record composition field uses the same Card model. Record fields and schema must be validated; changes should not silently delete values. Collections such as Projects and Posts are examples, not engine-only special cases.
 
 ### Assets as a first-class query source
 
-The built-in **Assets** library contains actual media file references and metadata: stable asset ID, source path, label, alt text, caption, credit, tags, optional order/other approved metadata, and **zero or more relationships** to collection records. It is queryable in collection-driven Cards without making a duplicate "Images" collection.
+The built-in **Assets** library contains actual media file references and metadata: stable asset ID, source path, label, alt text, caption, credit, tags, optional order and other approved user-defined fields. It is queryable in collection-driven Cards without making a duplicate "Images" collection.
 
-An asset may refer to multiple different project and post records; each relationship is a validated pair of (collection ID, record ID), deduplicated as a set. Relationships are not file-system parent folders, and changing a record title or slug does not break them. Deleting records/assets must surface affected references and avoid hidden destructive changes. Reusing an asset does not duplicate its media file.
+**Start with ordinary field matching, not a dedicated relationship model.** TA Projects may define a required, unique, stable **projectCode** string (e.g. "4424"); an image asset can carry its own **projectCode** property with the same value. This is a simple data join implemented by typed equality filters, not a separately managed association graph or foreign-key UI. The query should use the current page/record value rather than embedding a hardcoded project name or code.
+
+- Store project codes as strings, preserve leading zeroes, reject duplicate project codes among projects, and do not silently rename them.
+- If the site's existing stable record \`id\` already fulfils the same purpose, allow the filter to match that instead; do not force redundant \`projectCode\` fields.
+- Treat empty/missing values as nonmatching, not as a broad match-all query.
+- When a project code changes, explicitly warn about dependent assets or offer a validated update-all workflow; never silently orphan matching media.
+- One asset has one scalar \`projectCode\` for the initial use case. The same file may be directly reused elsewhere. If querying one asset under several projects becomes a concrete need, introduce an optional \`projectCodes\` array and a \`contains\` filter, **not** a general relationship framework yet.
+- Properties and tags stay on the asset metadata record, while the image is stored once as an ordinary file; folder location is not the canonical association.
+- Formal multi-collection, bidirectional relationship infrastructure is **deferred** until genuine TA authoring needs justify the complexity.
 
 Initial query operations should be typed, deterministic and intentionally small:
-- Boolean **AND** across filters; for multi-value array fields, use **contains**.
-- **equals** for scalar fields, **contains** for tags/arrays, **containsRelation** for (collectionId, recordId) pairs; **exists** where useful.
+- Boolean **AND** across filters; for multi-value array fields use **contains**.
+- **equals** for scalar fields, **contains** for tags/arrays and optionally **exists** when needed.
 - Explicit sort field/direction with stable tie-breaking, and bounded limit/count. No arbitrary user JavaScript, free-form expressions, full SQL or remote execution.
 - Source can be a custom collection or the built-in Assets library.
-- Page record context and query-item context are **separate**. The page exposes the current source record, while a repeated component receives the current matched row/asset. Treat absent contexts as validation/empty-result cases, never a random record.
+- Page record context and query-item context are **separate**. The page exposes the current project; each repeated Card receives its own matched asset. Missing context should produce an explicit validation/error or no-results state, never accidentally match all assets.
+- Dynamic values use a typed context reference resolved only against approved fields, not raw string evaluation.
 
-#### Example: highlighted assets related to the current project
+#### Example: highlighted assets matching the current project code
 
 **Illustrative proposed V2 query structure** (not accepted by the current V2 implementation):
 
@@ -81,12 +90,9 @@ Initial query operations should be typed, deterministic and intentionally small:
     "template": "highlight-image-card",
     "filters": [
       {
-        "field": "relations",
-        "operator": "containsRelation",
-        "value": {
-          "collection": "projects",
-          "recordId": { "context": "record.id" }
-        }
+        "field": "projectCode",
+        "operator": "equals",
+        "value": { "context": "record.projectCode" }
       },
       {
         "field": "tags",
@@ -100,9 +106,9 @@ Initial query operations should be typed, deterministic and intentionally small:
 }
 ~~~
 
-The full authored Card also retains required structural grid/area settings. The special context-value object is a safe typed reference, not interpolated executable code. Record IDs are stable (prefer ID over record name/slug). This query selects assets whose relations include the *current project* and whose tags include **highlighted**. Each returned asset renders using the reusable **highlight-image-card** component bound to the asset's image, caption and credit. The current page record remains accessible separately. TA uses this capability directly; there is no second demo-site deliverable.
+The full authored Card also retains required structural grid/area settings. The typed \`context\` expression is a safe reference, **not evaluated JavaScript**. The query matches assets with an equal projectCode and a highlighted tag. Each returned asset renders through the reusable **highlight-image-card** component bound to its image, caption and credit. The current project context stays available separately. This supports TA directly and does not require a second demo website.
 
-A future asset-library GUI should offer related-record pickers, tags, filters, and previews; safe SVG support must be considered separately from raster uploads, as untrusted SVG can carry active content.
+A future asset-library GUI should expose editable projectCode and tags fields with optional auto-fill from the current project context, filter controls and previews; safe SVG support must be considered separately from raster uploads, as untrusted SVG can carry active content.
 
 ## Editing, preview and file safety
 
@@ -120,7 +126,7 @@ The living [implementation plan](IMPLEMENTATION_PLAN.md) owns M12–M17 sequenci
 - **M12 unified pages/templates:** shared page and record assembler, one slot, componentized navigation/footer, isolated editing + full preview; home/work/studio may use different template choices.
 - **M13 styling:** global token model, named style references, limited overrides; TA appearance unchanged in before/after visual regression checks.
 - **M14 record compositions:** independently editable root Card on project and article records, optional generated detail pages and template inheritance/override.
-- **M15 collections/asset queries:** typed schema, custom records, multi-relation assets, AND queries and record context; reproduce the highlighted-assets project example as an integration test.
+- **M15 collections/asset queries:** typed schema, custom records, asset metadata projectCode matching, AND queries and record context; reproduce the highlighted-assets project example as an integration test. Formal relationships are deferred.
 - **M16 authoring polish:** smooth manual Card/Item workflows for real architectural projects and long posts; modularisation only where useful.
 - **M17 portable handoff:** instructions/migration/QA for the **one** TA site project folder and independently testable reuse of the engine. A second website is **not** an acceptance requirement.
 
