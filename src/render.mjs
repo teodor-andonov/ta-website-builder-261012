@@ -30,6 +30,7 @@ export function bind(value, context, data) {
   return String(value ?? '').replace(/\{\{\s*([^{}]+)\s*\}\}/g, (_, raw) => {
     const name = raw.trim();
     if (name === 'site.name') return data.site.name;
+    if(name === 'site.contact.email'||name === 'site.contact.bookingUrl')return data.site.contact?.[name.slice('site.contact.'.length)] ?? '';
     if (name === 'collection.name') return data.collections.find(c=>c.records.includes(context))?.name ?? '';
     return String(displayValue(context?.[name]));
   });
@@ -182,7 +183,14 @@ function renderBlock(node, context, data, options, depth) {
     return '<figure'+attrs+'>'+image+caption+'</figure>';
   }
   if(type==='button'){
-    const href=safeHref(bind(node.href||'#',context,data));
+    const rawHref=node.href||'#';
+    const resolved=bind(rawHref,context,data);
+    // Booking is opt-in. Never render a clickable dead link before setup.
+    if(rawHref==='{{site.contact.bookingUrl}}'&&!resolved){
+      const attrs=nodeAttrs(node,options,['item','item-button','b-action','is-unavailable'],'',' aria-disabled="true"');
+      return '<span'+attrs+'>15-minute introduction · booking link pending</span>';
+    }
+    const href=safeHref(resolved);
     const attrs=nodeAttrs(node,options,['item','item-button','b-action'],'',' href="'+escapeHtml(href)+'"'+
       (/^https?:\/\//i.test(href)?' target="_blank" rel="noopener noreferrer"':''));
     return '<a'+attrs+'>'+escapeHtml(bind(node.text||'Explore ↗',context,data))+'</a>';
