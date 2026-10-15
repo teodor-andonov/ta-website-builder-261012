@@ -59,13 +59,14 @@ test('JSON nav rejects invalid, duplicate and unsafe routes',()=>{
 });
 test('static build emits root and indexes, stylesheet, fallback and no editor',async()=>{
   const tmp=await mkdtemp(path.join(tmpdir(),'ta-m4-build-'));
+  const output=path.join(tmp,'dist');
   try{
-    const result=spawnSync(process.execPath,['src/build.mjs'],{cwd:root,encoding:'utf8',env:{...process.env,TA_OUTPUT_DIR:tmp},timeout:15000});
+    const result=spawnSync(process.execPath,['src/build.mjs'],{cwd:root,encoding:'utf8',env:{...process.env,TA_OUTPUT_DIR:output},timeout:15000});
     assert.equal(result.status,0,result.stderr);
     for(const name of ['index.html','work/index.html','posts/index.html','work/balkan-house/index.html','404.html','site.css']){
-      assert.ok((await stat(path.join(tmp,name))).isFile(),name);
+      assert.ok((await stat(path.join(output,name))).isFile(),name);
     }
-    await assert.rejects(stat(path.join(tmp,'studio/index.html')));
-    assert.match(await readFile(path.join(tmp,'site.css'),'utf8'),/M7 \/ Print-native Card system/);
+    await assert.rejects(stat(path.join(output,'studio/index.html')));
+    assert.match(await readFile(path.join(output,'site.css'),'utf8'),/M7 \/ Print-native Card system/);
   }finally{await rm(tmp,{recursive:true,force:true});}
 });
