@@ -7,6 +7,7 @@
 - Added `scripts/v1-staging-acceptance.mjs`, a read-only staging acceptance gate. It enforces valid canonical JSON and site routes, existing model and safe `noindex` metadata, no invented canonical/production URL, required built HTML/CSS/robots files and no private editor/API files in the public output.
 - Explicitly permits only the user-approved temporary media/page/record placeholder classifications and a missing booking configuration for **staging**. Any unexpected publication audit finding, lost route or contradiction between `placeholder` and `approvedForPublication` fails the gate. It emits `stagingReady:true` and `productionReady:false`, never implying a public production release.
 - Added `npm run v1:staging-check` and a dedicated CI step after the static build; four focused tests cover valid sample staging, unflagged placeholder source rejection, contradictory editorial flags and missing index route.
+- Added CI upload of the independently verified, unindexed `ta-v1-staging-preview` ZIP (7-day retention) so a manual review can happen without merging into `main` or deploying sample content.
 - Kept all M8–M11 original release requirements explicit: no invented domain/host, verified real booking URL, case study permission or manual accessibility certification. Public production `TA_ENABLE_INDEXING=1` remains blocked.
 - Updated [living roadmap](../IMPLEMENTATION_PLAN.md) and added [V1 release candidate checklist](../V1_RELEASE_CANDIDATE.md) separating engineering staging readiness from public-host and merge gates.
 
