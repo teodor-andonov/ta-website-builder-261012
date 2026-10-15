@@ -79,13 +79,20 @@ export function validate(data) {
       if(x.slice(0,2)!==x.slice(2,4)||x.slice(2,4)!==x.slice(4,6))fail('Palette must be grayscale only');
     }
   }
-  const checkBlocks=(blocks,where)=>{
+  // The editor selects nodes by ID within an authoring scope (Page, Template, Component).
+  // Reuse across independent scopes is fine; aliases within one scope are ambiguous.
+  const checkBlocks=(blocks,where,seen=new Set())=>{
     for(const b of blocks){
       if(!b||typeof b!=='object'||!safeId(b.id))fail(`Invalid block in ${where}`);
+      if(seen.has(b.id))fail(`Duplicate node ID in ${where}: ${b.id}`);
+      seen.add(b.id);
       if(b.overflow!==undefined&&!['clip','scroll'].includes(b.overflow))fail(`Invalid item overflow: ${b.id}`);
       if(b.type==='query'||b.type==='component')fail(`Legacy directive must be a source/reference Card: ${b.id}`);
       if(b.type!=='card')continue;
-      if(b.columns===undefined&&b.rows===undefined)continue; // old V2 import compatibility
+      if(b.columns===undefined&&b.rows===undefined){ // old V2 import compatibility
+        if(Array.isArray(b.children))checkBlocks(b.children,where,seen);
+        continue;
+      }
       if(!Number.isInteger(b.columns)||b.columns<1||b.columns>64||!Number.isInteger(b.rows)||b.rows<1||b.rows>64)
         fail(`Invalid grid divisions on ${b.id}`);
       if(b.source!==undefined){
@@ -107,7 +114,7 @@ export function validate(data) {
         if(!a||![a.x1,a.y1,a.x2,a.y2].every(Number.isInteger)||a.x1<1||a.y1<1||a.x2<=a.x1||a.y2<=a.y1||a.x2>b.columns+1||a.y2>b.rows+1)
           fail(`Invalid child grid area in ${b.id}: ${child?.id}`);
       }
-      checkBlocks(b.children,b.id);
+      checkBlocks(b.children,where,seen);
     }
   };
   for(const p of [...data.pages,...data.templates,...data.components])checkBlocks(p.blocks,p.id);
