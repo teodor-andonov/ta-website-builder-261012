@@ -4,13 +4,13 @@
 > Updated: **2026-10-15** · Maintained after each substantive development cycle.
 > Change history goes in [dated implementation logs](logs/README.md), while specialist documents describe *how* the system works.
 >
-> This plan describes the active **rolling V1 development branch** covering M8–M11. The public `main` branch remains behind until one user-approved V1 squash merge. No branch deletion.
+> This plan describes the active **rolling V1 development branch** covering M8–M11. The user **pre-authorised the final V1 squash merge on 2026-10-15**, provided the entire M8–M11 acceptance criteria pass. One additional post-V1 squash merge is authorised at the fully verified end of M12–M17. No branch deletion.
 
 ## Current position
 
 - **Stage:** M8 — Advanced Visual Editor, structure-first design, **in progress**.
 - **Working branch for all V1 M8–M11 development:** `feature/m8-advanced-editor`, [draft PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23). Continue on this same branch, despite its historical M8 name.
-- **Deployed baseline:** `main` publishes the M7 site and earlier M8 canvas-grid experiment. The V1 branch backs out that experiment in favour of tree-based authoring; **do not merge or publish this branch until M8–M11 are ready and the user approves the V1 release**.
+- **Deployed baseline:** `main` publishes the M7 site and earlier M8 canvas-grid experiment. The V1 branch backs out that experiment in favour of tree-based authoring; **do not squash merge until M8–M11 meet release acceptance**. The user has already authorised the single phase-end V1 squash merge; no further approval request is required.
 - **Local editor:** `npm run dev` → http://127.0.0.1:5173/ ; **local static preview:** `npm run preview` → http://127.0.0.1:4173/.
 - **Public demonstration:** https://teodor-andonov.github.io/ta-website-builder-261012/ — placeholder content, deliberately `noindex`, **not** the production launch.
 - **Recent evidence:** 71/71 automated tests and Chromium interaction/screenshot checks passed on the M8 branch (2026-10-14), including multi-step Undo/Redo, grid edits, keyboard Structure moves, overlap warnings, and stale-tab conflict recovery. Re-run on further changes.
@@ -52,7 +52,7 @@
 1. **Structural usability:** exercise add/duplicate/delete/nest on larger real-world trees and verify keyboard restructuring with assistive technologies. Overlap warnings are implemented; deliberate visual layering is still allowed. Multi-step history remains in-memory (up to 40 edits per scope, across at most 16 recent scopes) and does not survive a full reload.
 2. **Editor UX QA:** verify layout at 1600×1000 and 1280×800, scroll/focus management, Card/Item selection, larger documents, and generated/referenced Cards. Stale-tab writes now fail safely in automated tests; manually exercise Export JSON/reconcile/reload, disconnected-server failures and image uploads before production acceptance.
 3. **Acceptance:** inspect final diff for data-loss/security pitfalls, run `npm test`, `npm run build`, `node scripts/smoke-check.mjs`, Pages path audit and real Chromium interactions. Share screenshots and limitations with user.
-4. **Internal M8 completion:** once technical acceptance checks pass, record M8 as internally complete and proceed to M9 on the **same V1 branch**. Do not merge yet. The user reviews the final V1 across M8–M11 before a single squash merge.
+4. **Internal M8 completion:** once technical acceptance checks pass, record M8 as internally complete and proceed to M9 on the **same V1 branch**. Do not merge yet. The single V1 squash merge is pre-authorised at the end of all M8–M11 acceptance checks, not at the M8 gate.
 
 **Branch retention decision (2026-10-15):** **Do not delete branches or enable GitHub's automatically-delete-head-branches setting.** This supersedes previous housekeeping advice to remove merged branches. Preserve all heads unless the user explicitly changes the policy.
 
@@ -75,8 +75,8 @@ See [M8 design details](M8_EDITOR_PLAN.md) for interaction rules, [architecture]
 3. **Substantial scheduled cycles:** make the scope as large as makes technical sense. Complete **at least one meaningful roadmap substep per run when feasible**, and multiple substeps when coherent and testable. Choose case-by-case; no artificial one-tiny-fix limit. If blocked on user content, credentials or third-party access, handle other safely unblocked agreed work.
 4. **Before handoff:** run focused tests, build/smoke/CI and relevant browser interactions whenever tools permit. Record actual failures, pending checks and limitations rather than claiming unverified success; share screenshots for UI changes.
 5. **At each cycle end:** update the **current status and next actions here**, and create/extend the relevant dated log in `docs/logs/` with changed files, commits, PRs, test evidence and blockers. Update docs in the same branch as code.
-6. **Internal milestone gates:** M8, M9 and M10 may be marked technically complete and progress to the next milestone without user approval/merge. Request input only for genuinely missing content/design/credentials, irreversible changes or major scope deviations. **Only once all M8–M11 V1 scope is ready, request user acceptance.** Then (and only after explicit approval) squash-merge V1 to `main` once and verify production deployment in accordance with approved launch steps.
-7. **Post-V1:** after that approved merge, create **one** new branch from updated `main` for **all M12–M17**. Keep it through all post-V1 milestone cycles and perform **one final squash merge** if and when the user accepts the completed extension. Neither scheduled nor manual work should silently merge.
+6. **Internal milestone gates and authorised V1 merge:** advance M8 → M9 → M10 → M11 on the same branch without milestone merges. At the fully verified end of M11, with all required CI checks passing and release requirements met, **autonomously squash-merge the current V1 PR to `main` once** using an expected head SHA. This merge is **already authorised by the user** (2026-10-15); do not request the same approval again. Verify the GitHub Pages deployment triggered by `main`. Never fabricate project content, remove safety/SEO safeguards prematurely, supply nonexistent credentials, or represent an external production launch as complete when its prerequisites are missing. Continue other safe work when blocked.
+7. **Post-V1:** after the verified V1 merge, create **one** new branch from updated `main` for **all M12–M17**, continuing hourly development to the end of the roadmap. The user has authorised the agent to complete the roadmap **including the one final post-V1 squash merge** once M12–M17 are fully verified and checked, without another routine approval request. Report both merges explicitly; never squash prematurely or more than once per phase.
 8. **Never delete branches**, including after squash merges. Keep automatic head-branch deletion disabled. Prior instructions to delete branches after stage merges are superseded by this policy.
 
 
@@ -115,12 +115,14 @@ The original [M0–M3 baseline implementation plan](logs/2026-10-12-foundations.
 | **M16 — Manual authoring quality** | 16.1 fix Card/Item friction discovered in TA content; 16.2 asset metadata and SVG safety; 16.3 module separation; 16.4 resilience/UX acceptance | TA pages and long posts can be authored, changed and saved quickly and safely without layout presets | ~2–4 sessions |
 | **M17 — Portable Studio handoff** | 17.1 folder/setup documentation; 17.2 migrations and complete data/media backup; 17.3 static build/release regression; 17.4 end-to-end sign-off | One TA project folder can be copied, restored and built with same engine; no separate demo site | ~1–3 sessions |
 
-Effort is in focused development sessions, **not guaranteed calendar days**. M12–M17 share **one retained post-V1 development branch** (created after the approved V1 squash merge), with incremental implementation, tests, screenshots and progress logs across stages. User acceptance and a single squash merge happen **only at the end**. No branch deletion. Large or multiple substeps can be completed per development run when coherent.
+Effort is in focused development sessions, **not guaranteed calendar days**. M12–M17 share **one retained post-V1 development branch** (created after the verified and already-authorised V1 squash merge), with incremental implementation, tests, screenshots and progress logs across stages. The user has pre-authorised one final squash merge at the verifiably completed end of this phase. No branch deletion. Large or multiple substeps can be completed per development run when coherent.
+
+**Automation policy (2026-10-15):** The earlier 24-run pilot is superseded by a continuing **hourly development automation** that proceeds through the full roadmap while work remains. After verified completion of M17 and the final squash merge, mark the roadmap complete and disable the automation if possible; otherwise later invocations must stop without further changes. Never substitute a time limit for milestone completion.
 
 ### Next actions and boundaries
 
 1. **Now:** complete remaining M8 structural usability, visual/keyboard QA and save-recovery verification, record internal acceptance and then proceed directly to M9 on the same V1 branch. Do not merge before whole-V1 user acceptance.
 2. **Then:** execute unchanged original M9, M10 and M11 toward TA website + Content Studio V1 launch, keeping all new commits on the same V1 development branch.
-3. **After user-approved V1 merge:** create a single new post-V1 branch and begin M12; consult [the locked post-V1 specification](POST_V1_ARCHITECTURE.md) at each subsequent milestone. Only implementation-level UI field names/serialization choices remain flexible—not the product decisions above.
+3. **After fully checked V1 merge:** create a single new post-V1 branch and begin M12; consult [the locked post-V1 specification](POST_V1_ARCHITECTURE.md) at each subsequent milestone. Continue through M17 and perform the already-authorised final squash merge when the phase is complete. Only implementation-level UI field names/serialization choices remain flexible—not the product decisions above.
 4. Do not turn contextual asset queries, formal relationship systems or unified templates into emergency M8 work. The current renderer does **not** yet implement these post-V1 extensions. Formal relationships are explicitly deferred.
 
