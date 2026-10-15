@@ -54,6 +54,7 @@ function filename(){
 export async function createSnapshot(dataRoot=projectRoot,destRoot=join(dataRoot,'backups')){
  dataRoot=resolve(dataRoot);destRoot=resolve(destRoot);
  const fromContent=join(dataRoot,'content/site.json'),fromAssets=join(dataRoot,'assets');
+ if(destRoot===fromAssets||destRoot.startsWith(fromAssets+sep))throw Error('Backups cannot be stored inside the source assets directory');
  validate(JSON.parse(await readFile(fromContent,'utf8')));
  await lstat(fromAssets);
  await mkdir(destRoot,{recursive:true});
@@ -88,6 +89,7 @@ export async function verifySnapshot(directory){
 }
 export async function restoreSnapshot(source,target){
  source=resolve(source);target=resolve(target);
+ if(target===source||target.startsWith(source+sep))throw Error('Restore destination must be outside the snapshot directory');
  await verifySnapshot(source);
  try{await access(target);throw Error('Restore destination already exists; refusing to overwrite')}catch(error){
   if(error.code!=='ENOENT')throw error;
