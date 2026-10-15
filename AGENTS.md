@@ -19,7 +19,7 @@ Maintain the **existing** local file-first JSON Content Studio and its generated
 2. Work on the **current V1 development branch across all unfinished M8–M11 milestones**, rather than starting a branch per milestone. Do not merge/deploy intermediate milestones just for website preview. Preview through local Studio (`npm run dev`), local static output (`npm run preview`) or GitHub Actions screenshots.
 3. Keep `prototype-v2/index.html` intact as historical reference unless explicitly requested. Update canonical JSON and the shared renderer/model, not parallel manual HTML.
 4. Validate IDs and slugs; reject unsafe HTML/eval, cycles and data-loss edits. Restrict filesystem writes to approved data/media paths. The published static site must not include any writable API.
-5. Add focused tests, run reproducible CI/browser checks, capture screenshots for UI changes and disclose limitations. **Do not mistake green CI for complete product acceptance.**
+5. Add focused tests, run reproducible CI/browser checks, and disclose limitations. **Screenshots are suspended at the user's request (2026-10-15); do not capture or upload them unless requested again.** Do not mistake green CI for complete product acceptance.
 6. **At the end of every substantial run, update the living plan's current state/next steps AND the relevant dated file in `docs/logs/`.** Make these documentation changes in the same branch/PR as the implementation.
 
 ## Current assignment and source of truth
@@ -32,7 +32,7 @@ Maintain the **existing** local file-first JSON Content Studio and its generated
 ## Supported viewport and visual QA
 - **Content Studio is desktop-only.** Focus on desktop interaction and visual quality; do not implement or test mobile editor variants unless explicitly requested.
 - The **public website deliberately uses a nonadaptive print-style layout** on mobile: fixed Card grid divisions and child areas, proportional scaling in page-width units, no breakpoint reflow. Users can zoom/pan like a presentation. Desktop-only still applies to the authoring app.
-- For remote UI reviews, run desktop browser tests and share a compact set of screenshots and findings **directly in the chat**. No screenshot archives in GitHub and no recordings by default.
+- For remote UI reviews, run desktop browser tests at the agreed viewports and report concrete DOM/interaction checks **without screenshots for now** (user request 2026-10-15). No screenshot archives or recordings by default.
 - Baseline desktop viewports: 1600×1000, plus 1280×800 when relevant.
 
 ## Git/branch lifecycle — required (updated 2026-10-15)
