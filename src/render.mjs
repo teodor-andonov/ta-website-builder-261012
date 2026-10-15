@@ -256,17 +256,16 @@ export function renderPagePreview(data,blocks,context=null,options={}) {
   }
   return renderSiteFrame(renderBlocks(composed,context,data,{...options,topLevel:true}),data,{...options,route:options.route||resolvePreviewRoute(data,blocks,context)});
 }
-export function renderDocument(data,{title,blocks,context=null,route,collectionId=null,pageId=null,publication={indexing:false,origin:null}}) {
+export function renderDocument(data,{title,blocks,context=null,route,collectionId=null,pageId=null,publication={indexing:true,origin:null}}) {
   const heading=escapeHtml(title||data.site.name),name=escapeHtml(data.site.name);
   const plainTitle=(title||data.site.name)+' — '+data.site.name;
   const description=escapeHtml(context?.summary||data.site.description||'');
   const resolvedRoute=route||resolvePreviewRoute(data,blocks,context);
   const page=renderPagePreview(data,blocks,context,{route:resolvedRoute,pageId});
-  // Canonical and absolute social URLs only exist for an explicitly approved
-  // external production release; staging cannot claim an unverified domain.
-  const indexable=publication.indexing===true && typeof publication.origin==='string';
-  const absolute=indexable?publication.origin+resolvedRoute:null;
-  const robots=indexable?'index, follow':'noindex, nofollow';
+  // Public static pages are indexable by default, including GitHub Pages.
+  // Canonical URLs require a configured origin; none is fabricated for local output.
+  const absolute=publication.origin?publication.origin+resolvedRoute:null;
+  const robots='index, follow';
   const canonical=absolute?'<link rel="canonical" href="'+escapeHtml(absolute)+'">':'';
   const canonicalMeta=absolute?'<meta property="og:url" content="'+escapeHtml(absolute)+'">':'';
   const cover=context?.cover?data.assets.find(a=>a.id===context.cover):null;
@@ -277,7 +276,7 @@ export function renderDocument(data,{title,blocks,context=null,route,collectionI
   const htmlTitle=escapeHtml(plainTitle);
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${htmlTitle}</title><meta name="description" content="${description}"><meta name="robots" content="${robots}">${canonical}<meta property="og:type" content="${collectionId==='posts'?'article':'website'}"><meta property="og:site_name" content="${name}"><meta property="og:title" content="${htmlTitle}"><meta property="og:description" content="${description}">${canonicalMeta}<meta name="twitter:title" content="${htmlTitle}"><meta name="twitter:description" content="${description}">${mediaMeta}<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;450;500;550;600;650&display=swap"><link rel="stylesheet" href="/site.css"></head><body class="published-site">${page}</body></html>`;
 }
-export function collectPages(data,{publication={indexing:false,origin:null}}={}) {
+export function collectPages(data,{publication={indexing:true,origin:null}}={}) {
   const pages=[];
   for(const page of data.pages) if(page.status==='Published')
     pages.push({route:normalizeRoute(page.slug),html:renderDocument(data,{title:page.title,blocks:page.blocks,pageId:page.id,route:normalizeRoute(page.slug),publication})});
