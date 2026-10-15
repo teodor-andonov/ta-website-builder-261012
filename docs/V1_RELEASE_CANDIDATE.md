@@ -1,6 +1,9 @@
 # V1 release candidate — scope, acceptance, and remaining gates
 
-**As of 2026-10-15:** The M8–M11 **software/staging implementation** is feature-complete under automated testing. The actual public production release and the pre-authorised V1 squash-merge **are not claimed complete** while mandatory release prerequisites remain open. [One living roadmap](IMPLEMENTATION_PLAN.md) · [V1 final audit log](logs/2026-10-15-v1-release-candidate.md).
+> **Decision update — 15 October 2026:** The user explicitly authorised **squash-merging the completed V1 software/staging work now**, then starting the V2 branch. This overrides the earlier rule making public-launch content/booking/hosting/manual QA prerequisites for the *GitHub V1 merge*. Those are instead deferred until **after V2** and still block **indexed public production**. Keep the GitHub Pages staging preview `noindex`. No external host deployment or screenshot work is authorised.
+
+
+**As of 2026-10-15:** The M8–M11 **software/staging implementation** is feature-complete under automated testing. The actual public production release and a publicly indexed production website **remain blocked**, but the pre-authorised V1 software/staging squash merge may proceed after exact-head CI verification. [One living roadmap](IMPLEMENTATION_PLAN.md) · [V1 final audit log](logs/2026-10-15-v1-release-candidate.md).
 
 ## Software delivery (verified)
 
@@ -31,7 +34,7 @@ GitHub CI runs these alongside screenshot-free Chromium checks and the repositor
 2. **Contact booking**: supply and validate the actual 15-minute call URL (currently blank); continue rendering a nonclickable CTA until configured.
 3. **Hosting**: choose and verify actual production host/domain, control of DNS, HTTPS/TLS, direct nested route/404, redirects, and a host-side rollback rehearsal. Local ZIP verification is not live-host verification.
 4. **Human QA**: manual keyboard and screen-reader check on the actual site, target browsers/devices and real image-media performance. Automated DOM/ARIA tests do not substitute for that.
-5. **Final GitHub merge gate**: original standing authorization permits **one** squash merge of PR #23 to `main` only once the complete M8–M11 acceptance policy and remaining release prerequisites have been met, with green latest-head CI and exact head SHA verified. No manual reapproval of the squash merge is needed **after those prerequisites are met**. No direct pushes to `main`, interim merges, branch deletion, auto-delete or unapproved production host deployment.
+5. **Final GitHub V1 software merge gate**: the user's newer staging-only approval allows **one** squash merge of PR #23 to `main` after the complete M8–M11 automated engineering acceptance, green latest-head CI, verified `noindex` staging deployment configuration and exact head SHA. Actual host/content/booking/manual QA are deferred to public launch after V2. No manual reapproval of the squash merge is needed **after those prerequisites are met**. No direct pushes to `main`, interim merges, branch deletion, auto-delete or unapproved production host deployment.
 
 ## Practical handoff
 
