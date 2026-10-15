@@ -33,17 +33,19 @@ test('M8 allows node IDs reused in independent page scopes',()=>{
 });
 test('M8 rejects direct self-reference in reusable components',()=>{
   const d=copy(),component=d.components[0];
-  component.blocks[0].reference=component.id;
+  component.blocks[0].children=[];component.blocks[0].reference=component.id;
   assert.throws(()=>validate(d),/Circular component reference: contact-cta -> contact-cta/);
 });
 test('M8 rejects indirect cycles across two reusable components',()=>{
   const d=copy(),[first,second]=d.components;
+  first.blocks[0].children=[];second.blocks[0].children=[];
   first.blocks[0].reference=second.id;
   second.blocks[0].reference=first.id;
   assert.throws(()=>validate(d),/Circular component reference:/);
 });
 test('M8 rejects a collection Card that recursively instantiates its own component',()=>{
   const d=copy(),component=d.components[0];
+  component.blocks[0].children=[];
   component.blocks[0].source={
     collection:d.collections[0].id,
     template:component.id,
