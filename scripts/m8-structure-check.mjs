@@ -413,6 +413,9 @@ try{
  console.log('M8_SAVE_CONFLICT_OK revision mismatch, file preserved, local JSON export available');
  // A disconnected local backend must leave the unsaved edit exportable, with a
  // visible error (not just a hover tooltip), and must never invent a saved revision.
+ // Suppress the test document's deliberate unsaved-work navigation warning
+ // only for this explicit recovery reload. The production protection remains.
+ await evaluate("window.addEventListener('beforeunload',event=>event.stopImmediatePropagation(),true);true");
  await command('Page.reload',{ignoreCache:true});
  let loadedAgain=false;
  for(let i=0;i<90;i++){
