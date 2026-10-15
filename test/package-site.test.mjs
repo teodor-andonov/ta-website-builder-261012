@@ -59,7 +59,7 @@ test('M11 packages the actual preview site as a standalone noindex ZIP with SHA-
   await assert.rejects(packageSite({
    dist:join(tmp,'production-dist'),destination:join(tmp,'handoff','ta-production.zip'),
    env:{...process.env,TA_ENABLE_INDEXING:'1',TA_PUBLIC_ORIGIN:'https://ta-studio.com'}
-  }),/Static build rejected:.*Public indexing blocked/);
+  }),/Static build rejected:[\s\S]*Public indexing blocked/);
  }finally{await rm(tmp,{recursive:true,force:true})}
 });
 test('M11 packager refuses a private editor/source artifact in static output',{timeout:10000},async()=>{
