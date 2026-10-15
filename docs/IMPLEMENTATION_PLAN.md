@@ -1,144 +1,47 @@
-# TA Content Studio — implementation plan
+# TA Content Studio — living implementation plan
 
-> **Living index / source of truth for delivery status and upcoming work.**
-> Updated: **2026-10-15** · Maintained after each substantive development cycle.
-> Change history goes in [dated implementation logs](logs/README.md), while specialist documents describe *how* the system works.
->
-> This plan describes the **rolling V2 development branch** covering M12–M17. V1 software/staging was merged; public production remains deferred. The user **pre-authorised the final V1 squash merge on 2026-10-15**, provided the entire M8–M11 acceptance criteria pass. One additional post-V1 squash merge is authorised at the fully verified end of M12–M17. No branch deletion.
+> Updated 2026-10-15 · Source of truth for milestone status. Previous V1 technical history is preserved in [dated development logs](logs/README.md) and Git history. The [V2 architecture](POST_V1_ARCHITECTURE.md) contains the detailed specification.
 
-## Current position
+## Current state
 
-- **Stage:** **M12 — unified page/template system in progress**, on the one rolling V2 branch. V1 software/staging was successfully squash-merged and its unindexed Pages workflow passed. Real content, booking/contact, production host/domain and human QA are explicitly **deferred until after V2** by the user (2026-10-15); they remain blockers only to an **indexed public launch**, not the unindexed V1 staging merge. [V1 closeout](V1_RELEASE_CANDIDATE.md).
-- **V1 merged:** [PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23) → `main` at `7d5b445` (staging deploy green); V1 branch retained. **V2:** `feature/v2-unified-studio`, [rolling draft PR #24](https://github.com/teodor-andonov/ta-website-builder-261012/pull/24), based on that exact `main` merge.
-- **Staging publication:** GitHub Pages on `main` deploys **unindexed staging** with static content only. User expressly authorised the V1 software merge before real launch content/hosting; keep `noindex` and the independent strict production-indexing safeguards.
-- **Local editor:** `npm run dev` → http://127.0.0.1:5173/ ; **local static preview:** `npm run preview` → http://127.0.0.1:4173/.
-- **Public demonstration:** https://teodor-andonov.github.io/ta-website-builder-261012/ — placeholder content, deliberately `noindex`, **not** the production launch.
-- **Recent evidence:** **114/114 Node tests passed** and screenshot-free Chromium/browser CI passed on V1 staging acceptance commit `652e311` (2026-10-15). `npm run v1:staging-check` confirms `stagingReady:true`, `productionReady:false`, 10 public routes, 14 deliberately marked placeholders and 1 missing booking URL. Media/package integrity, real ZIP, byte-identical snapshot rollback and GitHub Pages prefix audits pass. PR #23 is mergeable but **must not be merged while M11 real host/launch, actual content approval and manual accessibility gates remain unverified**. See [V1 release candidate](V1_RELEASE_CANDIDATE.md).
+- **Working stage:** **V2 / M12** — unified page, template and component composition. First implementation: opt-in one-main-slot Card templates and root page composition with backward-compatible rendering. Next: use the template in Studio and extract shared Navbar/Header/Footer without duplicate authored content.
+- **Branch:** `feature/v2-unified-studio` · [rolling PR #24](https://github.com/teodor-andonov/ta-website-builder-261012/pull/24). One V2 branch for M12–M17; one final squash merge when software milestones pass. `main` remains the V1 release until that merge. V1 [PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23) was merged at `7d5b445`; both original branches are retained.
+- **Current task, before resuming M12:** **simplify publishing/tooling** as requested on 2026-10-15. Keep GitHub for source control and publishing from `main` only; eliminate Actions CI/testing/ZIP uploads; local tests remain available. Ordinary public HTML is indexable by default, including on GitHub Pages, even with user-approved placeholder content.
+- **Publishing:** [GitHub Pages is the current website](https://teodor-andonov.github.io/ta-website-builder-261012/), **not a staging environment**. Builds are generated from JSON + media with `npm run build` → `dist/`. `npm run preview` is a localhost view of the generated site (requires Node, not internet); optional `npm run package:site` writes `release/website.zip` for future Hostinger/other static hosting. `main` Pages publishing is the sole automatic GitHub workflow.
+- **Important timing:** this publishing/tooling cleanup is committed to the V2 branch, so the already-published `main` site will not reflect its new indexing policy until that branch is merged (or a separately authorised hotfix is released).
+- **Content:** editable project/post/media placeholders are allowed. Real material, 15-minute booking link, eventual Hostinger/domain migration and manual human QA are deferred until **after V2**. Do not fabricate missing real details and do not impose an approval gate on normal builds.
+- **Testing:** `npm test` (Node tests), `npm run test:browser` (local Chrome/Chromium, no screenshots), `npm run build` (safe static output), all **independent from GitHub**. Keep versioned backups, validation, optimistic saving, media safety and portable ZIP functionality. The previous hourly automation stays paused.
 
-## Roadmap at a glance
+## Milestone plan
 
-| Stage | Scope / acceptance | Status | History |
-| --- | --- | --- | --- |
-| M0 | Preserve the original single-file prototype and initial requirements | Complete | [Foundations](logs/2026-10-12-foundations.md) |
-| M1 | File-backed Studio, validated JSON persistence, static routes | Complete · [PR #1](https://github.com/teodor-andonov/ta-website-builder-261012/pull/1) | [Foundations](logs/2026-10-12-foundations.md) |
-| M2 | One shared renderer for Studio and public pages, reusable collections/templates | Complete · [PR #3](https://github.com/teodor-andonov/ta-website-builder-261012/pull/3) | [Foundations](logs/2026-10-12-foundations.md) |
-| M3 | Real image uploads, separate binary media and metadata | Complete · [PR #5](https://github.com/teodor-andonov/ta-website-builder-261012/pull/5) | [Foundations](logs/2026-10-12-foundations.md) |
-| M4 | Published Home/Work/Journal indexes, project/post detail pages | Complete · [PR #7](https://github.com/teodor-andonov/ta-website-builder-261012/pull/7) | [Foundations](logs/2026-10-12-foundations.md) |
-| M5 | GitHub Pages static staging through Actions, repository base path | Complete · [PR #9](https://github.com/teodor-andonov/ta-website-builder-261012/pull/9) | [Design + deployment](logs/2026-10-13-to-14-design-and-deploy.md) |
-| M6 | Soft Precision grayscale identity, initial homepage | Initial pass complete · [PR #11](https://github.com/teodor-andonov/ta-website-builder-261012/pull/11) | [Design + deployment](logs/2026-10-13-to-14-design-and-deploy.md) |
-| M7 | Print-native recursive Cards/Items, grid areas, spacing, outlines, nontrapping scroll | Functional pass complete · [PRs #13–#17](https://github.com/teodor-andonov/ta-website-builder-261012/pull/17) | [Design + deployment](logs/2026-10-13-to-14-design-and-deploy.md) |
-| M8 | Usable structure-first visual editor for Cards/Items | **Complete in merged V1 staging** | [M8 reliability handoff](logs/2026-10-15-m8-recovery-and-m9-start.md) |
-| M9 | TA projects/posts and editor-ready placeholder portfolio, services & How We Work | **Functionally complete with intentional placeholders — pending actual production media/copy review** | [M9 placeholder and asset authoring](logs/2026-10-15-m9-placeholders-and-m10-snapshots.md) |
-| M10 | Production QA, accessibility, metadata/SEO, performance, backups, acceptance | **Automated implementation complete; manual assistive-tech/device and real-media QA deferred to release gate** | [M10 accessibility handoff](logs/2026-10-15-m10-accessibility-m11-package.md) |
-| M11 | Production domain/hosting (Hostinger or equivalent), asset deployment, launch/maintenance | **V1 staging merged; external public-host/manual acceptance deferred until after V2** | [V1 release review](logs/2026-10-15-v1-release-candidate.md) |
+| Stage | Work | Status |
+|---|---|---|
+| V1 / M0–M11 | File-first Studio, public TA site, editor, content models, local media and static builds | **Merged to main** |
+| V2 / M12 | Unified page/template composition: one main slot, independent page root, shared Nav/Header/Footer, isolated page preview/editing | **In progress** |
+| M13 | Design tokens, named styles, local overrides and Studio Design controls | Planned |
+| M14 | Per-record root Card compositions, collection defaults and record overrides | Planned |
+| M15 | Generic typed collections, asset project-code/tag queries and equality/contains filtering | Planned |
+| M16 | Real TA authoring quality, metadata/media resilience, code/UI cleanup | Planned |
+| M17 | Portable Studio setup, full data/media restoration and final local software acceptance | Planned |
 
-*Milestone numbering evolved: advanced editor moved to M8 after the print-native Card architecture was separated into M7. Historical documents use their original numbering.*
+Detailed decisions and acceptance for M12–M17: [POST_V1_ARCHITECTURE.md](POST_V1_ARCHITECTURE.md). Avoid extra relationship systems, alternate site stores, a second demo website or app frameworks.
 
-## M8 — technical acceptance complete (2026-10-15)
+## Normal commands
 
-**Product decision:** organise the desktop editor as **Workspace | Document Structure | Canvas | Properties**. Canvas is for clean preview and selection; hierarchy changes happen in Structure, and precise geometry happens in Properties. The public website retains a fixed, nonadaptive, grayscale, proportional, print-like Card grid. Only the Studio UI uses a single blue highlight `#525cbb`.
+```sh
+npm run dev           # edit JSON/media using the local Studio
+npm run build         # generate static website into dist/
+npm run preview       # rebuild and serve dist on localhost:4173
+npm run package:site  # optional ZIP into release/website.zip
+npm test              # local Node tests
+npm run test:browser  # local Chromium/Chrome interaction checks, no screenshots
+```
 
-**Implemented on the active branch**
-- Restore simple Card/Item canvas selection and remove the intrusive canvas grid overlay.
-- Dedicated collapsible recursive Document Structure tree: synced selection, Card ancestry, folding, keyboard traversal and scrolling to selection.
-- Tree drag and keyboard controls to reorder or reparent authored Cards/Items, preventing circular nesting and unsupported destinations. Focused Structure rows support Alt+Up/Down to reorder siblings, Alt+Right to nest into the previous Card, and Alt+Left to outdent; a small move toolbar disables invalid actions. **Bounded, scope-local multi-step Undo/Redo** now covers tree moves, add/duplicate/delete, Card/Item properties and atomic grid-area edits; keyboard shortcuts available outside text fields.
-- Contextual Add Child/Add Section, collision-avoiding duplication, delete controls and optional authoring labels.
-- Compact grid-area picker in Properties, including real pointer selection and a separate **atomic X1/Y1/X2/Y2 Apply all** operation; invalid intermediate coordinates are never persisted.
-- Shared JSON renderer and local-only persistence preserved. Browser checks use disposable JSON data.
-- Nonblocking overlapping-cell feedback in Properties: striped occupied cells in the mini grid, immediate warnings for numeric drafts and drag placement, and pure geometry tests. Layering remains possible without silent layout changes.
-- Revision-checked JSON and image writes prevent one browser tab from overwriting another: the local API returns strong ETags, serialises mutations, and rejects missing/stale revisions (428/409). On a save conflict, Studio stops further writes and retains unsaved edits in memory for **Export JSON** before reload/manual reconciliation; browser tests cover this failure path.
-- **Tree identity and component dependency validation (2026-10-15):** reject duplicate Card/Item IDs within authoring scope and direct/indirect component cycles, including query sources. Seven regressions passed; no data migration. [Cycle log](logs/2026-10-15-m8-structure-integrity.md).
-- **Large-tree reliability and schema integrity (2026-10-15):** allow/render nested Cards beyond the former silent 10-level cutoff, enforce explicit 32-level authoring/render cap, reject unknown Items and hidden child content in generated/reference Cards, return HTTP 400 model errors without overwriting saved JSON, stress 320-item reparenting and a 320-item real Chromium Studio document. Save checks now wait for actual atomic write completion. CI remains screenshot-free. [Cycle log](logs/2026-10-15-m8-large-tree-qa.md).
+Backups: `npm run backup:create` and `npm run backup:restore -- <snapshot> <new-directory>`. Extra historic/diagnostic scripts remain runnable directly with Node, **not as scheduled GitHub jobs**.
 
-**Acceptance and M10 handoff**
+## Working policy
 
-1. **Completed:** model validation, comprehensive Structure editor operations, deep-nesting and 320-Item stress, browser selection, keyboard controls, grid edits and history, both desktop widths, data-source and reusable Card selection/definition navigation, invalid JSON rollback, valid whole-file import, corrupt-image handling, optimistic-concurrency conflict recovery and disconnected-server recovery. A confirm-gated **Reload saved file** action safely restores the server's validated snapshot after an Export JSON opportunity. Snapshot history is intentionally memory-only.
-2. **CI:** 88/88 Node tests and browser QA passed on implementation commit `3ba5f404`; existing V1 sample build/preview and project-path audit passed. Screenshot generation and uploads remain disabled per user request.
-3. **Deferred to M10 production acceptance:** manual screen-reader/device testing beyond tested ARIA focus/roles, broader browsers and real content/media usability, resilience with actual multi-asset collections and recovery drills. These do not block starting M9 but remain release requirements.
-4. **Branch:** continue M9, M10 and M11 on the same `feature/m8-advanced-editor` branch and PR #23. Do not merge between milestones; one final squash merge is already authorised only after whole V1 release criteria pass.
-
-**Branch retention decision (2026-10-15):** **Do not delete branches or enable GitHub's automatically-delete-head-branches setting.** This supersedes previous housekeeping advice to remove merged branches. Preserve all heads unless the user explicitly changes the policy.
-
-**Known separate refinement:** [Issue #22 — minimum useful grid divisions](https://github.com/teodor-andonov/ta-website-builder-261012/issues/22). Test equivalent layouts before reducing row/column counts; do not change composition silently.
-
-See [M8 design details](M8_EDITOR_PLAN.md) for interaction rules, [architecture](ARCHITECTURE.md) for data flow and [latest log](logs/2026-10-14-m8-structure-editor.md) for the detailed record.
-
-## M9–M11 — ongoing V1 delivery
-
-**M9 Content and sections.** Replace demonstration copy and graphics with approved real projects/posts. Complete services/arrangements: fixed packages, subscription and custom contract; architecture/computation/facades themes; verified contact and 15-minute-call CTA; metadata linking assets/credits. The existing Home page already contains basic Architecture/Computation/Research and fixed/subscription/custom arrangements; refine real content rather than duplicating those Cards. **Implemented M9 kickoff:** read-only `npm run audit:content`, strict `npm run audit:content -- --strict` for later release gating, CI reporting without interim failure, and editable per-Page/Record approval flag in Studio. Initial inventory found **21 blockers** (demo asset sources, placeholder contact details, missing verified project/post/page approval, demo record covers). Authentic content/permissions must come from actual materials or explicit user decisions; do not fabricate them or prematurely remove `noindex`. Continue implementing safe content authoring while awaiting genuine materials.
-
-**M9 development cycle — homepage + contact flow (2026-10-15).** Updated the existing homepage Card composition in canonical `content/site.json` rather than introducing another site or page type: Architecture/Computation/Facades & Research services copy; fixed packages, subscription and custom contract arrangements; one shared `contact-cta` component on Home and project templates. Added `site.contact.email` and `site.contact.bookingUrl` as optional validated settings, editable in Studio's Overview/Data inspector; the CTA remains **non-clickable** until a valid HTTPS booking URL is configured. Site-wide bindings and validation live in shared renderer/model. Added four contact regression tests and actual Chromium editing/CTA interaction coverage. **No meeting URL, prices, case studies, or factual project approvals have been invented.** The M9 content audit now blocks strict release until contact is configured, retaining 21 flagged issues. [M9 development log](logs/2026-10-15-m9-services-and-contact.md).
-
-**M9 placeholder-authoring completion (2026-10-15).** User explicitly approved temporary content and light/desaturated placeholder fills to unblock the builder. Replaced demo asset sources with four checked-in, inert, grayscale SVG files under `assets/placeholder/`, preserving stable IDs, cover references and all ten existing public routes. Pages, projects, posts and media are flagged `placeholder: true` separately from factual editorial approval; all are editable in the Studio and all production pages remain `noindex`. Project records now expose an optional unique stable `projectCode`, and asset metadata exposes the same scalar matching property without introducing the M15 relationship/query engine. Uploads can **replace an existing media file atomically while retaining asset ID**; server ETag enforcement, MIME checks, source files, upload permission and rejection tests cover this flow. Local Studio exposes placeholder toggles, project code fields, asset searching and bulk table editing. Tests use real browser interaction with no screenshots. Content audit distinguishes **14 deliberately temporary elements** from **1 unconfigured 15-minute booking destination**; strict external production launch remains gated. [Details](logs/2026-10-15-m9-placeholders-and-m10-snapshots.md).
-
-**Remaining real-content tasks (deferred to public-launch readiness, not M9 software work):** replace samples with actual authorized photos/case studies/posts and verified credits; clear placeholder flags only after replacement; confirm contact/booking URL and final external publishing. This is explicitly permitted by the user and does not block implementing M10/M11 as software stages.
-
-**M10 Production quality.** **Automated implementation complete; manual release acceptance remains.** Implemented `npm run backup:create`, `backup:verify`, and `backup:restore` for validated snapshots of JSON and assets, SHA-256 manifests and restore-to-new-folder. **New M10 pass (2026-10-15):** the shared renderer emits escaped per-page title/description and Open Graph/Twitter metadata, with `noindex, nofollow` and **no false canonical/social origin on staging**. An indexable build now requires explicit `TA_ENABLE_INDEXING=1`, a safe bare HTTPS `TA_PUBLIC_ORIGIN`, project-base path `/`, **zero** editorial audit findings (including real booking URL and replaced, approved media), and real files within a 12 MiB/file + 32 MiB aggregate budget. Only then does the build emit canonical links, `og:url`, optional real social cover image, `sitemap.xml`, and production `robots.txt`. Staging builds remain unindexed. Project tile images now lazy-load and image decoding is async. `npm run audit:media` and CI check path containment, missing binaries and size limits; build validates before deleting output. [M10 guide](M10_PUBLISHING_AND_PERFORMANCE.md) · [M10 log](logs/2026-10-15-m10-seo-performance.md). **Remaining:** manual keyboard/screen-reader and cross-browser/device testing, production image measurements with genuine media, failed-write/backup restore drills, and actual domain/DNS/TLS/host checks. Neither green CI nor a syntactically valid HTTPS origin proves production readiness. Keep `noindex` until these gates pass.
-
-**M11 Hosting and launch.** **Active.** Added a **host-independent, zero-dependency static ZIP export**: `npm run package:site` rebuilds the same JSON-derived public site for domain-root hosting, generates `release/ta-website-preview.zip` (Git ignored), with a release manifest containing SHA-256 digests of shipped files. Preview bundle is deliberately `noindex` and never deployed; production indexing is still behind the explicit approved-content, HTTPS-domain and media safety gates. No editor, API, logs, backups, or raw `content/site.json` are included. CI now unpacks/tests the ZIP, verifies the manifest, exercises a production refusal and audits repository-prefix Pages output. Sample verified ZIP: **21 public files, ~25 KB compressed**, containing 10 generated routes + 404/resources (not an actual user download in this chat). See [host handoff guide](M11_STATIC_HOST_HANDOFF.md) and [development log](logs/2026-10-15-m10-accessibility-m11-package.md).
-
-**M11 release-integrity cycle (2026-10-15).** The preview ZIP now has an **independent verification command** `npm run package:verify` checking ZIP headers, names/paths, CRC32, decompression limits, SHA-256 manifest consistency, required public files, and preview/production indexing state. `npm run release:rehearse` operates only in a disposable system-temporary copy: snapshots JSON+media, packages a baseline, tests a modified package, forces an invalid-media failure while retaining last good ZIP, restores to a separate folder, and reproduces the identical baseline ZIP. The main static build also writes to a sibling temporary directory and swaps it in only after a complete site exists; it refuses to overwrite unrelated folders or source/media paths. **Verified:** 110/110 tests, both GitHub Actions jobs green on `8265e833`, no screenshots. [Full run log](logs/2026-10-15-m11-release-rehearsal.md) · [Handoff guide](M11_STATIC_HOST_HANDOFF.md). This closes the **automated** build/package/rollback acceptance slice but does not simulate a live host's DNS/TLS, actual credentials or physical accessibility.
-
-**V1 closeout (2026-10-15).** Added an explicit, read-only `scripts/v1-staging-acceptance.mjs` and `npm run v1:staging-check`, executed by CI after static build. It separates **safe preview/staging** with user-approved placeholders from **public production**, which remains blocked. Four new tests confirm placeholders are allowed only when consistently flagged, route coverage is intact and contradictory content approval states are rejected. GitHub status and automated checks are green, but neither staged-release acceptance nor the instruction to wrap up V1 supplies missing public hosting, verified booking details or manual release QA. Preserve the previously stated V1 phase-end squash conditions. [Review checklist](V1_RELEASE_CANDIDATE.md).
-
-**V1 release policy clarification (2026-10-15):** All M8–M11 engineering and staging criteria have passed. The user explicitly authorised closing V1 and starting M12–M17 on a new V2 branch **without waiting for public content, real booking URL, host setup or manual QA**. Confirm latest-head checks, then do **one V1 squash merge**. Retain the public indexing/content/rights/manual-hosting gates for an eventual external launch after V2. Do not imply passing automated staging checks proves manual accessibility or production deployment acceptance.
-
-**Deferred until after V2 for indexed production launch:** manual screen-reader and keyboard-only checks on an actual device (beyond tested Chromium focus/ARIA/DOM); cross-browser and actual replacement media performance; verified genuine project content/permissions and contact booking; domain/host ownership, DNS/TLS, deep-route/404 and redirect behaviour on the chosen static provider; manual restore/rollback on the actual host with production-sized media. Work on safe documentation/deployment tooling without fabricating credentials or bypassing the publishing gate. One V1 merge remains pre-authorised **only after** final end-to-end acceptance; no interim merges or branch deletion.
-
-## Working protocol — mandatory every cycle
-
-1. **Before implementing:** read this plan, `AGENTS.md`, relevant specialist docs, current active branch, PR and current CI. Identify the next unfinished acceptance task from actual repo state.
-2. **During M8–M11:** use **one continuous V1 development branch** (`feature/m8-advanced-editor`) and its draft PR #23; add incremental commits here. Do not merge between M8, M9, M10 and M11. Do not push directly to `main` or deploy the incomplete site.
-3. **Substantial scheduled cycles:** make the scope as large as makes technical sense. Complete **at least one meaningful roadmap substep per run when feasible**, and multiple substeps when coherent and testable. Choose case-by-case; no artificial one-tiny-fix limit. If blocked on user content, credentials or third-party access, handle other safely unblocked agreed work.
-4. **Before handoff:** run focused tests, build/smoke/CI and relevant screenshot-free browser interactions whenever tools permit. Record actual failures, pending checks and limitations rather than claiming unverified success; screenshots remain disabled at the user's request.
-5. **At each cycle end:** update the **current status and next actions here**, and create/extend the relevant dated log in `docs/logs/` with changed files, commits, PRs, test evidence and blockers. Update docs in the same branch as code.
-6. **Internal milestone gates and authorised V1 merge:** advance M8 → M9 → M10 → M11 on the same branch without milestone merges. At the fully verified end of M11, with all required CI checks passing and release requirements met, **autonomously squash-merge the current V1 PR to `main` once** using an expected head SHA. This merge is **already authorised by the user** (2026-10-15); do not request the same approval again. Verify the GitHub Pages deployment triggered by `main`. Never fabricate project content, remove safety/SEO safeguards prematurely, supply nonexistent credentials, or represent an external production launch as complete when its prerequisites are missing. Continue other safe work when blocked.
-7. **Post-V1:** after the verified V1 merge, create **one** new branch from updated `main` for **all M12–M17**, continuing hourly development to the end of the roadmap. The user has authorised the agent to complete the roadmap **including the one final post-V1 squash merge** once M12–M17 are fully verified and checked, without another routine approval request. Report both merges explicitly; never squash prematurely or more than once per phase.
-8. **Never delete branches**, including after squash merges. Keep automatic head-branch deletion disabled. Prior instructions to delete branches after stage merges are superseded by this policy.
-
-
-
-## Historical starting criteria
-
-The original [M0–M3 baseline implementation plan](logs/2026-10-12-foundations.md) is historical: M1 file editing and generated sample project/post pages, M2 reusable templates/queries, and M3 safe image assets have all been implemented. Do not treat them as the current next task.
-
----
-
-## Post-V1 roadmap — agreed extension after M11
-
-> **Decisions confirmed 2026-10-15.** This extension follows and **does not replace, reorder, or expand the agreed scope of the original M8–M11 roadmap above**. First complete M8 editor acceptance → M9 real TA content → M10 production QA/backups → M11 hosting and V1 launch. Post-V1 work must not block V1. **The TA website is the only required real project; do not build another demo website.**
->
-> **Full implementation specification:** [Post-V1 architecture and queries](POST_V1_ARCHITECTURE.md). It owns detailed semantics, not milestone status. Planning resolution is recorded in [2026-10-15 design log](logs/2026-10-15-post-v1-planning.md). M12 implementation has begun on the retained V2 branch; later milestones remain planned.
-
-### Agreed product model
-
-- **One site = one folder = one local Studio instance.** JSON and actual media remain file-first and portable.
-- **One Card/Item composition system for pages and collection records.** Manual Card/Item authoring only. Components, templates, page compositions and record compositions are edited in isolation, with full-page preview separately.
-- **One main composition slot in each page template.** Templates can position reusable Navbar/Header/Footer and other components around a unique root Card. Home and Work can use a General template; Studio can choose a different template sharing its navbar but not necessarily its footer.
-- **Configurable site design:** global tokens → named Card/Item style → limited local overrides; grid geometry independent. Preserve TA's current look through migration.
-- **Generic typed collections** with optional detail pages; default template by collection, optional override per record. A query Card displays filtered records through a reusable Card component.
-- **Assets are queryable** as a built-in source with tags and ordinary typed metadata fields. Initial project association is simple **projectCode equality matching** between asset metadata and the current project record (or reuse the stable record ID if it already serves as the code). No dedicated relationship model for V2; support an array of codes only if the real TA workflow requires multi-project asset queries.
-- **Contextual deterministic queries:** match asset `projectCode` = current page `record.projectCode` **AND** tag contains `highlighted`; preserve separate page-record and query-item binding contexts. Validate unique/stable project codes, typed equality/contains, sort/limit and safe code-change handling. No arbitrary code.
-- **No second test site or new graphical node kinds.** Test reuse through real TA use cases, schema validation, isolated components and regression checks.
-
-### Executable post-V1 milestone sequence
-
-| Stage | Small delivery slices (proposed) | Acceptance / TA use case | Effort estimate |
-| --- | --- | --- | --- |
-| **M12 — Unified page and template system** | **In progress:** 12.1 validated one-slot Card contract; 12.2 opt-in page assembly in preview/static build; next 12.3 componentized Nav/Header/Footer and 12.4 isolated authoring/migration | Home, Work and Studio share templates without duplicating structural elements; V1 remains stable until migration | ~2–4 sessions |
-| **M13 — Site design system** | 13.1 design tokens/schema; 13.2 named styles + resolver; 13.3 local overrides; 13.4 Studio Design controls and migration | Edit TA typography, palette, rounding and spacing in Studio; appearance preserved unless explicitly changed | ~2–4 sessions |
-| **M14 — Record compositions** | 14.1 validated root Card per record; 14.2 collection default/record template override; 14.3 isolated record composition editor; 14.4 tests on real projects/posts | Two projects share Project Detail template but have completely different editable narratives and media | ~2–4 sessions |
-| **M15 — Generic collections and asset queries** | 15.1 typed field/record editor; 15.2 asset projectCode and tag metadata; 15.3 contextual equality/contains queries and rendering; 15.4 TA media integration test | Project Detail automatically displays assets matching the current project code and tagged highlighted; no relationship manager needed | ~3–5 sessions |
-| **M16 — Manual authoring quality** | 16.1 fix Card/Item friction discovered in TA content; 16.2 asset metadata and SVG safety; 16.3 module separation; 16.4 resilience/UX acceptance | TA pages and long posts can be authored, changed and saved quickly and safely without layout presets | ~2–4 sessions |
-| **M17 — Portable Studio handoff** | 17.1 folder/setup documentation; 17.2 migrations and complete data/media backup; 17.3 static build/release regression; 17.4 end-to-end sign-off | One TA project folder can be copied, restored and built with same engine; no separate demo site | ~1–3 sessions |
-
-Effort is in focused development sessions, **not guaranteed calendar days**. M12–M17 share **one retained post-V1 development branch** (created after the verified and already-authorised V1 squash merge), with incremental implementation, tests, screenshots and progress logs across stages. The user has pre-authorised one final squash merge at the verifiably completed end of this phase. No branch deletion. Large or multiple substeps can be completed per development run when coherent.
-
-**Execution policy (2026-10-15):** manual user prompts; the previous hourly automation remains paused. No background commitments. Commit tested M12–M17 progress to one V2 branch, never delete the source branch, and perform the pre-authorised final squash merge only when the complete V2 software scope and latest CI are verified.
-
-### Next actions and boundaries
-
-1. **Now — M12:** validate slot-based page templates and isolated root compositions without modifying existing V1 site output. Implement shareable Navbar/Header/Footer composition, full page assembly and isolated editing/preview with regression tests on TA's existing routes.
-2. **Then:** M13 named styles and design tokens → M14 record compositions → M15 typed generic collections/assets queries → M16 authoring polish → M17 portable Studio handoff, all on `feature/v2-unified-studio` and [PR #24](https://github.com/teodor-andonov/ta-website-builder-261012/pull/24).
-3. **At verified M17 completion:** one already-authorised V2 squash merge after green exact-head CI, never delete branches. Keep public production indexing, host deployment, real content/booking and manual QA for **after V2**.
-4. **Boundaries:** no new test/demo website, Markdown store, responsive reflow, generic relationship manager or scripting eval. Use the one TA site and source JSON with the same renderer.
+- Preserve JSON as the single authoring source, the shared rendering contract and the nonadaptive print-style public Card/Item grid. Studio remains desktop-focused. Leave `prototype-v2/` historical and untouched.
+- Prefer one meaningful, tested step per user-triggered cycle (larger coherent steps are welcome). No new background automation and no automatic screenshots.
+- After substantial changes, update this plan and add a dated [log](logs/README.md). Be clear about unrun local tests when the environment cannot execute the repository.
+- Keep `main` as current public GitHub Pages site; V2 PR is not a live deployment. Do not merge/delete branches, alter production hosting or require third-party access without the appropriate user instruction.
