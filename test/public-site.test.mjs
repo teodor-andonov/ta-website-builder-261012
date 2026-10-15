@@ -27,7 +27,7 @@ test('every internal link on every public page resolves to a built page',()=>{
       assert.ok(routes.has(normalized),`Broken internal link ${route} -> ${href}`);
     }
     assert.ok(!html.includes('href="/studio/"'),route);
-    assert.match(html,/<meta name="robots" content="noindex, nofollow">/);
+    assert.match(html,/<meta name="robots" content="index, follow">/);
   }
 });
 test('navigation highlights current top-level section on detail and index pages',()=>{
