@@ -18,3 +18,17 @@
 - Updated [AGENTS.md](../../AGENTS.md), [living implementation plan](../IMPLEMENTATION_PLAN.md), [architecture](../ARCHITECTURE.md) and [M8 editor plan](../M8_EDITOR_PLAN.md) to supersede conflicting per-milestone merge/delete instructions.
 - **Hourly 24-run automation pilot was created and enabled successfully** using the Automation system, with substantial M8–M11 cycle instructions and explicit no-merge/no-delete guards. The Automation system owns the schedule and task status; GitHub records development progress.
 - No code, merge or deployment changes were made. Each triggered run must re-read these rules and actual branch state.
+
+## Revised standing authorisation — 2026-10-15
+
+The user explicitly clarified that **V1's end-of-roadmap squash merge is already approved** and requested autonomous execution until the end of the entire roadmap.
+
+- The original 24-run pilot is superseded by a continuous hourly schedule, which should stop once the M12–M17 roadmap is fully finished.
+- Complete substantial substeps per run; automatically advance through the M8–M11 milestones on one retained branch.
+- **Once M8–M11 are fully verified, the agent may perform the one pre-authorised V1 squash merge without requesting approval again.** Verify GitHub Actions staging; no intermediate merges.
+- **After V1**, create the one post-V1 branch and execute M12–M17 autonomously. The user's instruction to continue through the end of the roadmap also authorises **one final squash merge** when all M12–M17 acceptance checks pass; no repeated approval prompt.
+- **No branch deletion ever** and no auto-delete setting. Check head SHA and required CI/test results before any merge.
+- Real content, secrets, live production host details, and irreversible external publishing still require actual data/access and safety checks. Do not fabricate or silently remove publishing protections to force a release.
+- At terminal completion, document actual merge/build results and pause/disable the scheduled task when supported. If automation remains active, subsequent runs should do nothing after detecting roadmap completion.
+
+This section **supersedes** the earlier approval-gated merge and 24-run pilot bullets above. Updated [AGENTS.md](../../AGENTS.md) and the [living plan](../IMPLEMENTATION_PLAN.md) accordingly. No runtime code changed during this policy update.
