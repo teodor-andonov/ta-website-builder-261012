@@ -167,7 +167,9 @@ function renderBlock(node, context, data, options, depth) {
   const type=node.type,overflow=node.overflow==='scroll'?' item-scroll':'';
   if(type==='text'){
     const attrs=nodeAttrs(node,options,['item','item-text','b-text',safeToken(node.style||'body')]);
-    return '<div'+attrs+'>'+ (escapeHtml(bind(node.text,context,data))||'<span class="muted">Empty text</span>')+'</div>';
+    // Preserve visual Cards while giving display/heading Items real semantic levels.
+    const tag=node.style==='display'||node.headingLevel===1?'h1':node.style==='heading'?'h2':'div';
+    return '<'+tag+attrs+'>'+ (escapeHtml(bind(node.text,context,data))||'<span class="muted">Empty text</span>')+'</'+tag+'>';
   }
   if(type==='rich'){
     const attrs=nodeAttrs(node,options,['item','item-rich','rich']);
