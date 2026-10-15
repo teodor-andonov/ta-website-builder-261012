@@ -5,10 +5,10 @@ import {auditContent} from '../scripts/content-readiness.mjs';
 
 const content=JSON.parse(await readFile(new URL('../content/site.json',import.meta.url),'utf8'));
 const copy=()=>structuredClone(content);
-test('M9 audit finds demonstration assets, placeholder contacts and unreviewed real-world claims',()=>{
+test('M9 audit finds demonstration assets, missing booking and unreviewed real-world claims',()=>{
  const issues=auditContent(copy());
  assert.ok(issues.some(i=>i.code==='demo-media'&&i.path==='assets/house'));
- assert.ok(issues.some(i=>i.code==='placeholder-contact'));
+ assert.ok(issues.some(i=>i.code==='missing-booking-url'));
  assert.ok(issues.some(i=>i.code==='review-required'&&i.path.includes('/projects/')));
  assert.ok(issues.some(i=>i.code==='page-review'&&i.path==='pages/home'));
 });
