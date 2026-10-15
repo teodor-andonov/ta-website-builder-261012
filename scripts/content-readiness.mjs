@@ -11,7 +11,9 @@ export function auditContent(data){
  if(!data.site?.contact?.bookingUrl?.trim())issue('missing-booking-url','site/contact/bookingUrl','Configure a real HTTPS booking destination for the 15-minute introduction CTA.');
  for(const a of data.assets||[]){
   if(a.placeholder===true)
-   issue('placeholder-media','assets/'+a.id,'Intentional neutral media fill; replace or mark as final before public launch.','placeholder');
+   issue('placeholder-media','assets/'+a.id,'Intentional neutral media fill; replace with real media before public launch.','placeholder');
+  else if(typeof a.src==='string'&&a.src.startsWith('/assets/placeholder/'))
+   issue('placeholder-source','assets/'+a.id,'Replace this neutral placeholder file before enabling public indexing.');
   else if(typeof a.src!=='string'||/^(?:demo:|\/assets\/demo\/)/.test(a.src))
    issue('demo-media','assets/'+a.id,'Replace demonstration media with an owned/licensed production file.');
   if(!a.alt?.trim())issue('missing-alt','assets/'+a.id,'Add descriptive alternative text or explicitly document decorative use.');
