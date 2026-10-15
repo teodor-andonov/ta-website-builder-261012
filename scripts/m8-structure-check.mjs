@@ -1,7 +1,7 @@
 // Browser end-to-end test for the local visual grid editor. Uses a disposable
 // copy of site.json: neither the user's content nor GitHub Pages is modified.
 import {spawn} from 'node:child_process';
-import {mkdtemp,mkdir,copyFile,readFile,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,copyFile,readFile,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {setTimeout as sleep} from 'node:timers/promises';
@@ -11,6 +11,26 @@ const tmp=await mkdtemp(join(tmpdir(),'ta-structure-editor-'));
 const contentRoot=join(tmp,'data'),chromeData=join(tmp,'chrome');
 await mkdir(join(contentRoot,'content'),{recursive:true});
 await copyFile(join(root,'content','site.json'),join(contentRoot,'content','site.json'));
+// Synthetic stress content is written ONLY into disposable test JSON.
+// A separate draft page avoids changing the established Home interaction flow.
+const fixtureFile=join(contentRoot,'content','site.json');
+const fixture=JSON.parse(await readFile(fixtureFile,'utf8'));
+const makeCard=(id,children,area,columns=1,rows=1)=>({
+  id,type:'card',columns,rows,children,...(area?{area}:{}),
+  padding:'x1',gap:'x1',background:'transparent',border:false,constrainHeight:false,heightFactor:.5
+});
+const cell={x1:1,y1:1,x2:2,y2:2};
+const groups=Array.from({length:8},(_,g)=>makeCard('stress-group-'+g,
+ Array.from({length:40},(_,i)=>({
+   id:'stress-item-'+g+'-'+i,type:'text',text:'Synthetic item '+i,
+   area:{x1:i%8+1,y1:Math.floor(i/8)+1,x2:i%8+2,y2:Math.floor(i/8)+2}
+ })),{x1:g+1,y1:1,x2:g+2,y2:2},8,5));
+const stressRoot=makeCard('stress-root',groups,null,8,1);
+let deepest={id:'stress-leaf',type:'text',text:'Deep nested authoring selection',area:{...cell}};
+for(let depth=12;depth>=0;depth--)deepest=makeCard('stress-level-'+depth,[deepest],{...cell});
+delete deepest.area;
+fixture.pages.find(p=>p.id==='studio').blocks.push(stressRoot,deepest);
+await writeFile(fixtureFile,JSON.stringify(fixture));
 const port=5274;
 const server=spawn(process.execPath,['src/server.mjs'],{cwd:root,env:{...process.env,PORT:String(port),TA_DATA_ROOT:contentRoot},stdio:'ignore'});
 let chrome,ws;
@@ -250,6 +270,28 @@ try{
    throw Error('Structure desktop QA failed at 1600×1000: '+JSON.stringify(spacious));
  await command('Emulation.clearDeviceMetricsOverride');
  console.log('M8_VIEWPORT_A11Y_OK 1280×800, 1600×1000, tree roles/levels/selection');
+ // Exercise 320 Items + 13 nested Cards in a real Chromium editor without screenshots.
+ await evaluate("window.__TA_STUDIO__.navigate('page','studio');true");
+ const stress=await evaluate(`(()=>({
+   count:document.querySelectorAll('#structureTree [role="treeitem"]').length,
+   leaf:!!document.querySelector('#structureTree .structure-select[data-id="stress-leaf"]'),
+   rendered:!!document.querySelector('.editor-shell [data-node-id="stress-leaf"]'),
+   deepLevel:document.querySelector('#structureTree .structure-select[data-id="stress-leaf"]')?.getAttribute('aria-level')
+ }))()`);
+ if(stress.count<330||!stress.leaf||!stress.rendered||Number(stress.deepLevel)<14)
+   throw Error('Large/deep Structure rendering failed: '+JSON.stringify(stress));
+ const deepFocus=await evaluate(`(()=>{
+   const leaf=document.querySelector('#structureTree .structure-select[data-id="stress-leaf"]');
+   leaf.click();
+   const selected=document.querySelector('#structureTree .structure-select[data-id="stress-leaf"]');
+   selected?.focus();
+   return {focused:document.activeElement?.dataset.id,selected:document.querySelectorAll('#structureTree [aria-selected="true"]').length,
+     preview:!!document.querySelector('.editor-shell [data-node-id="stress-leaf"].chosen')};
+ })()`);
+ if(deepFocus.focused!=='stress-leaf'||deepFocus.selected!==1||!deepFocus.preview)
+   throw Error('Deep Structure selection/focus divergence: '+JSON.stringify(deepFocus));
+ console.log('M8_LARGE_TREE_OK 320 synthetic Items, deep renderer, selection and ARIA focus');
+ await evaluate("window.__TA_STUDIO__.navigate('page','home');true");
  // Another browser tab (or a script) changes the file: Studio must refuse a
  // stale overwrite, keep local changes in memory and expose Export JSON recovery.
  const remoteSave=await evaluate(`(async()=>{
