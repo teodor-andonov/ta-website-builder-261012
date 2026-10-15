@@ -412,7 +412,10 @@ else {let n=found.node;h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+n
  `<div class="rule"></div><div class="upper">HEIGHT · SECTION CARD</div>`+
  nodeField('Constrain height','constrainHeight',String(Boolean(n.constrainHeight)),[['false','No · content height'],['true','Yes · width × factor']])+
  (n.constrainHeight?nodeField('Height factor (e.g. 0.5)','heightFactor',n.heightFactor||.5):'')+
- `<p class="help">Equal grid cells. Child areas use integer grid lines. Constrained height = Card width × factor.</p><button class="btn" data-act="show-blocks" data-inside="yes">${ic('add')} Add child object</button>`;
+ `<p class="help">Equal grid cells. Child areas use integer grid lines. Constrained height = Card width × factor.</p>`+
+ (n.source||n.reference
+  ?'<p class="help">Generated or referenced Card: edit the source or component definition; direct children are not allowed.</p>'
+  :`<button class="btn" data-act="show-blocks" data-inside="yes">${ic('add')} Add child object</button>`);
  if(n.type==='card'&&n.reference)h+=nodeField('Reusable component','reference',n.reference,db.components.map(c=>[c.id,c.name]))+`<button class="btn" data-act="edit-component" data-id="${e(n.reference)}">Edit definition ↗</button>`;
  if(n.type==='card'&&n.source){let src=n.source,cc=db.collections.find(c=>c.id===src.collection);h+=`<div class="rule"></div><div class="upper">DATA SOURCE · GENERATES RECORD CARDS</div>`+
  nodeField('Collection','source.collection',src.collection,db.collections.map(c=>[c.id,c.name]))+
