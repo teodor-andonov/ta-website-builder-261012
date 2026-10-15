@@ -97,7 +97,7 @@
 <div class="app" id="studioApp">
  <header class="topbar">
   <div class="brand"><button class="btn ghost icononly mobile-menu" id="menuBtn" aria-label="Open menu">☰</button><div class="mark">TA</div><div><strong>TA / CONTENT STUDIO</strong><span class="version">FILE ASSETS · M3</span></div></div>
-  <div class="toolbar"><span class="saved" id="saved">JSON FILE · READY</span><button class="btn ghost" id="importBtn">Import JSON</button><button class="btn dark" id="exportBtn">↧ &nbsp;Export JSON</button><input hidden type="file" id="importFile" accept=".json,application/json"><input hidden type="file" id="imageFile" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif" multiple></div>
+  <div class="toolbar"><span class="saved" id="saved" role="status" aria-live="polite">JSON FILE · READY</span><span id="saveDetails" role="alert" hidden></span><button class="btn ghost" id="importBtn">Import JSON</button><button class="btn dark" id="exportBtn">↧ &nbsp;Export JSON</button><input hidden type="file" id="importFile" accept=".json,application/json"><input hidden type="file" id="imageFile" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif" multiple></div>
  </header>
  <aside class="sidebar" id="sidebar"><div class="side-inner" id="sidebarContent"></div><div class="side-bottom">LOCAL FIRST &nbsp;↗<br>FILES · COLLECTIONS · TEMPLATES</div></aside>
  <aside class="structure-pane" id="structurePane" aria-label="Document structure"><div class="structure-head"><span>DOCUMENT STRUCTURE</span><button class="btn ghost sm" data-act="toggle-structure" title="Hide document structure" aria-label="Hide document structure">✕</button></div><div class="structure-summary" id="structureSummary"></div><div class="structure-editbar" role="toolbar" aria-label="Move selected Card or Item">
@@ -114,6 +114,7 @@
 import { renderBlocks as renderSharedBlocks, renderSiteFrame, assetSrc } from "/src/render.mjs";
 import {moveTreeNode,moveTreeByIntent,findFreeArea,findAreaConflicts} from "/src/tree-editor.mjs";
 import {createEditorHistory} from "/src/editor-history.mjs";
+import {validate as validateSiteData} from "/src/model.mjs";
 (async ()=>{'use strict';
 const SVG_ART={
 field:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 680"><defs><radialGradient id="a"><stop stop-color="#797a74"/><stop offset=".6" stop-color="#d2d3cb"/><stop offset="1" stop-color="#f2f2ec"/></radialGradient><filter id="b"><feGaussianBlur stdDeviation="16"/></filter><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency=".45" numOctaves="2" seed="7" result="n"/><feColorMatrix in="n" type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".07"/></feComponentTransfer></filter></defs><rect width="800" height="680" fill="#e7e8e1"/><g fill="#454640" opacity=".75"><rect x="110" y="102" width="160" height="160" rx="48"/><rect x="294" y="102" width="160" height="160" rx="38"/><rect x="478" y="102" width="160" height="160" rx="62"/><rect x="110" y="286" width="160" height="160" rx="55"/><rect x="294" y="286" width="160" height="160" rx="58"/><rect x="478" y="286" width="160" height="160" rx="47"/><rect x="294" y="470" width="160" height="160" rx="60"/></g><ellipse cx="422" cy="327" rx="260" ry="200" fill="url(#a)" filter="url(#b)" opacity=".85"/><rect width="800" height="680" filter="url(#noise)" opacity=".9"/></svg>`,
@@ -231,6 +232,7 @@ function markSaveFailure(error){
  const indicator=$('#saved');
  indicator.textContent='UNSAVED CHANGES · EXPORT JSON';
  indicator.title=error.message+' — Export JSON before reloading; the file on disk was not overwritten.';
+ const details=$('#saveDetails');details.hidden=false;details.textContent=error.message+' · Export JSON, then reload and reconcile before saving again.';
  console.error('File save stopped:',error);
 }
 function persist(){
@@ -488,7 +490,45 @@ function setNodeField(key,value){
 function openRecord(recordId,collectionId){if(collectionId)ui.collection=collectionId;ui.record=recordId;choose('record',{collection:ui.collection,record:recordId})}
 function download(name,text,type='application/json'){let blob=new Blob([text],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
 function exportJSON(){download('ta-site-content-v2.json',JSON.stringify(db,null,2))}
-function modifyScoped(scope,obj){if(scope==='all'){db=normalize(obj);return}if(scope==='assets'){if(!Array.isArray(obj))throw Error('Expected an array of assets.');db.assets=obj;return}if(scope==='collection'){let i=db.collections.findIndex(c=>c.id===ui.collection);db.collections[i]=obj;return}if(scope==='record'){let a=coll().records,i=a.findIndex(x=>x.id===ui.record);a[i]=obj;ui.record=obj.id;return}let array=scope==='page'?db.pages:scope==='template'?db.templates:db.components,key=scope==='page'?ui.page:scope==='template'?ui.template:ui.component,index=array.findIndex(x=>x.id===key);array[index]=obj;if(scope==='page')ui.page=obj.id;if(scope==='template')ui.template=obj.id;if(scope==='component')ui.component=obj.id}
+function modifyScoped(scope,obj,target){
+ if(scope==='all')return normalize(obj);
+ if(scope==='assets'){
+  if(!Array.isArray(obj))throw Error('Expected an array of assets.');
+  target.assets=obj;return target;
+ }
+ if(scope==='collection'){
+  const index=target.collections.findIndex(c=>c.id===ui.collection);
+  if(index<0)throw Error('Collection no longer exists');
+  target.collections[index]=obj;return target;
+ }
+ if(scope==='record'){
+  const collection=target.collections.find(c=>c.id===ui.collection);
+  const index=collection?.records.findIndex(r=>r.id===ui.record)??-1;
+  if(index<0)throw Error('Record no longer exists');
+  collection.records[index]=obj;return target;
+ }
+ const key=scope==='page'?'pages':scope==='template'?'templates':scope==='component'?'components':null;
+ if(!key)throw Error('Unknown JSON scope: '+scope);
+ const id=scope==='page'?ui.page:scope==='template'?ui.template:ui.component;
+ const index=target[key].findIndex(row=>row.id===id);
+ if(index<0)throw Error('Authored scope no longer exists');
+ target[key][index]=obj;return target;
+}
+function applyValidatedJSON(scope,obj){
+ // Work on a copy. Rejected JSON must never poison the live editor document.
+ const candidate=modifyScoped(scope,obj,clone(db));
+ normalize(candidate);
+ validateSiteData(candidate);
+ db=candidate;
+ if(scope==='record')ui.record=obj.id;
+ if(scope==='page')ui.page=obj.id;
+ if(scope==='template')ui.template=obj.id;
+ if(scope==='component')ui.component=obj.id;
+ // Importing arbitrary JSON invalidates earlier undo snapshots for this document.
+ editorHistory.clear();
+ persist();
+}
+
 function setRecordValue(r,key,value,field){if(field?.type==='boolean')value=Boolean(value);else if(field?.type==='number')value=value===''?'':Number(value);else if(field?.type==='tags')value=String(value).split(',').map(s=>s.trim()).filter(Boolean);r[key]=value}
 function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'navigate':{let sec=btn.dataset.section;if(sec==='template')choose('template',id||ui.template);else if(sec==='component')choose('component',id||ui.component);else choose(sec,id);break}
@@ -548,7 +588,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    break;
  }
  case'delete-scope':{let s=currentScope();if(!s||!confirm('Delete this '+ui.section+'?'))break;if(ui.section==='template'){if(db.templates.length<=1){alert('Keep at least one template.');break}db.templates=db.templates.filter(x=>x.id!==s.id);choose('template',db.templates[0].id)}else if(ui.section==='component'){db.components=db.components.filter(x=>x.id!==s.id);choose('component',db.components[0]?.id)}persist();break}
- case'apply-json':{let scope=btn.dataset.scope;try{let obj=JSON.parse($('#jsonEditor').value);modifyScoped(scope,obj);normalize(db);persist();ui.jsonMessage='JSON applied successfully.';renderAll()}catch(err){ui.jsonMessage='Error: '+err.message;let x=$('#jsonNotice');if(x){x.textContent=ui.jsonMessage;x.className='notice error'}}break}
+ case'apply-json':{let scope=btn.dataset.scope;try{let obj=JSON.parse($('#jsonEditor').value);applyValidatedJSON(scope,obj);ui.jsonMessage='JSON applied successfully.';renderAll()}catch(err){ui.jsonMessage='Error: '+err.message;let x=$('#jsonNotice');if(x){x.textContent=ui.jsonMessage;x.className='notice error'}}break}
  case'copy-json':navigator.clipboard?.writeText($('#jsonEditor').value).then(()=>{if($('#jsonNotice'))$('#jsonNotice').textContent='Copied to clipboard.'}).catch(()=>{});break;
  case'export':exportJSON();break;
  }}
@@ -570,8 +610,8 @@ async function runImageImport(files){
   try{
    const response=await fetch('/api/assets?filename='+encodeURIComponent(f.name),{
     method:'POST',headers:{'Content-Type':f.type,'If-Match':savedRevision},body:f
-   });
-   const result=await response.json();
+   }).catch(error=>{markSaveFailure(Error('Upload connection failed; server state is uncertain: '+error.message));throw error});
+   const result=await response.json().catch(error=>{markSaveFailure(Error('Upload response is incomplete; server state is uncertain: '+error.message));throw error});
    if(!response.ok){
     const error=Error(result.error||`Upload failed (${response.status})`);
     if(response.status===409||response.status===428)markSaveFailure(error);
@@ -785,7 +825,7 @@ document.addEventListener('change',event=>{let el=event.target;
  if(el.id==='scopePicker'){choose(ui.section,el.value);return}
  if(el.id==='formatFilter'){ui.format=el.value;renderWork();return}
  if(el.id==='recordSearch'||el.id==='assetSearch'){ui.search=el.value;renderWork();return}
- if(el.id==='importFile'&&el.files[0]){el.files[0].text().then(t=>{let d=normalize(JSON.parse(t));db=d;persist();choose('dashboard')}).catch(err=>alert('Import error: '+err.message));el.value='';return}
+ if(el.id==='importFile'&&el.files[0]){el.files[0].text().then(t=>{const d=normalize(JSON.parse(t));validateSiteData(d);if(!confirm('Replace the current Studio JSON with this validated file? Export a backup first if needed.'))return;applyValidatedJSON('all',d);choose('dashboard')}).catch(err=>alert('Import error: '+err.message));el.value='';return}
  if(el.id==='imageFile'){importImages([...el.files]).catch(err=>alert('Image error: '+err.message));el.value='';return}
 });
 document.addEventListener('input',event=>{
