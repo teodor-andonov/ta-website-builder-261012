@@ -56,6 +56,8 @@ jobs:
           test -s release/ta-website-preview.zip
           unzip -t release/ta-website-preview.zip > /tmp/ta-zip-check.log
           grep -q 'No errors detected in compressed data' /tmp/ta-zip-check.log
+      - name: Rehearse complete backup, failed build and rollback without touching source
+        run: npm run release:rehearse
       - name: Verify GitHub Pages project-path build
         env:
           TA_BASE_PATH: /ta-website-builder-261012/
