@@ -45,6 +45,10 @@
       },
       "pad": 1,
       "gap": 1
+    },
+    "contact": {
+      "email": "",
+      "bookingUrl": ""
     }
   },
   "collections": [
@@ -936,7 +940,7 @@
             {
               "id": "b_kjufyt",
               "type": "text",
-              "text": "HAVE A PROJECT IN MIND?",
+              "text": "HAVE A BRIEF OR QUESTION?",
               "style": "eyebrow",
               "area": {
                 "x1": 1,
@@ -948,7 +952,7 @@
             {
               "id": "b_g0vd1t",
               "type": "text",
-              "text": "Let’s make something useful.",
+              "text": "Discuss your project, idea or tool.",
               "style": "heading",
               "area": {
                 "x1": 2,
@@ -960,8 +964,8 @@
             {
               "id": "b_1f0qjq",
               "type": "button",
-              "text": "Start a conversation ↗",
-              "href": "mailto:hello@example.com",
+              "text": "Book a 15-minute introduction ↗",
+              "href": "{{site.contact.bookingUrl}}",
               "area": {
                 "x1": 1,
                 "y1": 2,
@@ -1432,7 +1436,7 @@
             {
               "id": "m6-methods-heading",
               "type": "text",
-              "text": "Across scales and disciplines.",
+              "text": "Architecture, computation, facades and research.",
               "style": "heading",
               "area": {
                 "x1": 5,
@@ -1472,7 +1476,7 @@
                 {
                   "id": "m6-architecture-copy",
                   "type": "text",
-                  "text": "Architectural ideas developed through spatial logic, materials and making.",
+                  "text": "Architecture from early spatial ideas to systems, material choices and buildable detail.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1529,7 +1533,7 @@
                 {
                   "id": "m6-computation-copy",
                   "type": "text",
-                  "text": "Computational approaches that make complexity legible, reusable and adaptable.",
+                  "text": "Parametric design, generative tools and custom workflows that help teams explore and deliver.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1562,7 +1566,7 @@
                 {
                   "id": "m6-research-num",
                   "type": "text",
-                  "text": "03  /  RESEARCH",
+                  "text": "03  /  FACADES & RESEARCH",
                   "style": "eyebrow",
                   "area": {
                     "x1": 1,
@@ -1574,7 +1578,7 @@
                 {
                   "id": "m6-research-title",
                   "type": "text",
-                  "text": "Questions & experiments.",
+                  "text": "Envelopes & experiments.",
                   "style": "heading",
                   "area": {
                     "x1": 1,
@@ -1586,7 +1590,7 @@
                 {
                   "id": "m6-research-copy",
                   "type": "text",
-                  "text": "Prototyping across façades, digital fabrication, geometry and visual systems.",
+                  "text": "Façade strategies, geometry and material studies, tested through design and computation.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1634,7 +1638,7 @@
                 {
                   "id": "m6-approach-label",
                   "type": "text",
-                  "text": "03  /  WORKING TOGETHER",
+                  "text": "03  /  HOW WE WORK",
                   "style": "eyebrow",
                   "area": {
                     "x1": 1,
@@ -1646,7 +1650,7 @@
                 {
                   "id": "m6-approach-heading",
                   "type": "text",
-                  "text": "A useful process starts with the right arrangement.",
+                  "text": "Choose the right way to work together.",
                   "style": "heading",
                   "area": {
                     "x1": 1,
@@ -1658,7 +1662,7 @@
                 {
                   "id": "m6-approach-note",
                   "type": "text",
-                  "text": "Three engagement formats we're developing. Specific deliverables and terms are defined around each brief.",
+                  "text": "Three possible arrangements. Scope, timing and fees are confirmed before any engagement.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1703,7 +1707,7 @@
                 {
                   "id": "m6-fixed-body",
                   "type": "text",
-                  "text": "Defined scope. Clear deliverables.",
+                  "text": "A defined brief with agreed deliverables, inputs, timeframe and fixed fee.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1748,7 +1752,7 @@
                 {
                   "id": "m6-subscription-body",
                   "type": "text",
-                  "text": "Ongoing design and computation support.",
+                  "text": "Reserved design and computation capacity for iterative or ongoing work.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1793,7 +1797,7 @@
                 {
                   "id": "m6-custom-body",
                   "type": "text",
-                  "text": "A tailored arrangement for a unique challenge.",
+                  "text": "A project-specific brief and contract for architecture, facades or custom systems.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1992,6 +1996,20 @@
           "border": false,
           "constrainHeight": true,
           "heightFactor": 0.28
+        },
+        {
+          "id": "home-contact-cta",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "x1",
+          "padding": "x1",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [],
+          "reference": "contact-cta"
         }
       ]
     },
