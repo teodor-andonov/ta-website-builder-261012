@@ -301,6 +301,48 @@ try{
  if(deepFocus.focused!=='stress-leaf'||deepFocus.selected!==1||!deepFocus.preview)
    throw Error('Deep Structure selection/focus divergence: '+JSON.stringify(deepFocus));
  console.log('M8_LARGE_TREE_OK 320 synthetic Items, deep renderer, selection and ARIA focus');
+ // Invalid JSON must not mutate Studio memory or reach disk, even through a scoped edit.
+ const rejectedJSON=await evaluate(`(()=>{
+   window.__TA_STUDIO__.navigate('page','home');
+   document.querySelector('[data-act="mode"][data-mode="json"]').click();
+   const source=window.__TA_STUDIO__.getData();
+   const before=JSON.stringify(source);
+   const textarea=document.querySelector('#jsonEditor'),editing=JSON.parse(textarea.value);
+   editing.blocks[1].id=editing.blocks[0].id;
+   textarea.value=JSON.stringify(editing);
+   document.querySelector('[data-act="apply-json"]').click();
+   return {message:document.querySelector('#jsonNotice')?.textContent,
+      unchanged:JSON.stringify(window.__TA_STUDIO__.getData())===before};
+ })()`);
+ if(!rejectedJSON.unchanged||!rejectedJSON.message?.includes('Duplicate node ID'))
+   throw Error('Invalid scoped JSON poisoned editor state: '+JSON.stringify(rejectedJSON));
+ await sleep(250);
+ const rejectedDisk=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
+ if(rejectedDisk.pages.find(p=>p.id==='home').blocks[1].id===rejectedDisk.pages.find(p=>p.id==='home').blocks[0].id)
+   throw Error('Invalid scoped JSON was written to disk');
+ console.log('M8_JSON_TRANSACTION_OK invalid scoped JSON retains editor state and on-disk tree');
+ // An invalid uploaded image is rejected safely without allocating an asset or blocking healthy JSON.
+ const uploadFailure=await evaluate(`(()=>{
+   window.__M8_uploadError='';
+   window.alert=text=>{window.__M8_uploadError=String(text)};
+   const box=document.querySelector('#imageFile'),transfer=new DataTransfer();
+   transfer.items.add(new File(['not a real PNG'], 'broken.png',{type:'image/png'}));
+   box.files=transfer.files;box.dispatchEvent(new Event('change',{bubbles:true}));
+   return {requested:true,initialAssets:window.__TA_STUDIO__.getData().assets.length};
+ })()`);
+ let rejectedUpload;
+ for(let i=0;i<40;i++){
+   rejectedUpload=await evaluate(`(()=>({alert:window.__M8_uploadError,
+      status:document.querySelector('#saved')?.textContent,
+      assets:window.__TA_STUDIO__.getData().assets.length}))()`);
+   if(rejectedUpload.alert)break;
+   await sleep(100);
+ }
+ if(!rejectedUpload.alert?.includes('broken.png')||
+    rejectedUpload.assets!==uploadFailure.initialAssets||
+    rejectedUpload.status!=='UPLOAD COMPLETED WITH ERRORS')
+   throw Error('Failed image upload altered library or hid error: '+JSON.stringify(rejectedUpload));
+ console.log('M8_UPLOAD_REJECTION_OK corrupt upload rejected; local asset list unchanged');
  await evaluate("window.__TA_STUDIO__.navigate('page','home');true");
  // Another browser tab (or a script) changes the file: Studio must refuse a
  // stale overwrite, keep local changes in memory and expose Export JSON recovery.
