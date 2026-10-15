@@ -14,6 +14,14 @@ Maintain the **existing** local file-first JSON Content Studio and its generated
 - Reuse stable record/asset/block identifiers; URLs use editable slugs.
 - Keep the toolchain small and understandable; prefer vanilla browser code and a minimal local development service, not a hosted CMS or mandatory SaaS.
 
+## Editorial content and placeholder media — user permission (2026-10-15)
+
+- The user **explicitly authorises temporary demo copy and plain light/desaturated visual fills** so M9–M11 development does not stall. Existing routes and Card/Item composition remain the real TA site; never create a second demo site.
+- Prefer flat, neutral, **checked-in static SVG media** for placeholder fills. Keep them clearly marked `placeholder: true` with editable tags/metadata. Raster replacement through Studio must preserve the original asset ID so existing record references survive.
+- Pages and records may carry `placeholder: true`, separate from `approvedForPublication`. An explicitly temporary placeholder is **acceptable for V1 technical delivery**, but **not equivalent to approved factual project information**. Do not misrepresent sample work as verified built projects or invent credits, prices, credentials or booking URLs.
+- The release audit distinguishes placeholders from real production blockers; **keep `noindex` and retain strict external-production content checks** until real copy, media rights, and working contact destinations are confirmed. Lack of authentic assets is not a reason to stop safe software development.
+- Asset/project `projectCode` is a stable editable metadata field, not a relationship manager or contextual query engine. Full contextual queries remain at M15.
+
 ## Working rules
 1. **At the start of every development run, read [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).** Check the current stage/branch/PR and the matching specialist documentation, then inspect the actual repository state.
 2. Work on the **current V1 development branch across all unfinished M8–M11 milestones**, rather than starting a branch per milestone. Do not merge/deploy intermediate milestones just for website preview. Preview through local Studio (`npm run dev`), local static output (`npm run preview`) or GitHub Actions screenshots.
