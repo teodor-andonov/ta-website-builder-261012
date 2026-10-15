@@ -71,6 +71,12 @@
           "options": ""
         },
         {
+          "key": "projectCode",
+          "label": "Project code (stable)",
+          "type": "text",
+          "options": ""
+        },
+        {
           "key": "year",
           "label": "Year",
           "type": "number",
@@ -134,7 +140,10 @@
             "Architecture",
             "Systems"
           ],
-          "body": "## A repeatable housing system\n\nA design investigation into adaptable residential typologies, parametric rules and efficient construction."
+          "body": "## A repeatable housing system\n\nA design investigation into adaptable residential typologies, parametric rules and efficient construction.",
+          "projectCode": "",
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "p-facade",
@@ -150,7 +159,10 @@
             "Façades",
             "Research"
           ],
-          "body": "## The envelope as an active system\n\nAn ongoing study of performative architectural skins."
+          "body": "## The envelope as an active system\n\nAn ongoing study of performative architectural skins.",
+          "projectCode": "",
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "p-typology",
@@ -166,7 +178,10 @@
             "Computation",
             "Research"
           ],
-          "body": "A library of repeatable geometric ideas."
+          "body": "A library of repeatable geometric ideas.",
+          "projectCode": "",
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "p-fields",
@@ -182,7 +197,10 @@
             "Graphics",
             "Research"
           ],
-          "body": "From discrete modules to a continuous visual field."
+          "body": "From discrete modules to a continuous visual field.",
+          "projectCode": "",
+          "placeholder": true,
+          "approvedForPublication": false
         }
       ]
     },
@@ -274,7 +292,9 @@
             "Computation",
             "Process"
           ],
-          "featured": true
+          "featured": true,
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "post-two",
@@ -290,7 +310,9 @@
             "Studio",
             "News"
           ],
-          "featured": true
+          "featured": true,
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "post-three",
@@ -306,7 +328,9 @@
             "Research",
             "Computation"
           ],
-          "featured": true
+          "featured": true,
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "post-four",
@@ -322,7 +346,9 @@
             "Visual",
             "Brand"
           ],
-          "featured": false
+          "featured": false,
+          "placeholder": true,
+          "approvedForPublication": false
         }
       ]
     }
@@ -2011,7 +2037,9 @@
           "children": [],
           "reference": "contact-cta"
         }
-      ]
+      ],
+      "placeholder": true,
+      "approvedForPublication": false
     },
     {
       "id": "work",
@@ -2098,7 +2126,9 @@
             }
           ]
         }
-      ]
+      ],
+      "placeholder": true,
+      "approvedForPublication": false
     },
     {
       "id": "journal",
@@ -2185,7 +2215,9 @@
             }
           ]
         }
-      ]
+      ],
+      "placeholder": true,
+      "approvedForPublication": false
     },
     {
       "id": "studio",
@@ -2325,64 +2357,76 @@
   "assets": [
     {
       "id": "field",
-      "name": "Diffuse field / 01",
-      "src": "demo:field",
-      "alt": "Abstract monochrome modular field",
-      "caption": "Diffusion study / 01",
-      "credit": "TA Design",
+      "name": "Neutral field",
+      "src": "/assets/placeholder/field.svg",
+      "alt": "Neutral light-grey placeholder illustration; not a project photograph",
+      "caption": "Placeholder media — replace with project artwork in Studio",
+      "credit": "TA / generated placeholder",
       "tags": [
         "Brand",
-        "Abstract"
+        "Abstract",
+        "Placeholder"
       ],
       "properties": {
         "family": "B / Soft field",
-        "licence": "Original"
-      }
+        "licence": "Original",
+        "projectCode": ""
+      },
+      "placeholder": true
     },
     {
       "id": "house",
-      "name": "Housing study / 01",
-      "src": "demo:house",
-      "alt": "Modular architectural study",
-      "caption": "Balkan House system study",
-      "credit": "TA Design",
+      "name": "Housing study placeholder",
+      "src": "/assets/placeholder/house.svg",
+      "alt": "Neutral light-grey placeholder illustration; not a project photograph",
+      "caption": "Placeholder media — replace with project artwork in Studio",
+      "credit": "TA / generated placeholder",
       "tags": [
         "Architecture",
-        "Project"
+        "Project",
+        "Placeholder"
       ],
       "properties": {
-        "project": "Balkan House"
-      }
+        "project": "Balkan House",
+        "projectCode": ""
+      },
+      "placeholder": true
     },
     {
       "id": "facade",
-      "name": "Facade pattern / 01",
-      "src": "demo:facade",
-      "alt": "Rhythmic façade fins",
-      "caption": "Façade performance study",
-      "credit": "TA Design",
+      "name": "Facade study placeholder",
+      "src": "/assets/placeholder/facade.svg",
+      "alt": "Neutral light-grey placeholder illustration; not a project photograph",
+      "caption": "Placeholder media — replace with project artwork in Studio",
+      "credit": "TA / generated placeholder",
       "tags": [
         "Research",
-        "Geometry"
+        "Geometry",
+        "Placeholder"
       ],
       "properties": {
-        "stage": "Concept"
-      }
+        "stage": "Concept",
+        "projectCode": ""
+      },
+      "placeholder": true
     },
     {
       "id": "glyph",
-      "name": "Glyph system / 01",
-      "src": "demo:glyph",
-      "alt": "Rounded geometric modules",
-      "caption": "TA glyph exploration",
-      "credit": "TA Design",
+      "name": "Graphic study placeholder",
+      "src": "/assets/placeholder/glyph.svg",
+      "alt": "Neutral light-grey placeholder illustration; not a project photograph",
+      "caption": "Placeholder media — replace with project artwork in Studio",
+      "credit": "TA / generated placeholder",
       "tags": [
         "Brand",
-        "Vector"
+        "Vector",
+        "Placeholder"
       ],
       "properties": {
-        "family": "A / Glyphs"
-      }
+        "family": "A / Glyphs",
+        "projectCode": ""
+      },
+      "placeholder": true
     }
   ]
 }
