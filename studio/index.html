@@ -416,7 +416,15 @@ function publicationApprovalSelect(kind,approved){
    '<option value="false"'+(approved?'':' selected')+'>Needs review</option>'+
    '<option value="true"'+(approved?' selected':'')+'>Approved</option></select></div>';
 }
-function renderInspector(){let h='';if(ui.section==='dashboard'||ui.section==='data'){h=inspectorEmpty('How it works','One JSON document contains collections, records, templates, components, pages and assets.')+'<div class="rule"></div><p class="help">Changes save to content/site.json through the local Node server. Export JSON remains an optional backup.</p>'}
+function renderInspector(){let h='';if(ui.section==='dashboard'||ui.section==='data'){
+ const contact=db.site.contact||{email:'',bookingUrl:''};
+ h=inspectorEmpty('Website settings','Site-wide contact details and content files.')+
+ '<div class="rule"></div><div class="upper">PUBLIC CONTACT</div>'+
+ '<p class="help">Only add verified destinations. Until a booking URL is configured, the 15-minute call CTA is not clickable.</p>'+
+ '<div class="field"><label>Contact email</label><input class="control" type="email" data-site-contact="email" value="'+e(contact.email||'')+'" placeholder="Verified address"></div>'+
+ '<div class="field"><label>15-minute call booking URL</label><input class="control" type="url" data-site-contact="bookingUrl" value="'+e(contact.bookingUrl||'')+'" placeholder="https://..."></div>'+
+ '<div class="rule"></div><p class="help">Changes save to content/site.json. Export JSON remains an optional backup. All pages and records need individual review before release.</p>';
+}
 else if(ui.section==='collection'){let c=coll();h=inspectorEmpty('Collection · '+c.name,'Each record is an auto-generated page under '+c.base+'/')+`<div class="rule"></div><div class="upper">SCHEMA</div><div style="margin:14px 0">${c.fields.map(f=>`<div class="panel-row" style="padding:7px 0;border:0"><span>${e(f.label)}</span><span class="summary">${e(f.type)}</span></div>`).join('')}</div><button class="btn" data-act="mode" data-mode="settings">${ic('settings')} Configure fields</button><div class="rule"></div><div class="upper">GENERATED ROUTES</div><div style="margin-top:12px">${c.records.slice(0,8).map(r=>`<button class="tree-row" data-act="open-record" data-id="${e(r.id)}">${ic('page')}<span>${e(c.base+'/'+r.slug)}</span></button>`).join('')}</div>`}
 else if(ui.section==='record'){let r=rec(),c=coll();if(r){h=inspectorEmpty(r.title,`${c.base}/${r.slug}`)+`<div class="upper">GENERATED PAGE</div><div style="margin:10px 0 19px"><span class="badge purple">${e(r.format||r.category||'Record')}</span> <span class="badge">${e(r.status||'Draft')}</span></div><div class="field"><label>Template applied</label><div class="control">${e(templateFor(c,r)?.name||'Missing template')}</div></div>${publicationApprovalSelect('record',r.approvedForPublication===true)}<div class="rule"></div>${c.fields.filter(f=>!['body','summary'].includes(f.key)).map(f=>recordFieldHtml(f,r)).join('')}<button class="btn" data-act="duplicate-record">${ic('duplicate')} Duplicate</button><div class="rule"></div><button class="btn" data-act="delete-record">${ic('trash')} Delete record</button>`}}
 else if(ui.section==='assets'){let a=asset();h=a?inspectorEmpty(a.name,'Asset / '+a.id)+`<img class="asset-large" src="${e(src(a))}" alt="${e(a.alt||'')}">${['name','src','alt','caption','credit','tags'].map(k=>{let html=nodeField(k==='src'?'Image file / URL':k[0].toUpperCase()+k.slice(1),k,a[k],null,k==='alt'||k==='caption');if(k==='src'&&String(a.src).startsWith('/assets/uploads/'))html=html.replace('data-node-prop="src"','data-node-prop="src" readonly title="Stored file path (read-only)"');return html.replaceAll('data-node-prop','data-asset-prop')}).join('')}<div class="rule"></div><div class="upper" style="margin-bottom:9px">CUSTOM PROPERTIES</div>${Object.entries(a.properties||{}).map(([k,v])=>`<div class="custom-row"><input value="${e(k)}" data-custom-key="${e(k)}"><input value="${e(valText(v))}" data-custom-val="${e(k)}"><button class="btn ghost sm" data-act="remove-custom" data-key="${e(k)}">×</button></div>`).join('')}<button class="btn sm" data-act="add-custom">${ic('add')} Property</button><div class="rule"></div><button class="btn sm" data-act="delete-asset">${ic('trash')} Delete asset</button>`:inspectorEmpty('Asset properties','Select an image to inspect its metadata.')}
@@ -823,6 +831,15 @@ document.addEventListener('change',event=>{let el=event.target;
  if(el.dataset.assetProp){let a=asset();if(a){if(el.dataset.assetProp==='src'&&String(a.src).startsWith('/assets/uploads/'))return;a[el.dataset.assetProp]=el.dataset.assetProp==='tags'?el.value.split(',').map(x=>x.trim()).filter(Boolean):el.value;persist();renderAll()}return}
  if(el.dataset.customVal){let a=asset();if(a){a.properties[el.dataset.customVal]=el.value;persist()}return}
  if(el.dataset.customKey){let a=asset(),old=el.dataset.customKey,k=el.value.trim();if(a&&k&&!Object.hasOwn(a.properties,k)){a.properties[k]=a.properties[old];delete a.properties[old];persist();renderInspector()}return}
+ if(el.dataset.siteContact){
+  const key=el.dataset.siteContact;
+  if(key!=='email'&&key!=='bookingUrl')return;
+  const candidate=clone(db);
+  candidate.site.contact={email:'',bookingUrl:'',...(candidate.site.contact||{}),[key]:el.value.trim()};
+  try{validateSiteData(candidate)}
+  catch(error){alert(error.message);renderInspector();return}
+  db=candidate;persist();renderInspector();return
+ }
  if(el.dataset.siteDesign){
     db.site.design||={unitDivisor:100,cardBorders:false};
     const key=el.dataset.siteDesign;
