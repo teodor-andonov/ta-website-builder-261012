@@ -343,6 +343,39 @@ try{
     rejectedUpload.status!=='UPLOAD COMPLETED WITH ERRORS')
    throw Error('Failed image upload altered library or hid error: '+JSON.stringify(rejectedUpload));
  console.log('M8_UPLOAD_REJECTION_OK corrupt upload rejected; local asset list unchanged');
+ // A source-driven Card is authorable as a query configuration, but must not
+ // offer child insertion. Its reused Card definition should open in isolation.
+ const sourceCard=await evaluate(`(()=>{
+   window.__TA_STUDIO__.navigate('page','home');
+   const row=document.querySelector('#structureTree .structure-select[data-id="m6-project-query"]');
+   if(!row)return {error:'No source Card in Structure'};
+   row.click();
+   return {childDisabled:document.querySelector('#treeAddChild')?.disabled,
+     hiddenAdd:!document.querySelector('#inspectBody [data-act="show-blocks"][data-inside="yes"]'),
+     sourceEditor:!!document.querySelector('#inspectBody [data-node-prop="source.collection"]'),
+     componentEditor:!!document.querySelector('#inspectBody [data-act="edit-component"][data-id="project-tile"]')};
+ })()`);
+ if(!sourceCard.childDisabled||!sourceCard.hiddenAdd||!sourceCard.sourceEditor||!sourceCard.componentEditor)
+   throw Error('Generated query Card can receive invalid authored children: '+JSON.stringify(sourceCard));
+ const componentView=await evaluate(`(()=>{
+   document.querySelector('#inspectBody [data-act="edit-component"][data-id="project-tile"]').click();
+   return {breadcrumb:document.querySelector('#breadcrumbs')?.textContent,
+     root:!!document.querySelector('#structureTree .structure-select[data-id="project-record-card"]')};
+ })()`);
+ if(!componentView.breadcrumb?.includes('Components')||!componentView.root)
+   throw Error('Component definition not inspectable in isolation: '+JSON.stringify(componentView));
+ const referenceCard=await evaluate(`(()=>{
+   window.__TA_STUDIO__.navigate('template','project-detail');
+   const row=document.querySelector('#structureTree .structure-select[data-id="b_acon1s"]');
+   if(!row)return {error:'No referenced Card'};
+   row.click();
+   return {childDisabled:document.querySelector('#treeAddChild')?.disabled,
+     hiddenAdd:!document.querySelector('#inspectBody [data-act="show-blocks"][data-inside="yes"]'),
+     editDefinition:!!document.querySelector('#inspectBody [data-act="edit-component"][data-id="contact-cta"]')};
+ })()`);
+ if(!referenceCard.childDisabled||!referenceCard.hiddenAdd||!referenceCard.editDefinition)
+   throw Error('Reusable reference Card inspection or child restrictions failed: '+JSON.stringify(referenceCard));
+ console.log('M8_SOURCE_REFERENCE_OK queries and referenced Cards inspectable; hidden child insertion unavailable');
  await evaluate("window.__TA_STUDIO__.navigate('page','home');true");
  // Another browser tab (or a script) changes the file: Studio must refuse a
  // stale overwrite, keep local changes in memory and expose Export JSON recovery.
