@@ -8,6 +8,7 @@ export function auditContent(data){
  const problems=[];
  const issue=(code,path,description)=>problems.push({code,path,description});
  const assets=new Map((data.assets||[]).map(a=>[a.id,a]));
+ if(!data.site?.contact?.bookingUrl?.trim())issue('missing-booking-url','site/contact/bookingUrl','Configure a real HTTPS booking destination for the 15-minute introduction CTA.');
  for(const a of data.assets||[]){
   if(typeof a.src!=='string'||/^(?:demo:|\/assets\/demo\/)/.test(a.src))
    issue('demo-media','assets/'+a.id,'Replace demonstration media with an owned/licensed production file.');
