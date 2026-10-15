@@ -123,7 +123,7 @@ export async function verifySitePackage(path){return verifySiteArchive(await rea
 const invoked=process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url);
 if(invoked){
  try{
-  const path=process.argv[2]||join(root,'release','ta-website-preview.zip');
+  const path=process.argv[2]||join(root,'release','website.zip');
   console.log('M11_PACKAGE_VERIFIED '+JSON.stringify(await verifySitePackage(path)));
  }catch(error){console.error('M11_PACKAGE_INVALID '+error.message);process.exitCode=1}
 }
