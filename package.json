@@ -13,7 +13,8 @@
     "backup:verify": "node scripts/site-snapshot.mjs verify",
     "backup:restore": "node scripts/site-snapshot.mjs restore",
     "audit:media": "node scripts/media-budget.mjs",
-    "package:site": "node scripts/package-site.mjs"
+    "package:site": "node scripts/package-site.mjs",
+    "release:rehearse": "node scripts/rehearse-release.mjs"
   },
   "engines": {
     "node": ">=20"
