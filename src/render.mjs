@@ -103,11 +103,13 @@ const defaultCard=(id,children,area,columns=1,rows=1)=>({
   border:false,constrainHeight:false,heightFactor:0.5
 });
 export function renderBlocks(blocks,context,data,options={},depth=0) {
-  if(depth>10||!Array.isArray(blocks))return '';
+  if(depth>32)throw new Error('Composition nesting exceeds 32 levels while rendering');
+  if(!Array.isArray(blocks))return '';
   return blocks.map(node=>renderBlock(node,context,data,options,depth)).join('');
 }
 function renderBlock(node, context, data, options, depth) {
-  if(!node||typeof node!=='object'||depth>10)return '';
+  if(depth>32)throw new Error('Composition nesting exceeds 32 levels while rendering');
+  if(!node||typeof node!=='object')return '';
   // Legacy JSON can be viewed, but canonical data uses source and reference Cards.
   if(node.type==='query'){
     const card=defaultCard(node.id,[],node.area,node.layout==='three'?3:node.layout==='grid'?2:1);
