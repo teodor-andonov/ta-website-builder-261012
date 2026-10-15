@@ -77,7 +77,7 @@ test('editor uses the shared direct-Card renderer and source Card authoring',asy
 
 test('annotated homepage has one Card per semantic section, with no redundant wrappers',()=>{
  const sections=home.blocks;
- assert.equal(sections.length,7);
+ assert.equal(sections.length,8);
  const byId=id=>{const s=sections.find(x=>x.id===id);assert.ok(s,id);return s};
  const work=byId('m6-work-title');
  assert.equal(work.children.length,4,'3 header Items + 1 record source Card');
