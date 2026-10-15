@@ -21,6 +21,19 @@ No Studio, local API, repository source, JSON authoring content, server credenti
 
 **Default output is a safe preview.** Page metadata stays `noindex, nofollow`, the `robots.txt` disallows crawling and no production sitemap/canonical origin is invented. This is suitable for visual QA on an unindexed host or offline handoff, **not a publicly indexed website launch**.
 
+## Verify release ZIP and rehearse a non-destructive rollback
+
+```sh
+npm run package:verify
+npm run release:rehearse
+```
+
+`package:verify` reads the **actual compressed ZIP**, checks ZIP-entry paths against traversal and private-source leakage, verifies uncompressed file sizes and CRC32, compares every file against `release-manifest.json` SHA-256 hashes, and confirms that preview packages remain `noindex` without a production sitemap. Pass a different ZIP to `npm run package:verify -- "/path/to/other.zip"`.
+
+`release:rehearse` builds a **disposable clone** of the current real TA content/media in the operating system's temporary directory. It creates and verifies a JSON/media snapshot, builds and packages the unindexed site, edits the cloned content, builds again, simulates a missing image to force a failed build, checks that the last successful ZIP survived, restores into a **different** folder and requires the restored ZIP to match the original byte-for-byte. It also verifies that restoring over the edited folder is refused. The temporary files are deleted afterwards; the source repository, live `dist/`, original content and external hosting are untouched.
+
+Static builds themselves now use a **transactional sibling directory**: the previous generated site is retained until the replacement has all its pages, CSS, assets, `robots.txt` and 404 written. The builder refuses to overwrite unrelated directories or protected source/media folders. This is a **local recovery drill**, not proof that a third-party hosting provider can restore uploaded files. Keep the prior verified bundle separately for a real host rollback.
+
 ## 2. Hand the generated site to a static host
 
 Hostinger or another static host can serve these files without Node, GitHub Pages or a writable API. Upload the **contents** of the ZIP directly to the website's configured document root (`public_html/` or the provider's equivalent), not an extra containing folder. A URL ending in `/work/` needs directory-index resolution to `work/index.html` from the host; test it rather than assuming the host has configured this.
