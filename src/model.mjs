@@ -1,6 +1,7 @@
 // Shared data contract for the local editor API and static build.
 export function validate(data) {
-  const fail = message => { throw new Error(message); };
+  // Expose validation failures as HTTP 400, rather than a misleading server error.
+  const fail = message => { const error=new Error(message); error.status=400; throw error; };
   if (!data || typeof data !== 'object' || Array.isArray(data)) fail('Root must be a JSON object');
   for (const name of ['collections','pages','templates','components','assets'])
     if (!Array.isArray(data[name])) fail(`${name} must be an array`);
@@ -59,6 +60,8 @@ export function validate(data) {
   }
   const allowedBackgrounds=new Set(['transparent','white','grey-100','grey-200','grey-300','grey-600','black']);
   const allowedSizes=new Set(['x1','x2','x4']);
+  const itemTypes=new Set(['text','rich','image','button','divider']);
+  const maxCompositionDepth=32; // Match src/render.mjs; fail rather than silently truncate authored content.
   if(data.site.design!==undefined){
     const design=data.site.design;
     if(!design||typeof design!=='object'||design.unitDivisor!==100||typeof design.cardBorders!=='boolean')
@@ -81,16 +84,22 @@ export function validate(data) {
   }
   // The editor selects nodes by ID within an authoring scope (Page, Template, Component).
   // Reuse across independent scopes is fine; aliases within one scope are ambiguous.
-  const checkBlocks=(blocks,where,seen=new Set())=>{
+  const checkBlocks=(blocks,where,seen=new Set(),depth=0)=>{
+    if(depth>maxCompositionDepth)fail(`Composition nesting exceeds ${maxCompositionDepth} levels in ${where}`);
+    if(!Array.isArray(blocks))fail(`Invalid authoring tree in ${where}`);
     for(const b of blocks){
       if(!b||typeof b!=='object'||!safeId(b.id))fail(`Invalid block in ${where}`);
       if(seen.has(b.id))fail(`Duplicate node ID in ${where}: ${b.id}`);
       seen.add(b.id);
       if(b.overflow!==undefined&&!['clip','scroll'].includes(b.overflow))fail(`Invalid item overflow: ${b.id}`);
       if(b.type==='query'||b.type==='component')fail(`Legacy directive must be a source/reference Card: ${b.id}`);
-      if(b.type!=='card')continue;
+      if(b.type!=='card'){
+        if(!itemTypes.has(b.type))fail(`Invalid Item type on ${b.id}: ${b.type}`);
+        if(b.children!==undefined)fail(`Items cannot contain children: ${b.id}`);
+        continue;
+      }
       if(b.columns===undefined&&b.rows===undefined){ // old V2 import compatibility
-        if(Array.isArray(b.children))checkBlocks(b.children,where,seen);
+        if(Array.isArray(b.children))checkBlocks(b.children,where,seen,depth+1);
         continue;
       }
       if(!Number.isInteger(b.columns)||b.columns<1||b.columns>64||!Number.isInteger(b.rows)||b.rows<1||b.rows>64)
@@ -107,6 +116,7 @@ export function validate(data) {
         fail(`Invalid reusable Card reference: ${b.id}`);
       if(!Array.isArray(b.children)||!allowedBackgrounds.has(b.background)||!allowedSizes.has(b.gap)||!allowedSizes.has(b.padding))
         fail(`Invalid Card settings on ${b.id}`);
+      if((b.source||b.reference)&&b.children.length)fail(`Generated or referenced Card cannot contain hidden authored children: ${b.id}`);
       if(typeof b.border!=='boolean'||typeof b.constrainHeight!=='boolean'||!Number.isFinite(b.heightFactor)||b.heightFactor<=0||b.heightFactor>4)
         fail(`Invalid Card constraint on ${b.id}`);
       for(const child of b.children){
@@ -114,7 +124,7 @@ export function validate(data) {
         if(!a||![a.x1,a.y1,a.x2,a.y2].every(Number.isInteger)||a.x1<1||a.y1<1||a.x2<=a.x1||a.y2<=a.y1||a.x2>b.columns+1||a.y2>b.rows+1)
           fail(`Invalid child grid area in ${b.id}: ${child?.id}`);
       }
-      checkBlocks(b.children,where,seen);
+      checkBlocks(b.children,where,seen,depth+1);
     }
   };
   for(const p of [...data.pages,...data.templates,...data.components])checkBlocks(p.blocks,p.id);
