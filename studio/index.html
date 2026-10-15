@@ -98,7 +98,7 @@
 <div class="app" id="studioApp">
  <header class="topbar">
   <div class="brand"><button class="btn ghost icononly mobile-menu" id="menuBtn" aria-label="Open menu">☰</button><div class="mark">TA</div><div><strong>TA / CONTENT STUDIO</strong><span class="version">FILE ASSETS · M3</span></div></div>
-  <div class="toolbar"><span class="saved" id="saved" role="status" aria-live="polite">JSON FILE · READY</span><span id="saveDetails" role="alert" hidden></span><button class="btn ghost" id="reloadBtn" hidden title="Discard local edits and reload validated JSON from disk">Reload saved file</button><button class="btn ghost" id="importBtn">Import JSON</button><button class="btn dark" id="exportBtn">↧ &nbsp;Export JSON</button><input hidden type="file" id="importFile" accept=".json,application/json"><input hidden type="file" id="imageFile" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif" multiple></div>
+  <div class="toolbar"><span class="saved" id="saved" role="status" aria-live="polite">JSON FILE · READY</span><span id="saveDetails" role="alert" hidden></span><button class="btn ghost" id="reloadBtn" hidden title="Discard local edits and reload validated JSON from disk">Reload saved file</button><button class="btn ghost" id="importBtn">Import JSON</button><button class="btn dark" id="exportBtn">↧ &nbsp;Export JSON</button><input hidden type="file" id="importFile" accept=".json,application/json"><input hidden type="file" id="imageFile" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif" multiple><input hidden type="file" id="replaceImageFile" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif"></div>
  </header>
  <aside class="sidebar" id="sidebar"><div class="side-inner" id="sidebarContent"></div><div class="side-bottom">LOCAL FIRST &nbsp;↗<br>FILES · COLLECTIONS · TEMPLATES</div></aside>
  <aside class="structure-pane" id="structurePane" aria-label="Document structure"><div class="structure-head"><span>DOCUMENT STRUCTURE</span><button class="btn ghost sm" data-act="toggle-structure" title="Hide document structure" aria-label="Hide document structure">✕</button></div><div class="structure-summary" id="structureSummary"></div><div class="structure-editbar" role="toolbar" aria-label="Move selected Card or Item">
@@ -432,7 +432,7 @@ function renderInspector(){let h='';if(ui.section==='dashboard'||ui.section==='d
 }
 else if(ui.section==='collection'){let c=coll();h=inspectorEmpty('Collection · '+c.name,'Each record is an auto-generated page under '+c.base+'/')+`<div class="rule"></div><div class="upper">SCHEMA</div><div style="margin:14px 0">${c.fields.map(f=>`<div class="panel-row" style="padding:7px 0;border:0"><span>${e(f.label)}</span><span class="summary">${e(f.type)}</span></div>`).join('')}</div><button class="btn" data-act="mode" data-mode="settings">${ic('settings')} Configure fields</button><div class="rule"></div><div class="upper">GENERATED ROUTES</div><div style="margin-top:12px">${c.records.slice(0,8).map(r=>`<button class="tree-row" data-act="open-record" data-id="${e(r.id)}">${ic('page')}<span>${e(c.base+'/'+r.slug)}</span></button>`).join('')}</div>`}
 else if(ui.section==='record'){let r=rec(),c=coll();if(r){h=inspectorEmpty(r.title,`${c.base}/${r.slug}`)+`<div class="upper">GENERATED PAGE</div><div style="margin:10px 0 19px"><span class="badge purple">${e(r.format||r.category||'Record')}</span> <span class="badge">${e(r.status||'Draft')}</span></div><div class="field"><label>Template applied</label><div class="control">${e(templateFor(c,r)?.name||'Missing template')}</div></div>${placeholderSelect('record',r.placeholder===true)}${publicationApprovalSelect('record',r.approvedForPublication===true)}<div class="rule"></div>${c.fields.filter(f=>!['body','summary'].includes(f.key)).map(f=>recordFieldHtml(f,r)).join('')}<button class="btn" data-act="duplicate-record">${ic('duplicate')} Duplicate</button><div class="rule"></div><button class="btn" data-act="delete-record">${ic('trash')} Delete record</button>`}}
-else if(ui.section==='assets'){let a=asset();h=a?inspectorEmpty(a.name,'Asset / '+a.id)+`<img class="asset-large" src="${e(src(a))}" alt="${e(a.alt||'')}">${placeholderSelect('asset',a.placeholder===true)}<div class="field"><label>Project code · optional match key</label><input class="control" data-asset-project-code="${e(a.id)}" value="${e(a.properties?.projectCode||'')}" placeholder="e.g. 4424"></div>${['name','src','alt','caption','credit','tags'].map(k=>{let html=nodeField(k==='src'?'Image file / URL':k[0].toUpperCase()+k.slice(1),k,a[k],null,k==='alt'||k==='caption');if(k==='src'&&String(a.src).startsWith('/assets/uploads/'))html=html.replace('data-node-prop="src"','data-node-prop="src" readonly title="Stored file path (read-only)"');return html.replaceAll('data-node-prop','data-asset-prop')}).join('')}<div class="rule"></div><div class="upper" style="margin-bottom:9px">CUSTOM PROPERTIES</div>${Object.entries(a.properties||{}).filter(([k])=>k!=='projectCode').map(([k,v])=>`<div class="custom-row"><input value="${e(k)}" data-custom-key="${e(k)}"><input value="${e(valText(v))}" data-custom-val="${e(k)}"><button class="btn ghost sm" data-act="remove-custom" data-key="${e(k)}">×</button></div>`).join('')}<button class="btn sm" data-act="add-custom">${ic('add')} Property</button><div class="rule"></div><button class="btn sm" data-act="delete-asset">${ic('trash')} Delete asset</button>`:inspectorEmpty('Asset properties','Select an image to inspect its metadata.')}
+else if(ui.section==='assets'){let a=asset();h=a?inspectorEmpty(a.name,'Asset / '+a.id)+`<img class="asset-large" src="${e(src(a))}" alt="${e(a.alt||'')}">${placeholderSelect('asset',a.placeholder===true)}<div class="field"><label>Project code · optional match key</label><input class="control" data-asset-project-code="${e(a.id)}" value="${e(a.properties?.projectCode||'')}" placeholder="e.g. 4424"></div>${['name','src','alt','caption','credit','tags'].map(k=>{let html=nodeField(k==='src'?'Image file / URL':k[0].toUpperCase()+k.slice(1),k,a[k],null,k==='alt'||k==='caption');if(k==='src'&&String(a.src).startsWith('/assets/uploads/'))html=html.replace('data-node-prop="src"','data-node-prop="src" readonly title="Stored file path (read-only)"');return html.replaceAll('data-node-prop','data-asset-prop')}).join('')}<div class="rule"></div><div class="upper" style="margin-bottom:9px">CUSTOM PROPERTIES</div>${Object.entries(a.properties||{}).filter(([k])=>k!=='projectCode').map(([k,v])=>`<div class="custom-row"><input value="${e(k)}" data-custom-key="${e(k)}"><input value="${e(valText(v))}" data-custom-val="${e(k)}"><button class="btn ghost sm" data-act="remove-custom" data-key="${e(k)}">×</button></div>`).join('')}<button class="btn sm" data-act="add-custom">${ic('add')} Property</button><div class="rule"></div><button class="btn" data-act="replace-asset-image">Replace image · keep asset ID</button><p class="help">Upload a new raster image to replace this asset’s source without changing existing project covers. Fill in the new alt text and credit after replacement.</p><button class="btn sm" data-act="delete-asset">${ic('trash')} Delete asset</button>`:inspectorEmpty('Asset properties','Select an image to inspect its metadata.')}
 else if(['page','template','component'].includes(ui.section)){let scope=currentScope(),found=ui.node?findNode(ui.node):null;if(!found){h=inspectorEmpty(scope?.name||scope?.title||'Page','Select an object on the canvas or from the structure below to edit it.');if(ui.section==='page'){h+=inputField('Page title',scope.title,'page','title')+inputField('URL route',scope.slug,'page','slug')+placeholderSelect('page',scope.placeholder===true)+publicationApprovalSelect('page',scope.approvedForPublication===true)+`<div class="rule"></div><div class="upper">MASTER SPACING · U = PAGE WIDTH / 100</div>`+nodeField('pad · units','site-pad',db.site.design?.pad??1)+nodeField('gap · units','site-gap',db.site.design?.gap??1)+`<div class="rule"></div><div class="upper">GLOBAL CARD DISPLAY</div><div class="field"><label>Card outlines</label><select class="control" data-site-design="cardBorders"><option value="false" ${db.site.design?.cardBorders?'':'selected'}>Off (individual outlines still work)</option><option value="true" ${db.site.design?.cardBorders?'selected':''}>On · outline all Cards at 20%</option></select></div>`+frameConstraintField('header','Navigation')+frameConstraintField('footer','Footer')}else if(ui.section==='template'){h+=inputField('Template name',scope.name,'template','name')+'<div class="field"><label>Collection</label><select class="control" data-edit="template" data-key="collection">'+optionsHtml(db.collections.map(c=>[c.id,c.name]),scope.collection)+'</select></div>'}else h+=inputField('Component name',scope.name,'component','name');h+=`<div class="rule"></div><button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section</button>`;if(ui.section!=='page')h+=`<div class="rule"></div><button class="btn sm" data-act="delete-scope">${ic('trash')} Delete ${ui.section}</button>`}
 else {let n=found.node;h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+nodeField('Structure label','label',n.label||'')+`<div style="display:flex;gap:5px;margin:0 0 22px"><button class="btn sm" data-act="move-node" data-delta="-1" title="Move up">${ic('up')}</button><button class="btn sm" data-act="move-node" data-delta="1" title="Move down">${ic('down')}</button><button class="btn sm" data-act="duplicate-node" title="Duplicate">${ic('duplicate')}</button><button class="btn sm" data-act="delete-node" title="Delete">${ic('trash')}</button></div>`;
  if(n.type==='text')h+=nodeField('Text · supports {{property}}','text',n.text,null,true)+nodeField('Typography','style',n.style,[['display','Display'],['heading','Heading'],['body','Body'],['eyebrow','Eyebrow'],['caption','Caption']]);
@@ -600,6 +600,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'new-asset':{let a={id:uid('asset'),name:'New image',src:'',alt:'',caption:'',credit:'',tags:[],properties:{}};db.assets.unshift(a);ui.asset=a.id;persist();choose('assets',a.id);showInspector();break}
  case'asset-select':ui.asset=id;renderWork();renderInspector();showInspector();break;
  case'upload':$('#imageFile').click();break;
+ case'replace-asset-image':if(asset())$('#replaceImageFile').click();break;
  case'delete-asset':if(confirm('Delete image metadata? References will remain but image previews may be empty.')){db.assets=db.assets.filter(a=>a.id!==ui.asset);ui.asset=db.assets[0]?.id;persist();renderAll()}break;
  case'add-custom':{let a=asset();if(!a)return;let k='new_property',i=1;while(Object.hasOwn(a.properties,k))k='new_property_'+i++;a.properties[k]='';persist();renderInspector();break}
  case'remove-custom':delete asset().properties[btn.dataset.key];persist();renderInspector();break;
@@ -635,13 +636,13 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'export':exportJSON();break;
  }}
 function showInspector(){$('#inspector').classList.add('show')}
-function importImages(files){
- const job=saveQueue.then(()=>runImageImport(files));
+function importImages(files,replaceId=null){
+ const job=saveQueue.then(()=>runImageImport(files,replaceId));
  // Serialise uploads with JSON writes, while preserving a rejecting job for UI.
  saveQueue=job.catch(()=>{});
  return job;
 }
-async function runImageImport(files){
+async function runImageImport(files,replaceId=null){
  const allowed=new Set(['image/png','image/jpeg','image/webp','image/gif']);
  if(saveBlocked||!savedRevision)throw Error('Unsaved changes. Export JSON before reloading; uploads are paused.');
  const errors=[];let added=0;
@@ -650,7 +651,7 @@ async function runImageImport(files){
   if(f.size>12*1024*1024){errors.push(`${f.name}: exceeds 12 MB`);continue}
   $('#saved').textContent=`UPLOADING IMAGE ${added+1}…`;
   try{
-   const response=await fetch('/api/assets?filename='+encodeURIComponent(f.name),{
+   const response=await fetch('/api/assets?filename='+encodeURIComponent(f.name)+(replaceId?'&replaceId='+encodeURIComponent(replaceId):''),{
     method:'POST',headers:{'Content-Type':f.type,'If-Match':savedRevision},body:f
    }).catch(error=>{markSaveFailure(Error('Upload connection failed; server state is uncertain: '+error.message));throw error});
    const result=await response.json().catch(error=>{markSaveFailure(Error('Upload response is incomplete; server state is uncertain: '+error.message));throw error});
@@ -662,9 +663,14 @@ async function runImageImport(files){
    const nextRevision=response.headers.get('etag');
    if(!nextRevision){markSaveFailure(Error('Upload response lacked a file revision'));throw Error('Upload state uncertain: export JSON before reloading');}
    savedRevision=nextRevision;
-   db.assets.push(result.asset);
+   if(replaceId){
+     const index=db.assets.findIndex(asset=>asset.id===replaceId);
+     if(index<0){markSaveFailure(Error('Replaced asset is no longer in the editor; export JSON and reconcile.'));throw Error('Replacement identity mismatch')}
+     db.assets[index]=result.asset;
+   }else db.assets.push(result.asset);
    ui.asset=result.asset.id;
    added++;
+   if(replaceId)break;
   }catch(err){
    errors.push(`${f.name}: ${err.message}`);
    if(saveBlocked)break;
@@ -902,6 +908,7 @@ document.addEventListener('change',event=>{let el=event.target;
  if(el.id==='recordSearch'||el.id==='assetSearch'){ui.search=el.value;renderWork();return}
  if(el.id==='importFile'&&el.files[0]){el.files[0].text().then(t=>{const d=normalize(JSON.parse(t));validateSiteData(d);if(!confirm('Replace the current Studio JSON with this validated file? Export a backup first if needed.'))return;applyValidatedJSON('all',d);choose('dashboard')}).catch(err=>alert('Import error: '+err.message));el.value='';return}
  if(el.id==='imageFile'){importImages([...el.files]).catch(err=>alert('Image error: '+err.message));el.value='';return}
+ if(el.id==='replaceImageFile'){const replaceId=ui.asset;importImages([...el.files],replaceId).catch(err=>alert('Image replacement error: '+err.message));el.value='';return}
 });
 document.addEventListener('input',event=>{
  const el=event.target;
