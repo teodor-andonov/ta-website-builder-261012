@@ -16,7 +16,7 @@ Maintain the **existing** local file-first JSON Content Studio and its generated
 
 ## Working rules
 1. **At the start of every development run, read [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).** Check the current stage/branch/PR and the matching specialist documentation, then inspect the actual repository state.
-2. Work on the *stage's existing feature branch* rather than starting a new branch per tiny fix. Do not merge/deploy incomplete milestones just for website preview. Preview through local Studio (`npm run dev`), local static output (`npm run preview`) or GitHub Actions screenshots.
+2. Work on the **current V1 development branch across all unfinished M8–M11 milestones**, rather than starting a branch per milestone. Do not merge/deploy intermediate milestones just for website preview. Preview through local Studio (`npm run dev`), local static output (`npm run preview`) or GitHub Actions screenshots.
 3. Keep `prototype-v2/index.html` intact as historical reference unless explicitly requested. Update canonical JSON and the shared renderer/model, not parallel manual HTML.
 4. Validate IDs and slugs; reject unsafe HTML/eval, cycles and data-loss edits. Restrict filesystem writes to approved data/media paths. The published static site must not include any writable API.
 5. Add focused tests, run reproducible CI/browser checks, capture screenshots for UI changes and disclose limitations. **Do not mistake green CI for complete product acceptance.**
@@ -35,14 +35,22 @@ Maintain the **existing** local file-first JSON Content Studio and its generated
 - For remote UI reviews, run desktop browser tests and share a compact set of screenshots and findings **directly in the chat**. No screenshot archives in GitHub and no recordings by default.
 - Baseline desktop viewports: 1600×1000, plus 1280×800 when relevant.
 
-## Git/branch lifecycle — required
+## Git/branch lifecycle — required (updated 2026-10-15)
 
-1. **One development branch per substantial milestone or agreed development cycle**, not one branch per micro-feature. Currently M8 works on `feature/m8-advanced-editor` / [draft PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23). Keep `main` stable; pushing to the feature branch runs CI without publishing Pages.
-2. Make multiple incremental commits in the active feature branch. Inspect the actual diff, run tests/build and browser checks, check data-loss/security risks, and document the test evidence and remaining problems before final review. Share actual screenshots directly for UI work.
-3. **Only after milestone acceptance**, squash-merge the approved PR to `main`, then verify GitHub Actions Pages deployment. Do not merge merely to preview.
-4. **Immediately after a confirmed merge, delete the merged head branch** (prefer GitHub's repository setting **Settings → General → Pull Requests → Automatically delete head branches**; if disabled, use the PR's **Delete branch** action or another supported deletion method). Then create `feature/<next-stage>` from latest `main` when the next cycle begins.
-5. Deleting a squash-merged head branch is safe for combined source changes and the PR record, but its original individual commits do not necessarily appear as independent commits in `main`. **Never apply automatic cleanup to open/unmerged experiments without explicit review.**
-6. Keep [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) and [dated implementation logs](docs/logs/README.md) updated before milestone merge. These are mandatory run deliverables.
+1. **One development branch for the entire V1 roadmap (M8–M11).** Continue on `feature/m8-advanced-editor` with draft [PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23); it is now the *rolling V1 branch*, despite its historical name. Keep `main` stable. Each M8–M11 substep is committed here. Do not create a new branch for M9, M10 or M11.
+2. **Substantial autonomous development cycles are allowed.** Each triggered run should take at least one meaningful roadmap substep when feasible and may complete multiple substeps or a larger coherent slice if complexity, tests and available execution time permit. The agent chooses scope per run. Never split work into trivial commits solely to match an hourly trigger. Do not claim progress for documentation-only updates unless legitimately blocked.
+3. Before edits, fetch current remote branch, roadmap, specialist docs, code and relevant CI. Work only on agreed roadmap tasks. Inspect diffs, validate/build and run available browser/CI checks. Maintain dated logs and next actions. On failure, record what failed, preserve a recoverable state and prioritise remediation in the next run.
+4. **Internal milestone completion does not mean merge.** Once the M8 technical acceptance criteria pass, record it and proceed to M9 on the *same branch*; likewise M9 → M10 → M11. No per-milestone user review is required unless decisions/approved content or access are missing. Unapproved factual project claims, real credentials, production-domain changes and destructive operations require explicit user input. If blocked, continue other unblocked agreed tasks.
+5. **Only ONE V1 squash merge to `main`, after M8–M11 are all ready and the user explicitly approves the final V1.** No autonomous merges, direct pushes to `main`, or production deployments. Draft PR #23 can cover all V1 increments. Until approval, preview with branch-local/local/CI artifacts and keep deployment gated.
+6. **After the approved V1 merge**, create **one new post-V1 development branch** from the latest `main`, covering M12–M17; make incremental commits there. Squash-merge it **once at the end**, if/when all its scope is ready and the user explicitly approves. A scheduled task must stop at merge gates, never cross them autonomously.
+7. **NEVER delete branches**, even after squash merges, and do not enable GitHub auto-delete. Preserve history and existing head branches unless the user specifically changes this instruction.
+8. Keep [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) as the one living roadmap and update dated [logs](docs/logs/README.md) as changes land. No separate competing roadmap.
+
+### Scheduled development cycle protocol
+
+Each unattended cycle is a **fresh invocation**, not continuous stateful execution. Read current repo status and durable GitHub log first; do not rely on chat history. Select the largest coherent next piece you can safely complete and validate. Target **at least one meaningful milestone substep** if feasible; do more when appropriate. Never guess that GitHub access, CI or browser automation are available until actually verified during the run.
+
+End each cycle with a concise user report containing the branch, milestone/substeps completed, commit/PR links, actual test/CI evidence (distinguish passing from pending), blockers and next step. Work autonomously only within the approved scope. If a dependent service is inaccessible or essential input is missing, report precisely and do not pretend to have completed the task. Do not merge or deploy.
 
 
 ## M7 — confirmed print/presentation Card system
