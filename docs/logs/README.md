@@ -21,5 +21,6 @@ Short, dated records of **completed or active development cycles**. These comple
 | 2026-10-15 | [M8 tree identity and component-reference validation](2026-10-15-m8-structure-integrity.md) |
 | 2026-10-15 | [M8 large-tree schema safety and screenshot-free browser QA](2026-10-15-m8-large-tree-qa.md) |
 | 2026-10-15 | [M8 recovery acceptance and M9 content readiness kickoff](2026-10-15-m8-recovery-and-m9-start.md) |
+| 2026-10-15 | [M9 homepage services, arrangements and verified-link CTA](2026-10-15-m9-services-and-contact.md) |
 
 Older `docs/M*_*.md` files are **technical references and milestone snapshots**, not competing plans.
