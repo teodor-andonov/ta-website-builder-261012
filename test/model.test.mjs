@@ -31,6 +31,26 @@ test('M8 allows node IDs reused in independent page scopes',()=>{
   d.pages[1].blocks[0].id=d.pages[0].blocks[0].id;
   assert.doesNotThrow(()=>validate(d));
 });
+test('M8 rejects direct self-reference in reusable components',()=>{
+  const d=copy(),component=d.components[0];
+  component.blocks[0].reference=component.id;
+  assert.throws(()=>validate(d),/Circular component reference: contact-cta -> contact-cta/);
+});
+test('M8 rejects indirect cycles across two reusable components',()=>{
+  const d=copy(),[first,second]=d.components;
+  first.blocks[0].reference=second.id;
+  second.blocks[0].reference=first.id;
+  assert.throws(()=>validate(d),/Circular component reference:/);
+});
+test('M8 rejects a collection Card that recursively instantiates its own component',()=>{
+  const d=copy(),component=d.components[0];
+  component.blocks[0].source={
+    collection:d.collections[0].id,
+    template:component.id,
+    layout:'grid',sort:'newest',filter:'featured',count:4
+  };
+  assert.throws(()=>validate(d),/Circular component reference:/);
+});
 test('duplicate slugs rejected',()=>{
   const d=copy();d.collections[1].records[1].slug=d.collections[1].records[0].slug;
   assert.throws(()=>validate(d),/Duplicate posts slug/);
