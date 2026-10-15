@@ -18,8 +18,8 @@
 The first broadened test suite exposed a fixture that lacked copied placeholder assets, corrected in `test/assets.test.mjs`. New public-origin tests caught `example.com` root being accepted by the domain-shape filter; fixed the validator. A browser job transiently failed to start headless Chrome in CI; a later screenshot-free run passed the editor workflow unchanged. No runtime screenshots were generated.
 
 On implementation [`f620ef3`](https://github.com/teodor-andonov/ta-website-builder-261012/commit/f620ef3f4fcf6dd0a66ac9a0506df7ea14100612):
-- [Node test/build](https://github.com/teodor-andonov/ta-website-builder-261012/actions/runs/38737867670) — **103 tests passed, 0 failed**, static output and Pages-prefix audit successful.
-- [Chromium browser checks](https://github.com/teodor-andonov/ta-website-builder-261012/actions/runs/38737867660) — **success**, existing M8/M9 interactive, accessibility DOM, recovery and media-replacement checks.
+- [Node test/build](https://github.com/teodor-andonov/ta-website-builder-261012/actions/runs/38738140800) — **103 tests passed, 0 failed**, static output and Pages-prefix audit successful.
+- [Chromium browser checks](https://github.com/teodor-andonov/ta-website-builder-261012/actions/runs/38738140571) — **success**, existing M8/M9 interactive, accessibility DOM, recovery and media-replacement checks.
 - No screenshots and no external deployment. The live project still has **14 user-authorized placeholders and one missing booking URL**; the production release gate intentionally remains closed.
 
 See [M10 publishing/performance guide](../M10_PUBLISHING_AND_PERFORMANCE.md) for commands and domain caveats.
