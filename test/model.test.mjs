@@ -5,6 +5,32 @@ import { validate } from '../src/model.mjs';
 const fixture=JSON.parse(await readFile(new URL('../content/site.json', import.meta.url),'utf8'));
 const copy = () => structuredClone(fixture);
 test('initial content is valid',()=>assert.equal(validate(copy()).version,2));
+test('M8 rejects duplicate IDs across a Card and its descendant within one page',()=>{
+  const d=copy();
+  const parent=d.pages[0].blocks.find(n=>n.type==='card'&&n.children?.length);
+  assert.ok(parent);
+  parent.children[0].id=parent.id;
+  assert.throws(()=>validate(d),/Duplicate node ID in home: /);
+});
+test('M8 rejects duplicate sibling IDs in one authoring scope',()=>{
+  const d=copy();
+  const parent=d.pages[0].blocks.find(n=>n.type==='card'&&n.children?.length>1);
+  assert.ok(parent);
+  parent.children[1].id=parent.children[0].id;
+  assert.throws(()=>validate(d),/Duplicate node ID in home: /);
+});
+test('M8 rejects duplicate node IDs in a component independently of pages',()=>{
+  const d=copy();
+  const parent=d.components.find(x=>x.blocks.some(n=>n.type==='card'&&n.children?.length));
+  const card=parent.blocks.find(n=>n.type==='card'&&n.children?.length);
+  card.children[0].id=card.id;
+  assert.throws(()=>validate(d),new RegExp('Duplicate node ID in '+parent.id+': '));
+});
+test('M8 allows node IDs reused in independent page scopes',()=>{
+  const d=copy();
+  d.pages[1].blocks[0].id=d.pages[0].blocks[0].id;
+  assert.doesNotThrow(()=>validate(d));
+});
 test('duplicate slugs rejected',()=>{
   const d=copy();d.collections[1].records[1].slug=d.collections[1].records[0].slug;
   assert.throws(()=>validate(d),/Duplicate posts slug/);
