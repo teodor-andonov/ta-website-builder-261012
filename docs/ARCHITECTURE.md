@@ -64,4 +64,4 @@ GitHub Pages currently publishes a project subpath and uses a build-time `TA_BAS
 
 ## How changes ship
 
-Edit in the current stage's feature branch, run automated/browser checks, update the [plan](IMPLEMENTATION_PLAN.md) plus a [dated cycle log](logs/README.md), gather visual sign-off, **squash-merge once per substantial stage**, verify Pages and **delete the merged head branch**. See [AGENTS.md](../AGENTS.md) for the detailed coding rules.
+Continue implementation on the **single retained V1 development branch across M8–M11**. Run automated/browser checks and update the [living plan](IMPLEMENTATION_PLAN.md) plus [dated logs](logs/README.md) per cycle. **Do not merge or deploy at individual milestones.** After complete V1 user approval, perform exactly one squash merge to `main`; keep the original branch. For M12–M17, use one separate retained post-V1 branch and one final user-approved squash merge. **Never delete branches.** See [AGENTS.md](../AGENTS.md) for binding operational rules.
