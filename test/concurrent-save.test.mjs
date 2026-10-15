@@ -44,6 +44,7 @@ test('M8 stale tabs and uploads cannot overwrite or bypass an atomic file revisi
   assert.equal(invalidNode.status,400);
   assert.match((await invalidNode.json()).error,/Duplicate node ID/);
   const cycle=structuredClone(alpha);
+  cycle.components[0].blocks[0].children=[];
   cycle.components[0].blocks[0].reference=cycle.components[0].id;
   const invalidCycle=await put(cycle,secondTagValue);
   assert.equal(invalidCycle.status,400);
