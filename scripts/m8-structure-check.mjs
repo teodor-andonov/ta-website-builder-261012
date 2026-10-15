@@ -81,6 +81,43 @@ try{
   await sleep(100);
  }
  if(!loaded)throw Error('Studio did not load');
+ // M9: verify the actual site-wide contact editor, typed URL guard, and CTA.
+ const configured=await evaluate(`(()=>{
+   window.__TA_STUDIO__.navigate('dashboard');
+   const input=document.querySelector('[data-site-contact="bookingUrl"]');
+   if(!input)return {error:'Booking input missing'};
+   input.value='https://meet.example.test/intro';
+   input.dispatchEvent(new Event('change',{bubbles:true}));
+   window.__TA_STUDIO__.navigate('page','home');
+   return {value:window.__TA_STUDIO__.getData().site.contact.bookingUrl,
+     active:!!document.querySelector('#workbody a[href="https://meet.example.test/intro"]')};
+ })()`);
+ if(configured.value!=='https://meet.example.test/intro'||!configured.active)
+   throw Error('Configured 15-minute CTA was not activated: '+JSON.stringify(configured));
+ const contactInvalid=await evaluate(`(()=>{
+   window.__TA_STUDIO__.navigate('dashboard');
+   window.__M9_contactError='';
+   window.alert=value=>window.__M9_contactError=String(value);
+   const input=document.querySelector('[data-site-contact="bookingUrl"]');
+   input.value='javascript:alert(1)';
+   input.dispatchEvent(new Event('change',{bubbles:true}));
+   return {error:window.__M9_contactError,
+      value:window.__TA_STUDIO__.getData().site.contact.bookingUrl};
+ })()`);
+ if(!contactInvalid.error?.includes('Booking URL')||contactInvalid.value!=='https://meet.example.test/intro')
+   throw Error('Invalid booking URL bypassed Studio validation: '+JSON.stringify(contactInvalid));
+ await evaluate(`(()=>{
+   const input=document.querySelector('[data-site-contact="bookingUrl"]');
+   input.value='';input.dispatchEvent(new Event('change',{bubbles:true}));
+   window.__TA_STUDIO__.navigate('page','home');return true;
+ })()`);
+ const pending=await evaluate(`(()=>({
+   text:document.querySelector('#workbody .is-unavailable')?.textContent||'',
+   links:document.querySelectorAll('#workbody a[href="https://meet.example.test/intro"]').length
+ }))()`);
+ if(!pending.text.includes('booking link pending')||pending.links!==0)
+   throw Error('Empty booking URL should not be clickable: '+JSON.stringify(pending));
+ console.log('M9_CONTACT_OK site-wide verified booking link activates CTA, invalid URLs rejected, unset CTA inert');
  await evaluate("window.__TA_STUDIO__.navigate('page','home'); true");
  const before=await evaluate("(()=>{const pane=document.querySelector('#structurePane');const app=document.querySelector('#studioApp');return {open:app.classList.contains('structure-open'),rows:pane.querySelectorAll('.structure-select').length,hasHome:!!pane.querySelector('[data-id=\"m6-hero\"]'),columns:getComputedStyle(app).gridTemplateColumns.split(' ').length};})()");
  if(!before.open||before.rows<20||!before.hasHome||before.columns!==4)throw Error('Four-panel tree not rendered: '+JSON.stringify(before));
