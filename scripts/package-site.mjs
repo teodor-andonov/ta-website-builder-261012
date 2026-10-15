@@ -39,12 +39,12 @@ function zipEntries(entries){
   if(packed.length>0xffffffff||bytes.length>0xffffffff)throw Error('File too large for ZIP32');
   const local=Buffer.alloc(30);
   local.writeUInt32LE(0x04034b50,0);local.writeUInt16LE(20,4);
-  local.writeUInt16LE(flags,6);local.writeUInt16LE(8,8);
+  local.writeUInt16LE(flags,6);local.writeUInt16LE(8,8);local.writeUInt16LE(0x21,12); // DOS date 1980-01-01
   local.writeUInt32LE(checksum,14);local.writeUInt32LE(packed.length,18);local.writeUInt32LE(bytes.length,22);
   local.writeUInt16LE(path.length,26);
   const cd=Buffer.alloc(46);
   cd.writeUInt32LE(0x02014b50,0);cd.writeUInt16LE(20,4);cd.writeUInt16LE(20,6);
-  cd.writeUInt16LE(flags,8);cd.writeUInt16LE(8,10);
+  cd.writeUInt16LE(flags,8);cd.writeUInt16LE(8,10);cd.writeUInt16LE(0x21,14);
   cd.writeUInt32LE(checksum,16);cd.writeUInt32LE(packed.length,20);cd.writeUInt32LE(bytes.length,24);
   cd.writeUInt16LE(path.length,28);cd.writeUInt32LE(offset,42);
   locals.push(local,path,packed);central.push(cd,path);
