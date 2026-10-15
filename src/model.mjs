@@ -7,6 +7,17 @@ export function validate(data) {
     if (!Array.isArray(data[name])) fail(`${name} must be an array`);
   if (!data.site || typeof data.site.name !== 'string') fail('site.name must be a string');
   if (data.version !== 2) fail('Unsupported data version (expected 2)');
+  // Public contact details are intentionally optional until the user verifies them.
+  // A missing booking destination must never become a live placeholder link.
+  if(data.site.contact!==undefined){
+    const contact=data.site.contact;
+    if(!contact||typeof contact!=='object'||Array.isArray(contact))fail('Invalid site contact settings');
+    if(typeof contact.email!=='string'||(contact.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)))
+      fail('Contact email must be empty or valid');
+    if(typeof contact.bookingUrl!=='string'||(contact.bookingUrl&&!/^https:\/\/[^\s/@]+(?:\.[^\s/@]+)+(?:[\/:?#][^\s]*)?$/i.test(contact.bookingUrl)))
+      fail('Booking URL must be empty or a valid HTTPS address');
+  }
+
   const safeId = value => typeof value === 'string' && /^[a-zA-Z0-9_-]+$/.test(value);
   const safeSlug = value => typeof value === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
   if (data.site.navigation !== undefined) {
