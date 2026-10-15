@@ -92,10 +92,12 @@ const server = http.createServer(async (req,res)=>{
       try {return respond(res,200,await readFile(path.join(uploadsDir,name)),{png:'image/png',jpg:'image/jpeg',webp:'image/webp',gif:'image/gif'}[name.split('.').pop()]);}
       catch(err){if(err.code==='ENOENT')return respond(res,404,JSON.stringify({error:'Not found'}));throw err;}
     }
-    // Shared asset path, strictly allow-listed to known demo SVGs (no file traversal).
-    if(req.method==='GET' && /^\/assets\/demo\/[a-z0-9-]+\.svg$/.test(pathname)) {
+    // Checked-in, inert SVGs are served from a narrow path allowlist. User uploads
+    // stay raster-only to avoid executing untrusted SVG content.
+    if(req.method==='GET' && /^\/assets\/(?:demo|placeholder)\/[a-z0-9-]+\.svg$/.test(pathname)) {
       const name=path.posix.basename(pathname);
-      const file=path.join(root,'assets','demo',name);
+      const group=pathname.startsWith('/assets/placeholder/')?'placeholder':'demo';
+      const file=path.join(root,'assets',group,name);
       try{return respond(res,200,await readFile(file),'image/svg+xml; charset=utf-8');}
       catch(err){if(err.code==='ENOENT')return respond(res,404,JSON.stringify({error:'Not found'}));throw err;}
     }
