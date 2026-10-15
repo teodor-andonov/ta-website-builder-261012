@@ -8,7 +8,7 @@ export function parsePublicOrigin(value){
   let origin;
   try{origin=new URL(value)}catch{throw Error('TA_PUBLIC_ORIGIN must be a valid HTTPS URL')}
   if(origin.protocol!=='https:'||origin.username||origin.password||origin.pathname!=='/'||origin.search||origin.hash||origin.port||
-     !origin.hostname.includes('.')||/(^localhost$|\.localhost$|\.local$|\.test$|\.example$|\.invalid$|\.example\.(com|org|net)$)/i.test(origin.hostname) ||
+     !origin.hostname.includes('.')||/(^localhost$|\.localhost$|\.local$|\.test$|\.example$|\.invalid$|(?:^|\.)example\.(com|org|net)$)/i.test(origin.hostname) ||
      /^\d+\.\d+\.\d+\.\d+$/.test(origin.hostname))
     throw Error('TA_PUBLIC_ORIGIN must be a verified public HTTPS origin without credentials, port, path, query or fragment');
   return origin.origin;
