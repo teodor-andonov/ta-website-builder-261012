@@ -110,7 +110,11 @@ const server = http.createServer(async (req,res)=>{
       const mediaType=String(req.headers['content-type']||'').split(';')[0].toLowerCase();
       const ext=allowedImages.get(mediaType);
       if(!ext)return respond(res,415,JSON.stringify({error:'Use PNG, JPEG, WebP or GIF images (SVG is not supported for upload)'}));
-      const filename=cleanFilename(new URL(req.url,`http://${host}:${port}`).searchParams.get('filename'));
+      const params=new URL(req.url,`http://${host}:${port}`).searchParams;
+      const filename=cleanFilename(params.get('filename'));
+      const replaceId=params.get('replaceId');
+      if(replaceId!==null&&!/^[a-zA-Z0-9_-]{1,120}$/.test(replaceId))
+        return respond(res,400,JSON.stringify({error:'Unsafe asset replacement ID'}));
       if(!filename || /[\/\\\x00-\x1f]/.test(filename) || filename.includes('..'))return respond(res,400,JSON.stringify({error:'Unsafe or missing file name'}));
       const suffix=path.extname(filename).toLowerCase();
       if(!(ext==='jpg'?['.jpg','.jpeg'].includes(suffix):suffix==='.'+ext))return respond(res,415,JSON.stringify({error:'File extension does not match image type'}));
@@ -123,8 +127,19 @@ const server = http.createServer(async (req,res)=>{
         const data=validate(JSON.parse(content));
         const key=randomUUID().replaceAll('-','');
         const dest=path.join(uploadsDir,`${key}.${ext}`);
-        const asset={id:`asset_${key}`,name:filename.replace(/\.[^.]+$/,'').slice(0,120),src:`/assets/uploads/${key}.${ext}`,alt:'',caption:'',credit:'',tags:[],properties:{filename,mime:mediaType,bytes:bytes.length}};
-        const next={...data,assets:[...data.assets,asset]};
+        const old=replaceId===null?null:data.assets.find(a=>a.id===replaceId);
+        if(replaceId!==null&&!old){const err=new Error('Asset to replace was not found');err.status=404;throw err;}
+        const asset=old?{
+          ...old,
+          src:`/assets/uploads/${key}.${ext}`,
+          alt:old.placeholder?'':old.alt,
+          caption:old.placeholder?'':old.caption,
+          credit:old.placeholder?'':old.credit,
+          tags:old.placeholder?(old.tags||[]).filter(tag=>tag!=='Placeholder'):old.tags,
+          placeholder:false,
+          properties:{...(old.properties||{}),filename,mime:mediaType,bytes:bytes.length}
+        }:{id:`asset_${key}`,name:filename.replace(/\.[^.]+$/,'').slice(0,120),src:`/assets/uploads/${key}.${ext}`,alt:'',caption:'',credit:'',tags:[],properties:{filename,mime:mediaType,bytes:bytes.length}};
+        const next={...data,assets:old?data.assets.map(a=>a.id===old.id?asset:a):[...data.assets,asset]};
         validate(next);
         await mkdir(uploadsDir,{recursive:true});
         let nextRevision;
@@ -132,7 +147,7 @@ const server = http.createServer(async (req,res)=>{
         catch(error){await unlink(dest).catch(()=>{});throw error;}
         return {asset,etag:nextRevision};
       });
-      return respond(res,201,JSON.stringify({ok:true,asset:result.asset}),undefined,{'ETag':result.etag});
+      return respond(res,replaceId===null?201:200,JSON.stringify({ok:true,asset:result.asset}),undefined,{'ETag':result.etag});
     }
     if (pathname==='/api/data' && req.method==='PUT') {
       if (!String(req.headers['content-type']||'').startsWith('application/json'))
