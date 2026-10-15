@@ -1,3 +1,4 @@
+import {assemblePage} from './page-assembly.mjs';
 /**
  * Shared, DOM-independent HTML renderer for both the studio and the static website.
  * ES module served unchanged to the browser by the local Node dev server.
@@ -244,14 +245,23 @@ export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
     '<span class="item item-footer">© '+new Date().getUTCFullYear()+'</span></footer></div>';
 }
 export function renderPagePreview(data,blocks,context=null,options={}) {
-  return renderSiteFrame(renderBlocks(blocks,context,data,{...options,topLevel:true}),data,{...options,route:options.route||resolvePreviewRoute(data,blocks,context)});
+  // Opt-in M12 pages share the same assembler in the editor preview and build.
+  // Legacy V1 pages and record detail pages remain byte-identical.
+  const page=options.pageId?data.pages.find(p=>p.id===options.pageId):null;
+  if(options.pageId&&!page)throw Error('Unknown preview page: '+options.pageId);
+  let composed=blocks;
+  if(page?.template){
+    const template=data.templates.find(t=>t.id===page.template);
+    composed=assemblePage(template,page.composition);
+  }
+  return renderSiteFrame(renderBlocks(composed,context,data,{...options,topLevel:true}),data,{...options,route:options.route||resolvePreviewRoute(data,blocks,context)});
 }
-export function renderDocument(data,{title,blocks,context=null,route,collectionId=null,publication={indexing:false,origin:null}}) {
+export function renderDocument(data,{title,blocks,context=null,route,collectionId=null,pageId=null,publication={indexing:false,origin:null}}) {
   const heading=escapeHtml(title||data.site.name),name=escapeHtml(data.site.name);
   const plainTitle=(title||data.site.name)+' — '+data.site.name;
   const description=escapeHtml(context?.summary||data.site.description||'');
   const resolvedRoute=route||resolvePreviewRoute(data,blocks,context);
-  const page=renderPagePreview(data,blocks,context,{route:resolvedRoute});
+  const page=renderPagePreview(data,blocks,context,{route:resolvedRoute,pageId});
   // Canonical and absolute social URLs only exist for an explicitly approved
   // external production release; staging cannot claim an unverified domain.
   const indexable=publication.indexing===true && typeof publication.origin==='string';
@@ -270,7 +280,7 @@ export function renderDocument(data,{title,blocks,context=null,route,collectionI
 export function collectPages(data,{publication={indexing:false,origin:null}}={}) {
   const pages=[];
   for(const page of data.pages) if(page.status==='Published')
-    pages.push({route:normalizeRoute(page.slug),html:renderDocument(data,{title:page.title,blocks:page.blocks,route:normalizeRoute(page.slug),publication})});
+    pages.push({route:normalizeRoute(page.slug),html:renderDocument(data,{title:page.title,blocks:page.blocks,pageId:page.id,route:normalizeRoute(page.slug),publication})});
   for(const collection of data.collections)for(const record of collection.records){
     if(record.status==='Draft')continue;
     const template=templateFor(data,collection,record);
