@@ -23,6 +23,8 @@ jobs:
         run: npm test
       - name: Syntax-check preserved standalone prototype
         run: node scripts/smoke-check.mjs
+      - name: Report unapproved or placeholder portfolio content (M9)
+        run: npm run audit:content
       - name: Build static public pages
         run: npm run build
       - name: Assert example pages exist
