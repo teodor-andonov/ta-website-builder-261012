@@ -14,7 +14,7 @@ window.addEventListener('load',()=>{
     const main=page?.querySelector(':scope > .card.card-main');
     const footer=page?.querySelector(':scope > .card.card-footer');
     checks.semanticCards=Boolean(page&&nav&&main&&footer);
-    checks.directSections=(main?.querySelectorAll(':scope > .card.card-section').length||0)===7;
+    checks.directSections=(main?.querySelectorAll(':scope > .card.card-section').length||0)===8;
     checks.roundedShell=[page,nav,main,footer].every(el=>el&&parseFloat(getComputedStyle(el).borderTopLeftRadius)>0);
     checks.directNavLinks=nav?.querySelectorAll(':scope > .item.item-link').length===3 && !nav.querySelector('.card-nav-links');
     const sectionWork=main?.querySelector(':scope > .card-work-section');
