@@ -177,7 +177,7 @@ function renderBlock(node, context, data, options, depth) {
     const asset=data.assets.find(a=>a.id===bind(node.source,context,data));
     const src=assetSrc(asset);
     const attrs=nodeAttrs(node,options,['item','item-image','b-figure']);
-    const image=src?'<img class="b-image'+(node.fit==='contain'?' contain':'')+'" src="'+escapeHtml(src)+'" alt="'+escapeHtml(asset?.alt||'')+'">':
+    const image=src?'<img class="b-image'+(node.fit==='contain'?' contain':'')+'" src="'+escapeHtml(src)+'" alt="'+escapeHtml(asset?.alt||'')+'" decoding="async"'+(node.loading==='lazy'?' loading="lazy"':'')+'>':
        '<div class="placeholder">NO IMAGE / CHOOSE AN ASSET</div>';
     const caption=node.caption&&asset?.caption?'<figcaption>'+escapeHtml(asset.caption)+'</figcaption>':'';
     return '<figure'+attrs+'>'+image+caption+'</figure>';
