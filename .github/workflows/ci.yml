@@ -59,6 +59,14 @@ jobs:
           unzip -t release/ta-website-preview.zip > /tmp/ta-zip-check.log
           npm run package:verify
           grep -q 'No errors detected in compressed data' /tmp/ta-zip-check.log
+      - name: Attach verified, unindexed V1 static preview ZIP to PR checks
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ta-v1-staging-preview
+          path: release/ta-website-preview.zip
+          if-no-files-found: error
+          retention-days: 7
       - name: Rehearse complete backup, failed build and rollback without touching source
         run: npm run release:rehearse
       - name: Verify GitHub Pages project-path build
