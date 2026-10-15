@@ -25,6 +25,8 @@ jobs:
         run: node scripts/smoke-check.mjs
       - name: Report unapproved or placeholder portfolio content (M9)
         run: npm run audit:content
+      - name: Verify local media paths and delivery budgets
+        run: npm run audit:media
       - name: Build static public pages
         run: npm run build
       - name: Assert example pages exist
