@@ -1,16 +1,16 @@
 # TA Content Studio — implementation plan
 
 > **Living index / source of truth for delivery status and upcoming work.**
-> Updated: **2026-10-14** · Maintained after each substantive development cycle.
+> Updated: **2026-10-15** · Maintained after each substantive development cycle.
 > Change history goes in [dated implementation logs](logs/README.md), while specialist documents describe *how* the system works.
 >
-> This plan describes the active feature branch. The public `main` branch may lag until the feature is reviewed and squash-merged.
+> This plan describes the active **rolling V1 development branch** covering M8–M11. The public `main` branch remains behind until one user-approved V1 squash merge. No branch deletion.
 
 ## Current position
 
 - **Stage:** M8 — Advanced Visual Editor, structure-first design, **in progress**.
-- **Working branch:** `feature/m8-advanced-editor`, [draft PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23).
-- **Deployed baseline:** `main` publishes the M7 site and earlier M8 canvas-grid experiment. The M8 branch backs out that experiment in favour of tree-based authoring; **do not merge/deploy until M8 acceptance**.
+- **Working branch for all V1 M8–M11 development:** `feature/m8-advanced-editor`, [draft PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23). Continue on this same branch, despite its historical M8 name.
+- **Deployed baseline:** `main` publishes the M7 site and earlier M8 canvas-grid experiment. The V1 branch backs out that experiment in favour of tree-based authoring; **do not merge or publish this branch until M8–M11 are ready and the user approves the V1 release**.
 - **Local editor:** `npm run dev` → http://127.0.0.1:5173/ ; **local static preview:** `npm run preview` → http://127.0.0.1:4173/.
 - **Public demonstration:** https://teodor-andonov.github.io/ta-website-builder-261012/ — placeholder content, deliberately `noindex`, **not** the production launch.
 - **Recent evidence:** 71/71 automated tests and Chromium interaction/screenshot checks passed on the M8 branch (2026-10-14), including multi-step Undo/Redo, grid edits, keyboard Structure moves, overlap warnings, and stale-tab conflict recovery. Re-run on further changes.
@@ -52,9 +52,9 @@
 1. **Structural usability:** exercise add/duplicate/delete/nest on larger real-world trees and verify keyboard restructuring with assistive technologies. Overlap warnings are implemented; deliberate visual layering is still allowed. Multi-step history remains in-memory (up to 40 edits per scope, across at most 16 recent scopes) and does not survive a full reload.
 2. **Editor UX QA:** verify layout at 1600×1000 and 1280×800, scroll/focus management, Card/Item selection, larger documents, and generated/referenced Cards. Stale-tab writes now fail safely in automated tests; manually exercise Export JSON/reconcile/reload, disconnected-server failures and image uploads before production acceptance.
 3. **Acceptance:** inspect final diff for data-loss/security pitfalls, run `npm test`, `npm run build`, `node scripts/smoke-check.mjs`, Pages path audit and real Chromium interactions. Share screenshots and limitations with user.
-4. **Release:** only after user review, squash-merge **one M8 PR** into `main`, verify GitHub Pages deployment, delete merged branch, then start a new branch for the next cycle.
+4. **Internal M8 completion:** once technical acceptance checks pass, record M8 as internally complete and proceed to M9 on the **same V1 branch**. Do not merge yet. The user reviews the final V1 across M8–M11 before a single squash merge.
 
-**One-time repository housekeeping:** GitHub's **Automatically delete head branches** setting is currently **off**. Enable it at [Settings → General → Pull Requests](https://github.com/teodor-andonov/ta-website-builder-261012/settings). After enabling, remove older already-merged branches via PR #17 and PR #21's **Delete branch** controls. Keep the active M8 branch; the superseded, unmerged PR #19 branch is not part of merged-branch cleanup. See [current branch inventory in the dated log](logs/2026-10-14-m8-structure-editor.md).
+**Branch retention decision (2026-10-15):** **Do not delete branches or enable GitHub's automatically-delete-head-branches setting.** This supersedes previous housekeeping advice to remove merged branches. Preserve all heads unless the user explicitly changes the policy.
 
 **Known separate refinement:** [Issue #22 — minimum useful grid divisions](https://github.com/teodor-andonov/ta-website-builder-261012/issues/22). Test equivalent layouts before reducing row/column counts; do not change composition silently.
 
@@ -70,12 +70,16 @@ See [M8 design details](M8_EDITOR_PLAN.md) for interaction rules, [architecture]
 
 ## Working protocol — mandatory every cycle
 
-1. **Before implementing:** read this plan and the relevant specialist doc; inspect live branch and PR. Identify the current acceptance target.
-2. **During the cycle:** commit to the *current stage's feature branch*, never auto-merge intermediate slices merely to publish; preview locally or via CI artifacts.
-3. **Before handoff:** run focused tests, complete CI and actual browser interactions where relevant; document limitations and include actual screenshots.
-4. **At cycle end:** update the **current status/next actions here**, and create or extend the relevant **dated log** in `docs/logs/` with changed files/PRs, tests and decisions. Documentation changes belong in the **same branch/PR** as code changes.
-5. **At milestone release:** user reviews, squash-merge to `main`, verify Actions/Pages, then **delete that merged head branch**. Start a new `feature/<next-stage>` branch from current `main`; avoid accumulating stale heads.
-6. **Do not delete unmerged branches by this rule.** Unmerged/superseded experiments must be explicitly reviewed/closed/discarded before branch deletion. Squash merging keeps the combined changes on `main` and the PR record, but not necessarily individual branch-only commits as separate ancestors.
+1. **Before implementing:** read this plan, `AGENTS.md`, relevant specialist docs, current active branch, PR and current CI. Identify the next unfinished acceptance task from actual repo state.
+2. **During M8–M11:** use **one continuous V1 development branch** (`feature/m8-advanced-editor`) and its draft PR #23; add incremental commits here. Do not merge between M8, M9, M10 and M11. Do not push directly to `main` or deploy the incomplete site.
+3. **Substantial scheduled cycles:** make the scope as large as makes technical sense. Complete **at least one meaningful roadmap substep per run when feasible**, and multiple substeps when coherent and testable. Choose case-by-case; no artificial one-tiny-fix limit. If blocked on user content, credentials or third-party access, handle other safely unblocked agreed work.
+4. **Before handoff:** run focused tests, build/smoke/CI and relevant browser interactions whenever tools permit. Record actual failures, pending checks and limitations rather than claiming unverified success; share screenshots for UI changes.
+5. **At each cycle end:** update the **current status and next actions here**, and create/extend the relevant dated log in `docs/logs/` with changed files, commits, PRs, test evidence and blockers. Update docs in the same branch as code.
+6. **Internal milestone gates:** M8, M9 and M10 may be marked technically complete and progress to the next milestone without user approval/merge. Request input only for genuinely missing content/design/credentials, irreversible changes or major scope deviations. **Only once all M8–M11 V1 scope is ready, request user acceptance.** Then (and only after explicit approval) squash-merge V1 to `main` once and verify production deployment in accordance with approved launch steps.
+7. **Post-V1:** after that approved merge, create **one** new branch from updated `main` for **all M12–M17**. Keep it through all post-V1 milestone cycles and perform **one final squash merge** if and when the user accepts the completed extension. Neither scheduled nor manual work should silently merge.
+8. **Never delete branches**, including after squash merges. Keep automatic head-branch deletion disabled. Prior instructions to delete branches after stage merges are superseded by this policy.
+
+
 
 ## Historical starting criteria
 
@@ -111,12 +115,12 @@ The original [M0–M3 baseline implementation plan](logs/2026-10-12-foundations.
 | **M16 — Manual authoring quality** | 16.1 fix Card/Item friction discovered in TA content; 16.2 asset metadata and SVG safety; 16.3 module separation; 16.4 resilience/UX acceptance | TA pages and long posts can be authored, changed and saved quickly and safely without layout presets | ~2–4 sessions |
 | **M17 — Portable Studio handoff** | 17.1 folder/setup documentation; 17.2 migrations and complete data/media backup; 17.3 static build/release regression; 17.4 end-to-end sign-off | One TA project folder can be copied, restored and built with same engine; no separate demo site | ~1–3 sessions |
 
-Effort is in focused development sessions, **not guaranteed calendar days**. Each milestone gets a coherent feature branch/PR, incremental implementation/tests/screen capture, user acceptance, merge and head-branch cleanup as prescribed above. This is a sequence of small slices that can progress across days or weeks depending on real integration results.
+Effort is in focused development sessions, **not guaranteed calendar days**. M12–M17 share **one retained post-V1 development branch** (created after the approved V1 squash merge), with incremental implementation, tests, screenshots and progress logs across stages. User acceptance and a single squash merge happen **only at the end**. No branch deletion. Large or multiple substeps can be completed per development run when coherent.
 
 ### Next actions and boundaries
 
-1. **Now:** complete remaining M8 structural usability, visual/keyboard QA, save recovery verification and review PR #23. Do not merge until accepted.
-2. **Then:** execute unchanged original M9, M10 and M11 toward TA website + Content Studio V1 launch.
-3. **After V1:** begin M12; consult [the locked post-V1 specification](POST_V1_ARCHITECTURE.md) at each subsequent milestone. Only implementation-level UI field names/serialization choices remain flexible—not the product decisions above.
+1. **Now:** complete remaining M8 structural usability, visual/keyboard QA and save-recovery verification, record internal acceptance and then proceed directly to M9 on the same V1 branch. Do not merge before whole-V1 user acceptance.
+2. **Then:** execute unchanged original M9, M10 and M11 toward TA website + Content Studio V1 launch, keeping all new commits on the same V1 development branch.
+3. **After user-approved V1 merge:** create a single new post-V1 branch and begin M12; consult [the locked post-V1 specification](POST_V1_ARCHITECTURE.md) at each subsequent milestone. Only implementation-level UI field names/serialization choices remain flexible—not the product decisions above.
 4. Do not turn contextual asset queries, formal relationship systems or unified templates into emergency M8 work. The current renderer does **not** yet implement these post-V1 extensions. Formal relationships are explicitly deferred.
 
