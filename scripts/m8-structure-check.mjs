@@ -119,7 +119,7 @@ try{
    throw Error('Empty booking URL should not be clickable: '+JSON.stringify(pending));
  console.log('M9_CONTACT_OK site-wide verified booking link activates CTA, invalid URLs rejected, unset CTA inert');
  // Asset/project matching remains simple property editing — no relation engine.
- const codeEdit=await evaluate(\`(()=>{
+ const codeEdit=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('assets','house');
    const code=document.querySelector('#inspector [data-asset-project-code="house"]');
    if(!code)return {error:'Asset project-code field unavailable'};
@@ -131,10 +131,10 @@ try{
    project.value='4424';project.dispatchEvent(new Event('change',{bubbles:true}));
    return {asset:window.__TA_STUDIO__.getData().assets.find(x=>x.id==='house').properties.projectCode,
      project:window.__TA_STUDIO__.getData().collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-balkan').projectCode};
- })()\`);
+ })()`);
  if(codeEdit.asset!=='4424'||codeEdit.project!=='4424')
    throw Error('Project and asset code editing failed: '+JSON.stringify(codeEdit));
- const duplicateCode=await evaluate(\`(()=>{
+ const duplicateCode=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('record',{collection:'projects',record:'p-facade'});
    document.querySelector('[data-act="mode"][data-mode="fields"]')?.click();
    window.__M9CodeError='';window.alert=value=>window.__M9CodeError=String(value);
@@ -142,12 +142,12 @@ try{
    code.value='4424';code.dispatchEvent(new Event('change',{bubbles:true}));
    return {message:window.__M9CodeError,
      value:window.__TA_STUDIO__.getData().collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-facade').projectCode};
- })()\`);
+ })()`);
  if(!duplicateCode.message?.includes('Duplicate projectCode')||duplicateCode.value!=='')
    throw Error('Duplicate project code bypassed validation: '+JSON.stringify(duplicateCode));
  console.log('M9_PROJECT_CODE_OK typed asset/record matching and duplicate-code rejection');
  // Upload a REAL PNG as an in-place replacement; covers still reference 'house'.
- const replacementStart=await evaluate(\`(()=>{
+ const replacementStart=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('assets','house');
    const before=window.__TA_STUDIO__.getData().assets.length;
    const base64='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/T3sAAAAASUVORK5CYII=';
@@ -158,16 +158,16 @@ try{
    if(!input)return {error:'Replace image file picker missing'};
    input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
    return {started:true,before};
- })()\`);
+ })()`);
  if(!replacementStart.started)throw Error('Image replacement not started: '+JSON.stringify(replacementStart));
  let replacement;
  for(let i=0;i<80;i++){
-   replacement=await evaluate(\`(()=>{
+   replacement=await evaluate(`(()=>{
      const d=window.__TA_STUDIO__.getData(),a=d.assets.find(x=>x.id==='house');
      return {src:a?.src,placeholder:a?.placeholder,projectCode:a?.properties?.projectCode,
        count:d.assets.length,status:document.querySelector('#saved')?.textContent,
        cover:d.collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-balkan').cover};
-   })()\`);
+   })()`);
    if(replacement.src?.startsWith('/assets/uploads/')&&replacement.status==='JSON FILE · SAVED')break;
    await sleep(100);
  }
