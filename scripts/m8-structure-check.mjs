@@ -118,6 +118,67 @@ try{
  if(!pending.text.includes('booking link pending')||pending.links!==0)
    throw Error('Empty booking URL should not be clickable: '+JSON.stringify(pending));
  console.log('M9_CONTACT_OK site-wide verified booking link activates CTA, invalid URLs rejected, unset CTA inert');
+ // Asset/project matching remains simple property editing — no relation engine.
+ const codeEdit=await evaluate(\`(()=>{
+   window.__TA_STUDIO__.navigate('assets','house');
+   const code=document.querySelector('#inspector [data-asset-project-code="house"]');
+   if(!code)return {error:'Asset project-code field unavailable'};
+   code.value='4424';code.dispatchEvent(new Event('change',{bubbles:true}));
+   window.__TA_STUDIO__.navigate('record',{collection:'projects',record:'p-balkan'});
+   document.querySelector('[data-act="mode"][data-mode="fields"]')?.click();
+   const project=document.querySelector('[data-record-field="projectCode"]');
+   if(!project)return {error:'Project record code field unavailable'};
+   project.value='4424';project.dispatchEvent(new Event('change',{bubbles:true}));
+   return {asset:window.__TA_STUDIO__.getData().assets.find(x=>x.id==='house').properties.projectCode,
+     project:window.__TA_STUDIO__.getData().collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-balkan').projectCode};
+ })()\`);
+ if(codeEdit.asset!=='4424'||codeEdit.project!=='4424')
+   throw Error('Project and asset code editing failed: '+JSON.stringify(codeEdit));
+ const duplicateCode=await evaluate(\`(()=>{
+   window.__TA_STUDIO__.navigate('record',{collection:'projects',record:'p-facade'});
+   document.querySelector('[data-act="mode"][data-mode="fields"]')?.click();
+   window.__M9CodeError='';window.alert=value=>window.__M9CodeError=String(value);
+   const code=document.querySelector('[data-record-field="projectCode"]');
+   code.value='4424';code.dispatchEvent(new Event('change',{bubbles:true}));
+   return {message:window.__M9CodeError,
+     value:window.__TA_STUDIO__.getData().collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-facade').projectCode};
+ })()\`);
+ if(!duplicateCode.message?.includes('Duplicate projectCode')||duplicateCode.value!=='')
+   throw Error('Duplicate project code bypassed validation: '+JSON.stringify(duplicateCode));
+ console.log('M9_PROJECT_CODE_OK typed asset/record matching and duplicate-code rejection');
+ // Upload a REAL PNG as an in-place replacement; covers still reference 'house'.
+ const replacementStart=await evaluate(\`(()=>{
+   window.__TA_STUDIO__.navigate('assets','house');
+   const before=window.__TA_STUDIO__.getData().assets.length;
+   const base64='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/T3sAAAAASUVORK5CYII=';
+   const raw=atob(base64),buf=Uint8Array.from(raw,c=>c.charCodeAt(0));
+   const transfer=new DataTransfer();
+   transfer.items.add(new File([buf],'actual.png',{type:'image/png'}));
+   const input=document.querySelector('#replaceImageFile');
+   if(!input)return {error:'Replace image file picker missing'};
+   input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+   return {started:true,before};
+ })()\`);
+ if(!replacementStart.started)throw Error('Image replacement not started: '+JSON.stringify(replacementStart));
+ let replacement;
+ for(let i=0;i<80;i++){
+   replacement=await evaluate(\`(()=>{
+     const d=window.__TA_STUDIO__.getData(),a=d.assets.find(x=>x.id==='house');
+     return {src:a?.src,placeholder:a?.placeholder,projectCode:a?.properties?.projectCode,
+       count:d.assets.length,status:document.querySelector('#saved')?.textContent,
+       cover:d.collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-balkan').cover};
+   })()\`);
+   if(replacement.src?.startsWith('/assets/uploads/')&&replacement.status==='JSON FILE · SAVED')break;
+   await sleep(100);
+ }
+ if(!replacement.src?.startsWith('/assets/uploads/')||replacement.placeholder!==false||
+    replacement.projectCode!=='4424'||replacement.count!==replacementStart.before||
+    replacement.cover!=='house'||replacement.status!=='JSON FILE · SAVED')
+   throw Error('In-place media replacement broke references: '+JSON.stringify(replacement));
+ const replacementMedia=await fetch('http://127.0.0.1:'+port+replacement.src);
+ if(replacementMedia.status!==200)throw Error('Replaced image binary is not served: '+replacementMedia.status);
+ console.log('M9_MEDIA_REPLACEMENT_OK safe PNG upload, same asset ID, cover and project code retained');
+
  await evaluate("window.__TA_STUDIO__.navigate('page','home'); true");
  const before=await evaluate("(()=>{const pane=document.querySelector('#structurePane');const app=document.querySelector('#studioApp');return {open:app.classList.contains('structure-open'),rows:pane.querySelectorAll('.structure-select').length,hasHome:!!pane.querySelector('[data-id=\"m6-hero\"]'),columns:getComputedStyle(app).gridTemplateColumns.split(' ').length};})()");
  if(!before.open||before.rows<20||!before.hasHome||before.columns!==4)throw Error('Four-panel tree not rendered: '+JSON.stringify(before));
