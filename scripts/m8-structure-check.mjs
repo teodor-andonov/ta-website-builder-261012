@@ -321,6 +321,40 @@ try{
  if(rejectedDisk.pages.find(p=>p.id==='home').blocks[1].id===rejectedDisk.pages.find(p=>p.id==='home').blocks[0].id)
    throw Error('Invalid scoped JSON was written to disk');
  console.log('M8_JSON_TRANSACTION_OK invalid scoped JSON retains editor state and on-disk tree');
+ // Full JSON imports must use the same validated transaction boundary as scoped edits.
+ const invalidImport=await evaluate(`(()=>{
+   window.__M8_ImportAlert='';window.alert=x=>{window.__M8_ImportAlert=String(x)};
+   window.__M8_beforeImport=JSON.stringify(window.__TA_STUDIO__.getData());
+   const upload=document.querySelector('#importFile'),transfer=new DataTransfer();
+   const data=window.__TA_STUDIO__.getData();data.version=99;
+   transfer.items.add(new File([JSON.stringify(data)],'invalid.json',{type:'application/json'}));
+   upload.files=transfer.files;upload.dispatchEvent(new Event('change',{bubbles:true}));
+   return {started:true};
+ })()`);
+ let badImportState;
+ for(let i=0;i<40;i++){
+   badImportState=await evaluate(`(()=>({alert:window.__M8_ImportAlert,
+     unchanged:JSON.stringify(window.__TA_STUDIO__.getData())===window.__M8_beforeImport}))()`);
+   if(badImportState.alert)break;await sleep(100);
+ }
+ if(!badImportState.alert?.includes('Unsupported data version')||!badImportState.unchanged)
+   throw Error('Rejected full JSON import mutated memory: '+JSON.stringify(badImportState));
+ const validImport=await evaluate(`(()=>{
+   window.confirm=()=>true;
+   const data=window.__TA_STUDIO__.getData();data.site.name='M8 verified imported file';
+   const input=document.querySelector('#importFile'),transfer=new DataTransfer();
+   transfer.items.add(new File([JSON.stringify(data)],'valid.json',{type:'application/json'}));
+   input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+   return {started:true};
+ })()`);
+ let accepted=false;
+ for(let i=0;i<50;i++){
+   const value=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8')).site.name;
+   if(value==='M8 verified imported file'){accepted=true;break}await sleep(100);
+ }
+ if(!accepted)throw Error('Valid JSON import did not commit atomically');
+ console.log('M8_FULL_IMPORT_OK rejected invalid file without mutation; validated full import saved');
+
  // An invalid uploaded image is rejected safely without allocating an asset or blocking healthy JSON.
  const uploadFailure=await evaluate(`(()=>{
    window.__M8_uploadError='';
