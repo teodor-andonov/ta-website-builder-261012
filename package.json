@@ -12,7 +12,8 @@
     "backup:create": "node scripts/site-snapshot.mjs create",
     "backup:verify": "node scripts/site-snapshot.mjs verify",
     "backup:restore": "node scripts/site-snapshot.mjs restore",
-    "audit:media": "node scripts/media-budget.mjs"
+    "audit:media": "node scripts/media-budget.mjs",
+    "package:site": "node scripts/package-site.mjs"
   },
   "engines": {
     "node": ">=20"
