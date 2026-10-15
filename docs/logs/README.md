@@ -24,5 +24,6 @@ Short, dated records of **completed or active development cycles**. These comple
 | 2026-10-15 | [M9 homepage services, arrangements and verified-link CTA](2026-10-15-m9-services-and-contact.md) |
 | 2026-10-15 | [M9 placeholder content and M10 safe snapshot/restore](2026-10-15-m9-placeholders-and-m10-snapshots.md) |
 | 2026-10-15 | [M10 gated publication metadata and media budgets](2026-10-15-m10-seo-performance.md) |
+| 2026-10-15 | [M10 semantic accessibility and M11 static-host packaging](2026-10-15-m10-accessibility-m11-package.md) |
 
 Older `docs/M*_*.md` files are **technical references and milestone snapshots**, not competing plans.
