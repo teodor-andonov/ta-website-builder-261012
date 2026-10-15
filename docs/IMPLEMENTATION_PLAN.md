@@ -8,12 +8,12 @@
 
 ## Current position
 
-- **Stage:** M8 — Advanced Visual Editor, structure-first design, **in progress**.
+- **Stage:** **M9 — Real TA content and arrangements, in progress**. M8 technical/browser acceptance achieved on the V1 branch (2026-10-15).
 - **Working branch for all V1 M8–M11 development:** `feature/m8-advanced-editor`, [draft PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23). Continue on this same branch, despite its historical M8 name.
 - **Deployed baseline:** `main` publishes the M7 site and earlier M8 canvas-grid experiment. The V1 branch backs out that experiment in favour of tree-based authoring; **do not squash merge until M8–M11 meet release acceptance**. The user has already authorised the single phase-end V1 squash merge; no further approval request is required.
 - **Local editor:** `npm run dev` → http://127.0.0.1:5173/ ; **local static preview:** `npm run preview` → http://127.0.0.1:4173/.
 - **Public demonstration:** https://teodor-andonov.github.io/ta-website-builder-261012/ — placeholder content, deliberately `noindex`, **not** the production launch.
-- **Recent evidence:** **84/84 tests passed** on code commit `937740a` (2026-10-15), with green **test-and-build** and **Content Studio browser QA** workflows. CI built 10 pages and validated 11 generated HTML paths. Browser checks verified Structure interactions/history, grid editing, 1280×800 and 1600×1000 desktop layouts/ARIA state, a disposable **320-Item + deeply nested page**, and stale-tab save recovery. Automated screenshots were removed per user request; the browser interaction checks remain. Recheck CI on the final head after documentation updates.
+- **Recent evidence:** **88/88 tests passed** and both test-and-build and screenshot-free Chromium browser QA passed on implementation commit `3ba5f404` (2026-10-15). CI built 10 static pages with no editor/API exposure. M8 browser tests include 320-Item nested trees, both desktop widths, keyboard editing, generated/referenced Card inspection, rejected scoped and full JSON imports, corrupt media rejection, stale ETag conflict, confirmed reload-from-disk recovery and offline save failure preserving exportable edits. M9 content audit reports **21 outstanding publication issues** in existing demo data, including demo imagery and missing editorial approval. Re-run CI on subsequent changes.
 
 ## Roadmap at a glance
 
@@ -27,14 +27,14 @@
 | M5 | GitHub Pages static staging through Actions, repository base path | Complete · [PR #9](https://github.com/teodor-andonov/ta-website-builder-261012/pull/9) | [Design + deployment](logs/2026-10-13-to-14-design-and-deploy.md) |
 | M6 | Soft Precision grayscale identity, initial homepage | Initial pass complete · [PR #11](https://github.com/teodor-andonov/ta-website-builder-261012/pull/11) | [Design + deployment](logs/2026-10-13-to-14-design-and-deploy.md) |
 | M7 | Print-native recursive Cards/Items, grid areas, spacing, outlines, nontrapping scroll | Functional pass complete · [PRs #13–#17](https://github.com/teodor-andonov/ta-website-builder-261012/pull/17) | [Design + deployment](logs/2026-10-13-to-14-design-and-deploy.md) |
-| M8 | Usable structure-first visual editor for Cards/Items | **Active — draft PR #23** | [M8 cycle](logs/2026-10-14-m8-structure-editor.md) |
-| M9 | Authentic TA portfolio content, projects/posts, services & How We Work | Planned | — |
+| M8 | Usable structure-first visual editor for Cards/Items | **Technically complete — on rolling V1 draft PR #23, not merged** | [M8 reliability handoff](logs/2026-10-15-m8-recovery-and-m9-start.md) |
+| M9 | Authentic TA portfolio content, projects/posts, services & How We Work | **Active — content readiness and authoring controls** | [M9 start](logs/2026-10-15-m8-recovery-and-m9-start.md) |
 | M10 | Production QA, accessibility, metadata/SEO, performance, backups, acceptance | Planned | — |
 | M11 | Production domain/hosting (Hostinger or equivalent), asset deployment, launch/maintenance | Planned | — |
 
 *Milestone numbering evolved: advanced editor moved to M8 after the print-native Card architecture was separated into M7. Historical documents use their original numbering.*
 
-## M8 — active development cycle
+## M8 — technical acceptance complete (2026-10-15)
 
 **Product decision:** organise the desktop editor as **Workspace | Document Structure | Canvas | Properties**. Canvas is for clean preview and selection; hierarchy changes happen in Structure, and precise geometry happens in Properties. The public website retains a fixed, nonadaptive, grayscale, proportional, print-like Card grid. Only the Studio UI uses a single blue highlight `#525cbb`.
 
@@ -50,11 +50,12 @@
 - **Tree identity and component dependency validation (2026-10-15):** reject duplicate Card/Item IDs within authoring scope and direct/indirect component cycles, including query sources. Seven regressions passed; no data migration. [Cycle log](logs/2026-10-15-m8-structure-integrity.md).
 - **Large-tree reliability and schema integrity (2026-10-15):** allow/render nested Cards beyond the former silent 10-level cutoff, enforce explicit 32-level authoring/render cap, reject unknown Items and hidden child content in generated/reference Cards, return HTTP 400 model errors without overwriting saved JSON, stress 320-item reparenting and a 320-item real Chromium Studio document. Save checks now wait for actual atomic write completion. CI remains screenshot-free. [Cycle log](logs/2026-10-15-m8-large-tree-qa.md).
 
-**Remaining before M8 sign-off**
-1. **Structural usability:** 320-item pure tree manipulation and real Chromium rendering/selection/focus, nested render limits, and keyboard reorder/indent tests now pass. Remaining: inspect UI behaviour under rejected duplicate-ID/invalid imported JSON and keyboard/screen-reader traversal beyond ARIA attribute checks. Overlap warnings remain intentionally nonblocking. Multi-step history remains in-memory (up to 40 edits per scope, across at most 16 recent scopes) and does not survive reload.
-2. **Editor UX QA:** both desktop viewports and large-tree selection passed Chromium checks; normal Card/Item edits and stale-tab conflict preservation passed. Remaining: disconnected-server UI recovery, real upload failure handling, generated/referenced Card inspection, and any focused accessibility issues found from a keyboard/screen-reader pass.
-3. **Acceptance:** inspect final diff for data-loss/security pitfalls and rerun `npm test`, `npm run build`, `node scripts/smoke-check.mjs`, Pages path audit and real Chromium interactions. Report verified results and limitations **without screenshots**, as requested on 2026-10-15.
-4. **Internal M8 completion:** once technical acceptance checks pass, record M8 as internally complete and proceed to M9 on the **same V1 branch**. Do not merge yet. The single V1 squash merge is pre-authorised at the end of all M8–M11 acceptance checks, not at the M8 gate.
+**Acceptance and M10 handoff**
+
+1. **Completed:** model validation, comprehensive Structure editor operations, deep-nesting and 320-Item stress, browser selection, keyboard controls, grid edits and history, both desktop widths, data-source and reusable Card selection/definition navigation, invalid JSON rollback, valid whole-file import, corrupt-image handling, optimistic-concurrency conflict recovery and disconnected-server recovery. A confirm-gated **Reload saved file** action safely restores the server's validated snapshot after an Export JSON opportunity. Snapshot history is intentionally memory-only.
+2. **CI:** 88/88 Node tests and browser QA passed on implementation commit `3ba5f404`; existing V1 sample build/preview and project-path audit passed. Screenshot generation and uploads remain disabled per user request.
+3. **Deferred to M10 production acceptance:** manual screen-reader/device testing beyond tested ARIA focus/roles, broader browsers and real content/media usability, resilience with actual multi-asset collections and recovery drills. These do not block starting M9 but remain release requirements.
+4. **Branch:** continue M9, M10 and M11 on the same `feature/m8-advanced-editor` branch and PR #23. Do not merge between milestones; one final squash merge is already authorised only after whole V1 release criteria pass.
 
 **Branch retention decision (2026-10-15):** **Do not delete branches or enable GitHub's automatically-delete-head-branches setting.** This supersedes previous housekeeping advice to remove merged branches. Preserve all heads unless the user explicitly changes the policy.
 
@@ -62,9 +63,9 @@
 
 See [M8 design details](M8_EDITOR_PLAN.md) for interaction rules, [architecture](ARCHITECTURE.md) for data flow and [latest log](logs/2026-10-14-m8-structure-editor.md) for the detailed record.
 
-## M9–M11 — planned sequence
+## M9–M11 — ongoing V1 delivery
 
-**M9 Content and sections.** Replace demonstration copy and graphics with approved real projects/posts. Complete services/arrangements: fixed packages, subscription and custom contract; architecture/computation/facades themes; contact and call-to-action; metadata linking assets/credits. Ensure editors can author all required pages without hand-editing HTML.
+**M9 Content and sections.** Replace demonstration copy and graphics with approved real projects/posts. Complete services/arrangements: fixed packages, subscription and custom contract; architecture/computation/facades themes; verified contact and 15-minute-call CTA; metadata linking assets/credits. The existing Home page already contains basic Architecture/Computation/Research and fixed/subscription/custom arrangements; refine real content rather than duplicating those Cards. **Implemented M9 kickoff:** read-only `npm run audit:content`, strict `npm run audit:content -- --strict` for later release gating, CI reporting without interim failure, and editable per-Page/Record approval flag in Studio. Initial inventory found **21 blockers** (demo asset sources, placeholder contact details, missing verified project/post/page approval, demo record covers). Authentic content/permissions must come from actual materials or explicit user decisions; do not fabricate them or prematurely remove `noindex`. Continue implementing safe content authoring while awaiting genuine materials.
 
 **M10 Production quality.** Test accessibility with keyboard and screen readers, semantic metadata, SEO, canonical URLs/social previews, image loading and size budgets, failed-write/rollback behavior, JSON backup/restore, form and link behavior, browser/device acceptance. Remove `noindex` only for approved launch content.
 
