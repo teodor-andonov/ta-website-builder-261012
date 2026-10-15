@@ -28,3 +28,9 @@
 This planning pass was checked against the current M8 plan and renderer/model code for feasibility. Existing V1 collection queries and hardcoded site frame **do not** implement the proposed record-context asset filtering or unified single-slot template assembly; these are explicitly post-V1 work. No tests were run because no runtime code was changed. The M8 branch's implementation remains pending user review and release.
 
 **Next:** complete the existing M8 editor QA and acceptance before proceeding to unchanged M9.
+
+## Same-day refinement — simplify project asset matching
+
+**Decision correction (2026-10-15):** The earlier discussion selected multi-record asset relationships, but the subsequent review prioritised a simpler property-based approach for the actual TA website. **Supersedes the multi-relationship bullets earlier in this log.** In M15, initially match asset `projectCode` against the current project record's `projectCode` using validated typed equality, alongside tag filtering (e.g. contains `highlighted`). A stable existing record ID may be used instead if appropriate. Codes must be unique/stable; code changes should be guarded or update affected assets. A future array of codes can cover multi-project matching if needed. **Dedicated bidirectional relationships and relationship-management UI are deferred, not required for M15.**
+
+Updated the [post-V1 architecture](../POST_V1_ARCHITECTURE.md) and [living roadmap](../IMPLEMENTATION_PLAN.md) accordingly, preserving the original M8–M11 milestones. Documentation only; no runtime code changes, merge or deployment.
