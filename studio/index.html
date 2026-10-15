@@ -15,6 +15,7 @@
 @media(max-width:850px){.app{grid-template-columns:195px minmax(0,1fr)}.inspector{position:fixed;top:56px;right:0;bottom:0;width:290px;z-index:12;box-shadow:-12px 0 33px #0001;transform:translateX(101%);transition:transform .15s}.inspector.show{transform:translateX(0)}.inspect-toggle{display:inline-flex}.saved,.version{display:none}}
 @media(max-width:620px){.app{display:flex;flex-direction:column;min-height:100vh;height:100vh}.topbar{height:56px;flex:none;padding:0 12px}.sidebar{position:fixed;left:0;top:56px;bottom:0;width:238px;z-index:11;transform:translateX(-101%);transition:transform .15s;box-shadow:14px 0 40px #0001}.sidebar.show{transform:translateX(0)}.mobile-menu{display:inline-flex}.workspace{flex:1}.worktop{padding:0 10px}.worktop .btn.sm{display:none}.workbody{flex:1}.content-wrap{padding:24px 12px}.page-heading{align-items:flex-start}.section-title{font-size:23px}.stats{gap:6px}.stat{padding:12px}.stat b{font-size:19px}.dashboard-grid,.detail-grid{grid-template-columns:1fr}.editor-shell{width:calc(100% - 20px);margin:14px auto}.web-content{padding:13px}.web-nav{padding:0 14px}.b-card.split,.b-card.grid,.b-card.three,.b-query.three{grid-template-columns:1fr}.b-query.grid{grid-template-columns:1fr 1fr}.web-links{gap:8px}.toolbar .btn{padding:6px}.topbar .btn.ghost{display:none}.version{display:none}.choices{grid-template-columns:1fr}}
 @media(max-width:620px){.topbar .btn.mobile-menu{display:inline-flex}}
+#reloadBtn[hidden],#saveDetails[hidden]{display:none}
 </style>
 <link rel="stylesheet" href="/src/public.css">
 
@@ -97,7 +98,7 @@
 <div class="app" id="studioApp">
  <header class="topbar">
   <div class="brand"><button class="btn ghost icononly mobile-menu" id="menuBtn" aria-label="Open menu">☰</button><div class="mark">TA</div><div><strong>TA / CONTENT STUDIO</strong><span class="version">FILE ASSETS · M3</span></div></div>
-  <div class="toolbar"><span class="saved" id="saved" role="status" aria-live="polite">JSON FILE · READY</span><span id="saveDetails" role="alert" hidden></span><button class="btn ghost" id="importBtn">Import JSON</button><button class="btn dark" id="exportBtn">↧ &nbsp;Export JSON</button><input hidden type="file" id="importFile" accept=".json,application/json"><input hidden type="file" id="imageFile" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif" multiple></div>
+  <div class="toolbar"><span class="saved" id="saved" role="status" aria-live="polite">JSON FILE · READY</span><span id="saveDetails" role="alert" hidden></span><button class="btn ghost" id="reloadBtn" hidden title="Discard local edits and reload validated JSON from disk">Reload saved file</button><button class="btn ghost" id="importBtn">Import JSON</button><button class="btn dark" id="exportBtn">↧ &nbsp;Export JSON</button><input hidden type="file" id="importFile" accept=".json,application/json"><input hidden type="file" id="imageFile" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif" multiple></div>
  </header>
  <aside class="sidebar" id="sidebar"><div class="side-inner" id="sidebarContent"></div><div class="side-bottom">LOCAL FIRST &nbsp;↗<br>FILES · COLLECTIONS · TEMPLATES</div></aside>
  <aside class="structure-pane" id="structurePane" aria-label="Document structure"><div class="structure-head"><span>DOCUMENT STRUCTURE</span><button class="btn ghost sm" data-act="toggle-structure" title="Hide document structure" aria-label="Hide document structure">✕</button></div><div class="structure-summary" id="structureSummary"></div><div class="structure-editbar" role="toolbar" aria-label="Move selected Card or Item">
@@ -232,8 +233,28 @@ function markSaveFailure(error){
  const indicator=$('#saved');
  indicator.textContent='UNSAVED CHANGES · EXPORT JSON';
  indicator.title=error.message+' — Export JSON before reloading; the file on disk was not overwritten.';
- const details=$('#saveDetails');details.hidden=false;details.textContent=error.message+' · Export JSON, then reload and reconcile before saving again.';
+ const details=$('#saveDetails');details.hidden=false;details.textContent=error.message+' · Export JSON before reloading if you want to keep these edits.';
+ $('#reloadBtn').hidden=false;
  console.error('File save stopped:',error);
+}
+async function reloadSavedFile(){
+ if(!saveBlocked)return;
+ if(!confirm('Discard unsaved browser edits and reload the latest validated JSON from disk? Export JSON first if you need a copy.'))return;
+ // Finish any queued job before swapping in a fresh source tree.
+ await saveQueue;
+ try{
+  const response=await fetch('/api/data',{cache:'no-store'});
+  if(!response.ok)throw Error('Reload failed ('+response.status+')');
+  const next=normalize(await response.json());
+  validateSiteData(next);
+  const revision=response.headers.get('etag');
+  if(!revision)throw Error('Reload response did not include file revision');
+  db=next;savedRevision=revision;saveBlocked=false;saveQueue=Promise.resolve();
+  editorHistory.clear();ui.jsonMessage='';
+  $('#saved').textContent='JSON FILE · LOADED';$('#saved').title='';
+  $('#saveDetails').textContent='';$('#saveDetails').hidden=true;
+  $('#reloadBtn').hidden=true;choose('dashboard');
+ }catch(error){markSaveFailure(error)}
 }
 function persist(){
  if(saveBlocked)return saveQueue;
@@ -895,7 +916,7 @@ document.addEventListener('keydown',event=>{
 });
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeModal();$('#inspector').classList.remove('show');$('#sidebar').classList.remove('show')}if(event.key==='Enter'&&(event.target.id==='recordSearch'||event.target.id==='assetSearch')){event.target.blur();renderWork()}});
 function recById(cid,rid){return db.collections.find(c=>c.id===cid)?.records.find(r=>r.id===rid)}
-$('#exportBtn').addEventListener('click',exportJSON);$('#importBtn').addEventListener('click',()=>$('#importFile').click());$('#menuBtn').addEventListener('click',()=>$('#sidebar').classList.toggle('show'));$('#inspectToggle').addEventListener('click',()=>$('#inspector').classList.toggle('show'));$('#inspectClose').addEventListener('click',()=>$('#inspector').classList.remove('show'));
+$('#exportBtn').addEventListener('click',exportJSON);$('#reloadBtn').addEventListener('click',reloadSavedFile);$('#importBtn').addEventListener('click',()=>$('#importFile').click());$('#menuBtn').addEventListener('click',()=>$('#sidebar').classList.toggle('show'));$('#inspectToggle').addEventListener('click',()=>$('#inspector').classList.toggle('show'));$('#inspectClose').addEventListener('click',()=>$('#inspector').classList.remove('show'));
 window.__TA_STUDIO__={getData:()=>clone(db),reset:()=>{db=normalize(seed());persist();choose('dashboard')},navigate:choose};
 try {
  const response=await fetch('/api/data',{cache:'no-store'});
