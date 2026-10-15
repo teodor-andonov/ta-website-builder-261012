@@ -36,6 +36,20 @@ test('M8 stale tabs and uploads cannot overwrite or bypass an atomic file revisi
   assert.equal(first.status,200);
   const secondTagValue=first.headers.get('etag');
   assert.ok(secondTagValue&&secondTagValue!==firstTag,'each successful save gets a new revision');
+  // Invalid authored trees must return actionable HTTP 400 and preserve both
+  // the saved file and its revision (not silently render, nor report HTTP 500).
+  const hidden=structuredClone(alpha);
+  hidden.pages[0].blocks[0].children[0].id=hidden.pages[0].blocks[0].id;
+  const invalidNode=await put(hidden,secondTagValue);
+  assert.equal(invalidNode.status,400);
+  assert.match((await invalidNode.json()).error,/Duplicate node ID/);
+  const cycle=structuredClone(alpha);
+  cycle.components[0].blocks[0].reference=cycle.components[0].id;
+  const invalidCycle=await put(cycle,secondTagValue);
+  assert.equal(invalidCycle.status,400);
+  assert.match((await invalidCycle.json()).error,/Circular component reference/);
+  assert.equal((await data()).site.name,'Alpha edit');
+  assert.equal((await get()).headers.get('etag'),secondTagValue);
   const rejected=await put(beta,secondTag);
   assert.equal(rejected.status,409,'stale second tab must never overwrite the file');
   assert.match((await rejected.json()).error,/Export unsaved JSON/);
