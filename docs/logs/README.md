@@ -27,5 +27,6 @@ Short, dated records of **completed or active development cycles**. These comple
 | 2026-10-15 | [M10 semantic accessibility and M11 static-host packaging](2026-10-15-m10-accessibility-m11-package.md) |
 | 2026-10-15 | [M11 atomic builds, verified release ZIP and end-to-end rollback rehearsal](2026-10-15-m11-release-rehearsal.md) |
 | 2026-10-15 | [V1 staging release candidate, final acceptance and production blockers](2026-10-15-v1-release-candidate.md) |
+| 2026-10-15 | [V2 local-first publishing and GitHub workflow simplification](2026-10-15-v2-local-first-publishing-cleanup.md) |
 
 Older `docs/M*_*.md` files are **technical references and milestone snapshots**, not competing plans.
