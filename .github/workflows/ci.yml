@@ -29,6 +29,8 @@ jobs:
         run: npm run audit:media
       - name: Build static public pages
         run: npm run build
+      - name: Verify explicitly unindexed V1 staging release boundary
+        run: npm run v1:staging-check
       - name: Assert example pages exist
         run: |
           test -f dist/posts/designing-with-code/index.html
