@@ -138,3 +138,51 @@ test('M8 collision diagnostics can report several overlaps and skip malformed si
  assert.deepEqual(findAreaConflicts(p,'new',{x1:2.5,y1:2,x2:3,y2:3}),[]);
  assert.deepEqual(findAreaConflicts(null,'new',{x1:1,y1:1,x2:2,y2:2}),[]);
 });
+
+test('M8 stress: 320 authored Items retain unique IDs and valid paths through repeated reparenting',()=>{
+ const groups=Array.from({length:8},(_,g)=>{
+   const children=Array.from({length:40},(_,i)=>item('item-'+g+'-'+i,{
+     x1:i%8+1,y1:Math.floor(i/8)+1,x2:i%8+2,y2:Math.floor(i/8)+2
+   }));
+   return card('group-'+g,children,{x1:g+1,y1:1,x2:g+2,y2:2},8,5);
+ });
+ const original=[card('stress-root',groups,undefined,8,1)],unchanged=structuredClone(original);
+ let current=original;
+ for(let i=0;i<18;i++){
+   const id='item-0-'+i;
+   const moved=moveTreeNode(current,id,'group-1','inside');
+   assert.equal(moved.ok,true,'move '+id+': '+moved.error);
+   current=moved.blocks;
+   assert.deepEqual(nodePath(current,id),['stress-root','group-1',id]);
+ }
+ assert.deepEqual(original,unchanged,'all 18 moves are immutable');
+ assert.equal(current[0].children[0].children.length,22);
+ assert.equal(current[0].children[1].children.length,58);
+ assert.equal(current[0].children[1].rows,8,'full target grid grows within validated maximum');
+ const group=current[0].children[1];
+ const seen=new Set();
+ for(const n of group.children){
+   assert.equal(seen.has(n.id),false,'no duplicate authored ID');
+   seen.add(n.id);
+   assert.ok(n.area.x1>=1&&n.area.x2<=group.columns+1&&n.area.y2<=group.rows+1);
+ }
+ const selected=moveTreeByIntent(current,'group-4','up');
+ assert.equal(selected.ok,true);
+ assert.deepEqual(selected.blocks[0].children.slice(2,5).map(x=>x.id),['group-2','group-4','group-3']);
+ assert.deepEqual(selected.blocks[0].children[3].area,{x1:5,y1:1,x2:6,y2:2},
+   'keyboard reorder affects reading order but never the authored grid cell');
+});
+test('M8 stress: long nested ancestry and safe deep outdent',()=>{
+ const leaf=item('deep-leaf',{x1:1,y1:1,x2:2,y2:2});
+ let root=leaf;
+ for(let depth=13;depth>=0;depth--){
+   root=card('level-'+depth,[root],{x1:1,y1:1,x2:2,y2:2},1,1);
+ }
+ delete root.area;
+ const before=[root],path=nodePath(before,'deep-leaf');
+ assert.equal(path.length,15);
+ const moved=moveTreeByIntent(before,'deep-leaf','outdent');
+ assert.equal(moved.ok,true);
+ assert.equal(nodePath(moved.blocks,'deep-leaf').length,14);
+ assert.deepEqual(nodePath(before,'deep-leaf'),path,'original deep structure unchanged');
+});
