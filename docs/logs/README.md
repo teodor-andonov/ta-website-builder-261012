@@ -18,5 +18,6 @@ Short, dated records of **completed or active development cycles**. These comple
 | 2026-10-14 | [M8 — structure-first editor, current feature branch](2026-10-14-m8-structure-editor.md) |
 | 2026-10-15 | [Post-V1 planning — unified templates, collections and contextual asset queries](2026-10-15-post-v1-planning.md) |
 | 2026-10-15 | [Autonomous development — long-lived V1/post-V1 branches and approval gates](2026-10-15-autonomous-dev-protocol.md) |
+| 2026-10-15 | [M8 tree identity and component-reference validation](2026-10-15-m8-structure-integrity.md) |
 
 Older `docs/M*_*.md` files are **technical references and milestone snapshots**, not competing plans.
