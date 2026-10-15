@@ -378,6 +378,49 @@ try{
  if(disk.site.name!=='M8 external tab update'||diskNode.label==='Local unsaved label')
    throw Error('Conflict overwrote the external file');
  console.log('M8_SAVE_CONFLICT_OK revision mismatch, file preserved, local JSON export available');
+ // A disconnected local backend must leave the unsaved edit exportable, with a
+ // visible error (not just a hover tooltip), and must never invent a saved revision.
+ await command('Page.reload',{ignoreCache:true});
+ let loadedAgain=false;
+ for(let i=0;i<90;i++){
+   try{loadedAgain=await evaluate(`Boolean(window.__TA_STUDIO__&&document.querySelector('#saved')?.textContent==='JSON FILE · LOADED')`);}catch{}
+   if(loadedAgain)break;await sleep(100);
+ }
+ if(!loadedAgain)throw Error('Unable to reload saved JSON after stale-tab recovery');
+ const offline=await evaluate(`(()=>{
+   window.__TA_STUDIO__.navigate('page','home');
+   const originalFetch=window.fetch;
+   window.fetch=(url,options)=>String(url)==='/api/data'&&options?.method==='PUT'
+     ?Promise.reject(new TypeError('Simulated backend connection loss'))
+     :originalFetch(url,options);
+   document.querySelector('#structurePane [data-act="select-node"][data-id="m6-hero-title"]')?.click();
+   const label=document.querySelector('[data-node-prop="label"]');
+   if(!label)return {error:'No editable label'};
+   label.value='Offline unsaved edit';
+   label.dispatchEvent(new Event('change',{bubbles:true}));
+   return {started:true};
+ })()`);
+ if(!offline.started)throw Error('Offline test could not edit Studio: '+JSON.stringify(offline));
+ let offlineUI;
+ for(let i=0;i<50;i++){
+   offlineUI=await evaluate(`(()=>({
+     status:document.querySelector('#saved')?.textContent,
+     error:document.querySelector('#saveDetails')?.textContent,
+     visible:!document.querySelector('#saveDetails')?.hidden,
+     exported:!!document.querySelector('#exportBtn'),
+     label:window.__TA_STUDIO__.getData().pages.find(p=>p.id==='home').blocks
+       .find(b=>b.id==='m6-hero').children.find(b=>b.id==='m6-hero-copy').children
+       .find(b=>b.id==='m6-hero-title').label
+   }))()`);
+   if(offlineUI.status?.includes('UNSAVED CHANGES'))break;await sleep(100);
+ }
+ if(!offlineUI.status?.includes('UNSAVED CHANGES')||!offlineUI.visible||
+    !offlineUI.error?.includes('Simulated backend connection loss')||!offlineUI.exported||
+    offlineUI.label!=='Offline unsaved edit')
+   throw Error('Offline save did not provide visible recovery: '+JSON.stringify(offlineUI));
+ const offlineDisk=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
+ if(titleIn(offlineDisk).label==='Offline unsaved edit')throw Error('Disconnected write changed disk');
+ console.log('M8_OFFLINE_RECOVERY_OK visible error, unsaved JSON export, unchanged disk');
  console.log('M8_STRUCTURE_OK '+JSON.stringify({before,selected,selectedItem,fold,unfold,hidden,shown}));
 }finally{
  ws?.close();chrome?.kill('SIGKILL');server.kill('SIGTERM');
