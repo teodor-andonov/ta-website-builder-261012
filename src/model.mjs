@@ -65,6 +65,23 @@ export function validate(data) {
       claimRoute(`${collection.base}/${record.slug}`);
     }
   }
+  // Stable metadata key for project/asset authoring. This is NOT a
+  // relationship engine; M15 can query the same property later.
+  const projectCodes=new Set();
+  const projects=data.collections.find(c=>c.id==='projects');
+  for(const record of projects?.records||[]){
+    const code=record.projectCode;
+    if(code===undefined||code==='')continue;
+    if(typeof code!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(code))
+      fail('Invalid projectCode on record '+record.id);
+    if(projectCodes.has(code))fail('Duplicate projectCode: '+code);
+    projectCodes.add(code);
+  }
+  for(const asset of data.assets){
+    const code=asset.properties?.projectCode;
+    if(code!==undefined&&(typeof code!=='string'||(code!==''&&!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(code))))
+      fail('Invalid asset projectCode: '+asset.id);
+  }
   for (const asset of data.assets) {
     if(typeof asset.src!=='string')fail(`Invalid asset source: ${asset.id}`);
     if(/^data:/i.test(asset.src))fail(`Invalid asset source: embedded data URIs are not supported (${asset.id})`);
