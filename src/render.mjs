@@ -244,22 +244,36 @@ export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
 export function renderPagePreview(data,blocks,context=null,options={}) {
   return renderSiteFrame(renderBlocks(blocks,context,data,{...options,topLevel:true}),data,{...options,route:options.route||resolvePreviewRoute(data,blocks,context)});
 }
-export function renderDocument(data,{title,blocks,context=null,route}) {
+export function renderDocument(data,{title,blocks,context=null,route,collectionId=null,publication={indexing:false,origin:null}}) {
   const heading=escapeHtml(title||data.site.name),name=escapeHtml(data.site.name);
+  const plainTitle=(title||data.site.name)+' — '+data.site.name;
   const description=escapeHtml(context?.summary||data.site.description||'');
-  const page=renderPagePreview(data,blocks,context,{route:route||resolvePreviewRoute(data,blocks,context)});
-  // Sample content isn't approved for live indexing yet.
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${heading} — ${name}</title><meta name="description" content="${description}"><meta name="robots" content="noindex, nofollow"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;450;500;550;600;650&display=swap"><link rel="stylesheet" href="/site.css"></head><body class="published-site">${page}</body></html>`;
+  const resolvedRoute=route||resolvePreviewRoute(data,blocks,context);
+  const page=renderPagePreview(data,blocks,context,{route:resolvedRoute});
+  // Canonical and absolute social URLs only exist for an explicitly approved
+  // external production release; staging cannot claim an unverified domain.
+  const indexable=publication.indexing===true && typeof publication.origin==='string';
+  const absolute=indexable?publication.origin+resolvedRoute:null;
+  const robots=indexable?'index, follow':'noindex, nofollow';
+  const canonical=absolute?'<link rel="canonical" href="'+escapeHtml(absolute)+'">':'';
+  const canonicalMeta=absolute?'<meta property="og:url" content="'+escapeHtml(absolute)+'">':'';
+  const cover=context?.cover?data.assets.find(a=>a.id===context.cover):null;
+  const image=absolute && cover && cover.placeholder!==true && assetSrc(cover).startsWith('/assets/')
+    ? publication.origin+assetSrc(cover) : null;
+  const mediaMeta=image?'<meta property="og:image" content="'+escapeHtml(image)+'"><meta name="twitter:card" content="summary_large_image">':
+    '<meta name="twitter:card" content="summary">';
+  const htmlTitle=escapeHtml(plainTitle);
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${htmlTitle}</title><meta name="description" content="${description}"><meta name="robots" content="${robots}">${canonical}<meta property="og:type" content="${collectionId==='posts'?'article':'website'}"><meta property="og:site_name" content="${name}"><meta property="og:title" content="${htmlTitle}"><meta property="og:description" content="${description}">${canonicalMeta}<meta name="twitter:title" content="${htmlTitle}"><meta name="twitter:description" content="${description}">${mediaMeta}<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;450;500;550;600;650&display=swap"><link rel="stylesheet" href="/site.css"></head><body class="published-site">${page}</body></html>`;
 }
-export function collectPages(data) {
+export function collectPages(data,{publication={indexing:false,origin:null}}={}) {
   const pages=[];
   for(const page of data.pages) if(page.status==='Published')
-    pages.push({route:normalizeRoute(page.slug),html:renderDocument(data,{title:page.title,blocks:page.blocks,route:normalizeRoute(page.slug)})});
+    pages.push({route:normalizeRoute(page.slug),html:renderDocument(data,{title:page.title,blocks:page.blocks,route:normalizeRoute(page.slug),publication})});
   for(const collection of data.collections)for(const record of collection.records){
     if(record.status==='Draft')continue;
     const template=templateFor(data,collection,record);
     if(!template)throw Error(`Missing template for ${collection.id}/${record.slug}`);
-    pages.push({route:recordPath(collection,record),html:renderDocument(data,{title:record.title,blocks:template.blocks,context:record,route:recordPath(collection,record)})});
+    pages.push({route:recordPath(collection,record),html:renderDocument(data,{title:record.title,blocks:template.blocks,context:record,route:recordPath(collection,record),collectionId:collection.id,publication})});
   }
   return pages;
 }
