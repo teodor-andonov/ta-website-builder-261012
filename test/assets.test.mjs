@@ -21,6 +21,7 @@ test('real image upload, metadata edits and published output survive reload', {t
   await cp(path.join(root,'content','site.json'),path.join(storage,'content','site.json'));
   await mkdir(path.join(storage,'assets','demo'),{recursive:true});
   await cp(path.join(root,'assets','demo'),path.join(storage,'assets','demo'),{recursive:true});
+  await cp(path.join(root,'assets','placeholder'),path.join(storage,'assets','placeholder'),{recursive:true});
   const server=spawn(process.execPath,['src/server.mjs'],{cwd:root,env:{...process.env,PORT:String(port),TA_DATA_ROOT:storage},stdio:'ignore'});
   try{
     await waitFor(url,server);
