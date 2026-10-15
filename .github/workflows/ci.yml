@@ -23,8 +23,14 @@ jobs:
         run: npm test
       - name: Syntax-check preserved standalone prototype
         run: node scripts/smoke-check.mjs
+      - name: Report unapproved or placeholder portfolio content (M9)
+        run: npm run audit:content
+      - name: Verify local media paths and delivery budgets
+        run: npm run audit:media
       - name: Build static public pages
         run: npm run build
+      - name: Verify explicitly unindexed V1 staging release boundary
+        run: npm run v1:staging-check
       - name: Assert example pages exist
         run: |
           test -f dist/posts/designing-with-code/index.html
@@ -46,6 +52,23 @@ jobs:
           curl -fsS http://127.0.0.1:4173/posts/ | grep -q 'Notes, news'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/studio/)" = "404"
           echo "Local preview serves generated public routes and excludes editor."
+      - name: Package independent static-host preview and verify ZIP readability
+        run: |
+          npm run package:site
+          test -s release/ta-website-preview.zip
+          unzip -t release/ta-website-preview.zip > /tmp/ta-zip-check.log
+          npm run package:verify
+          grep -q 'No errors detected in compressed data' /tmp/ta-zip-check.log
+      - name: Attach verified, unindexed V1 static preview ZIP to PR checks
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ta-v1-staging-preview
+          path: release/ta-website-preview.zip
+          if-no-files-found: error
+          retention-days: 7
+      - name: Rehearse complete backup, failed build and rollback without touching source
+        run: npm run release:rehearse
       - name: Verify GitHub Pages project-path build
         env:
           TA_BASE_PATH: /ta-website-builder-261012/

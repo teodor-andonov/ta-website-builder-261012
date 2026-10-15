@@ -24,7 +24,7 @@ test('semantic Page/Nav/Main/Footer and authored Cards occupy real DOM nodes',()
  const html=renderPagePreview(data,home.blocks,null,{route:'/'});
  assert.match(html,/<div class="card card-page webpage view/);
  assert.match(html,/<nav class="card card-nav /);
- assert.match(html,/<main id="main-content" class="card card-main /);
+ assert.match(html,/<main id="main-content" tabindex="-1" class="card card-main /);
  assert.match(html,/<footer class="card card-footer /);
  assert.match(html,/<section class="card grid-card /);
  assert.match(html,/<div class="item item-text b-text /);
@@ -77,7 +77,7 @@ test('editor uses the shared direct-Card renderer and source Card authoring',asy
 
 test('annotated homepage has one Card per semantic section, with no redundant wrappers',()=>{
  const sections=home.blocks;
- assert.equal(sections.length,7);
+ assert.equal(sections.length,8);
  const byId=id=>{const s=sections.find(x=>x.id===id);assert.ok(s,id);return s};
  const work=byId('m6-work-title');
  assert.equal(work.children.length,4,'3 header Items + 1 record source Card');

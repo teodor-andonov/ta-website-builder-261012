@@ -1,7 +1,7 @@
 # TA Content Studio — Instructions for coding agents
 
 ## Goal
-Evolve the existing visual editor (see `prototype-v2/index.html`) into a real local file-first authoring system and static public TA website. **Preserve**, don't redesign, the prototype's refined minimal interface.
+Maintain the **existing** local file-first JSON Content Studio and its generated public TA website. Preserve the minimal UI, keep the Card/Item model explicit, and avoid unnecessary rewrites. The original `prototype-v2/index.html` is a historical reference, not an unfinished task.
 
 ## Decisions that must survive
 - **JSON only** is the canonical authoring format for pages, projects, posts, assets metadata, templates, components and compositions. Do not add Markdown as parallel content.
@@ -14,38 +14,65 @@ Evolve the existing visual editor (see `prototype-v2/index.html`) into a real lo
 - Reuse stable record/asset/block identifiers; URLs use editable slugs.
 - Keep the toolchain small and understandable; prefer vanilla browser code and a minimal local development service, not a hosted CMS or mandatory SaaS.
 
+## Editorial content and placeholder media — user permission (2026-10-15)
+
+- The user **explicitly authorises temporary demo copy and plain light/desaturated visual fills** so M9–M11 development does not stall. Existing routes and Card/Item composition remain the real TA site; never create a second demo site.
+- Prefer flat, neutral, **checked-in static SVG media** for placeholder fills. Keep them clearly marked `placeholder: true` with editable tags/metadata. Raster replacement through Studio must preserve the original asset ID so existing record references survive.
+- Pages and records may carry `placeholder: true`, separate from `approvedForPublication`. An explicitly temporary placeholder is **acceptable for V1 technical delivery**, but **not equivalent to approved factual project information**. Do not misrepresent sample work as verified built projects or invent credits, prices, credentials or booking URLs.
+- The release audit distinguishes placeholders from real production blockers; **keep `noindex` and retain strict external-production content checks** until real copy, media rights, and working contact destinations are confirmed. Lack of authentic assets is not a reason to stop safe software development.
+- Asset/project `projectCode` is a stable editable metadata field, not a relationship manager or contextual query engine. Full contextual queries remain at M15.
+
 ## Working rules
-1. Read `README.md`, the runnable baseline and `docs/` before changing architecture.
-2. Keep the baseline `prototype-v2/index.html` intact unless explicitly updating the reference snapshot.
-3. Start with file-backed persistence and real page output. Do not spend Milestone 1 on a new dashboard, drag-and-drop, accounts, clouds or a framework migration.
-4. Changes to source JSON must reach preview and generated HTML via the same schema and data, not duplicated record content.
-5. Validate IDs/slugs, avoid unsafe eval/HTML injection, keep local filesystem writes restricted to permitted data/media directories. Ensure static deployments cannot write files.
-6. Add reproducible tests and document exactly what was run. Don't imply production readiness based on the visual prototype.
+1. **At the start of every development run, read [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).** Check the current stage/branch/PR and the matching specialist documentation, then inspect the actual repository state.
+2. Work on the **current V1 development branch across all unfinished M8–M11 milestones**, rather than starting a branch per milestone. Do not merge/deploy intermediate milestones just for website preview. Preview through local Studio (`npm run dev`), local static output (`npm run preview`) or GitHub Actions screenshots.
+3. Keep `prototype-v2/index.html` intact as historical reference unless explicitly requested. Update canonical JSON and the shared renderer/model, not parallel manual HTML.
+4. Validate IDs and slugs; reject unsafe HTML/eval, cycles and data-loss edits. Restrict filesystem writes to approved data/media paths. The published static site must not include any writable API.
+5. Add focused tests, run reproducible CI/browser checks, and disclose limitations. **Screenshots are suspended at the user's request (2026-10-15); do not capture or upload them unless requested again.** Do not mistake green CI for complete product acceptance.
+6. **At the end of every substantial run, update the living plan's current state/next steps AND the relevant dated file in `docs/logs/`.** Make these documentation changes in the same branch/PR as the implementation.
 
-## Definition of the first vertical slice
-Edit sample Post `designing-with-code` → save to a real JSON file → reload → preview reflects it → build `dist/posts/designing-with-code/index.html`. Also build project `dist/work/balkan-house/index.html`. A shared template edit must affect more than one generated page.
+## Current assignment and source of truth
 
-See `docs/IMPLEMENTATION_PLAN.md` for sequencing.
+- **Status, milestones, acceptance criteria, next work:** [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) — **the one living roadmap**, updated each run.
+- **Dated implementation history:** [`docs/logs/`](docs/logs/README.md). Preserve historical entries and link to them; do not create competing planning documents per run.
+- **Technical specifications:** `docs/ARCHITECTURE.md` and relevant `docs/M*.md` (e.g. `docs/M8_EDITOR_PLAN.md`). These explain the system, not whether a milestone is complete.
+- The original M1 file persistence and sample-page vertical slice were completed in 2026 and are **not** the next coding task; see [history](docs/logs/2026-10-12-foundations.md).
 
 ## Supported viewport and visual QA
 - **Content Studio is desktop-only.** Focus on desktop interaction and visual quality; do not implement or test mobile editor variants unless explicitly requested.
 - The **public website deliberately uses a nonadaptive print-style layout** on mobile: fixed Card grid divisions and child areas, proportional scaling in page-width units, no breakpoint reflow. Users can zoom/pan like a presentation. Desktop-only still applies to the authoring app.
-- For remote UI reviews, run desktop browser tests and share a compact set of screenshots and findings **directly in the chat**. No screenshot archives in GitHub and no recordings by default.
+- For remote UI reviews, run desktop browser tests at the agreed viewports and report concrete DOM/interaction checks **without screenshots for now** (user request 2026-10-15). No screenshot archives or recordings by default.
 - Baseline desktop viewports: 1600×1000, plus 1280×800 when relevant.
 
-## Pull request and merge standards
-- Develop each substantial change on a focused branch. Keep `main` stable.
-- Before merging: inspect the actual diff, run tests and production build, verify major interactions, check for secrets and unsafe filesystem/network changes, and document important limitations.
-- Use GitHub Actions CI as the repeatable baseline; do not label absent or pending checks as passing.
-- Favor squash merges for cohesive changes and link related issues. Merge only after findings affecting correctness/security/data loss are resolved.
-- Where possible, provide honest screenshots of the browser-tested result directly in the conversation. Avoid overclaiming that tests fully cover the interface.
+## V1 staging completion / V2 execution decision (2026-10-15)
+
+The user has explicitly approved **merging V1 now as a software and unindexed-staging release**, then creating **one V2 development branch** for M12–M17. This supersedes the older condition tying the V1 GitHub squash merge to real portfolio copy, booking/contact, third-party hosting, manual screen-reader/browser QA and external production launch. Those matters are **deferred until after V2**. Their *public production* gate remains unchanged: no fictional credentials, rights/credits, invented booking URL, removal of `noindex` or external-host deployment.
+
+The one V1 squash merge is allowed **after verifying green exact-head CI and confirming `main` builds a noindex-only GitHub Pages staging site**. Preserve the historical V1 branch. After verifying the merge, create one rolling V2 branch from the resulting `main` commit. Keep screenshot capture disabled. Treat the post-V1 architecture in `docs/POST_V1_ARCHITECTURE.md` as the design spec and `docs/IMPLEMENTATION_PLAN.md` as the one living roadmap.
+
+## Git/branch lifecycle — required (updated 2026-10-15)
+
+1. **One development branch for the entire V1 roadmap (M8–M11).** Continue on `feature/m8-advanced-editor` with draft [PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23); it is now the *rolling V1 branch*, despite its historical name. Keep `main` stable. Each M8–M11 substep is committed here. Do not create a new branch for M9, M10 or M11.
+2. **Substantial autonomous development cycles are allowed.** Each triggered run should take at least one meaningful roadmap substep when feasible and may complete multiple substeps or a larger coherent slice if complexity, tests and available execution time permit. The agent chooses scope per run. Never split work into trivial commits solely to match an hourly trigger. Do not claim progress for documentation-only updates unless legitimately blocked.
+3. Before edits, fetch current remote branch, roadmap, specialist docs, code and relevant CI. Work only on agreed roadmap tasks. Inspect diffs, validate/build and run available browser/CI checks. Maintain dated logs and next actions. On failure, record what failed, preserve a recoverable state and prioritise remediation in the next run.
+4. **Internal milestone completion does not mean merge.** Once the M8 technical acceptance criteria pass, record it and proceed to M9 on the *same branch*; likewise M9 → M10 → M11. No per-milestone user review is required unless decisions/approved content or access are missing. Unapproved factual project claims, real credentials, production-domain changes and destructive operations require explicit user input. If blocked, continue other unblocked agreed tasks.
+5. **The user has ALREADY AUTHORISED the ONE V1 squash merge to `main` (2026-10-15), and reaffirmed a SOFTWARE/STAGING-only closeout on 2026-10-15.** When M8–M11 software is verified, all required automated checks are green, the preview stays unindexed and the current PR head is confirmed, **perform the squash merge automatically once** (use merge method `squash` and an expected head SHA). Do not ask the user for V1 merge approval again. This authorization includes the GitHub Pages staging deployment triggered by merging `main`; verify its result. No interim merges, direct pushes to `main` or repeated squash merges. Do not fabricate approved project content or credentials, bypass failing checks, remove launch protections, or force an external production-host deployment when required data or access is missing.
+6. **After the verified V1 squash merge**, create **one new post-V1 development branch** from the latest `main`, covering M12–M17; use it for incremental commits and one PR. The user has authorised carrying the roadmap through to completion, including **one final post-V1 squash merge** if M12–M17 are verifiably complete with passing checks. A successful scheduled run may cross each internal milestone and the approved squash-merge gates; do not stop merely to ask for reapproval. If essential user-controlled content, credentials, live domain decisions or irreversible non-GitHub deployment actions are not available, report the specific blocker and continue other safe work; never claim the stage or release is complete without satisfying its acceptance criteria.
+7. **NEVER delete branches**, even after squash merges, and do not enable GitHub auto-delete. Preserve history and existing head branches unless the user specifically changes this instruction.
+8. Keep [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) as the one living roadmap and update dated [logs](docs/logs/README.md) as changes land. No separate competing roadmap.
+
+### Scheduled development cycle protocol
+
+Each unattended cycle is a **fresh invocation**, not continuous stateful execution. Read current repo status and durable GitHub log first; do not rely on chat history. Select the largest coherent next piece you can safely complete and validate. Target **at least one meaningful milestone substep** if feasible; do more when appropriate. Never guess that GitHub access, CI or browser automation are available until actually verified during the run.
+
+End each cycle with a concise user report containing the branch, milestone/substeps completed, commit/PR links, actual test/CI evidence (distinguish passing from pending), blockers and next step. Work autonomously only within the approved scope. If a dependent service is inaccessible or essential input is missing, report precisely and do not pretend to have completed the task. **A single squash merge is allowed at each fully verified phase-end as already authorised.** An approved squash merge may trigger GitHub Pages staging; do not publish external production content without the required actual credentials and approved material. Once M17 and its final merge are complete, record final completion, stop coding and disable the recurring automation if supported; otherwise future invocations must detect the terminal status and perform no work.
+
 
 ## M7 — confirmed print/presentation Card system
 - Cards are equal-division grids with explicit integer rows/columns. Their immediate children, Cards or atomic Objects, have `{x1,y1,x2,y2}` grid-line areas (1-indexed start inclusive/end exclusive).
 - Page, nav, sections and footer are semantic Cards; nested Cards restart their own grids. No automatic rearrangement or responsive breakpoint layouts.
 - `1u = page width / 100` (`1cqw`); text, padding, gap, radius and sizing derive from it, not pixel floors/clamps. On narrow screens layout scales down instead of changing columns.
 - Section Cards and nav/footer provide a `constrainHeight` toggle with height = Card width × `heightFactor`, else content-height rows.
-- Strict grayscale background palette including `transparent`; a site-level Card-border toggle and per-Card optional subtle borders. Gaps and padding limited to none/compact/regular/generous; overflow clipped with invisible scrollbars.
+- Strict grayscale background palette including `transparent`; a site-level Card-outline toggle and per-Card optional subtle outlines. Positive Card gap/padding use the shared master values with 1×, 2× and 4× multipliers. Items clip overflow by default; optional internal scrolling hides scrollbars but must not trap document scrolling.
 - Don't silently reintroduce responsive card layouts, saturated colour tokens, arbitrary line dividers or fixed-size child positioning.
 
 ## M7 refinement — master Card spacing

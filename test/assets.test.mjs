@@ -21,6 +21,7 @@ test('real image upload, metadata edits and published output survive reload', {t
   await cp(path.join(root,'content','site.json'),path.join(storage,'content','site.json'));
   await mkdir(path.join(storage,'assets','demo'),{recursive:true});
   await cp(path.join(root,'assets','demo'),path.join(storage,'assets','demo'),{recursive:true});
+  await cp(path.join(root,'assets','placeholder'),path.join(storage,'assets','placeholder'),{recursive:true});
   const server=spawn(process.execPath,['src/server.mjs'],{cwd:root,env:{...process.env,PORT:String(port),TA_DATA_ROOT:storage},stdio:'ignore'});
   try{
     await waitFor(url,server);
@@ -37,13 +38,16 @@ test('real image upload, metadata edits and published output survive reload', {t
       const response=await fetch(`${url}/api/assets?filename=${encodeURIComponent(name)}`,{method:'POST',headers:{'Content-Type':type},body});
       assert.equal(response.status,status,`Expected ${name} rejection`);
     }
-    let current=await(await fetch(url+'/api/data')).json();
+    let latest=await fetch(url+'/api/data');
+    let revision=latest.headers.get('etag');
+    let current=await latest.json();
     assert.equal(current.assets.length,start.assets.length,'Invalid uploads must not alter metadata');
     assert.deepEqual(await readdir(path.join(storage,'assets','uploads')).catch(()=>[]),[]);
     const rejectedOrigin=await fetch(`${url}/api/assets?filename=valid.png`,{method:'POST',headers:{'Content-Type':'image/png','Origin':'https://attacker.example'},body:png});
     assert.equal(rejectedOrigin.status,403);
-    const uploaded=await fetch(`${url}/api/assets?filename=Archive%20Photo.png`,{method:'POST',headers:{'Content-Type':'image/png'},body:png});
+    const uploaded=await fetch(`${url}/api/assets?filename=Archive%20Photo.png`,{method:'POST',headers:{'Content-Type':'image/png','If-Match':revision},body:png});
     const result=await uploaded.json();
+    revision=uploaded.headers.get('etag');
     assert.equal(uploaded.status,201,JSON.stringify(result));
     assert.equal(result.ok,true);
     const asset=result.asset;
@@ -60,12 +64,14 @@ test('real image upload, metadata edits and published output survive reload', {t
     assert.deepEqual(Buffer.from(await media.arrayBuffer()),png);
     assert.equal((await stat(path.join(storage,asset.src))).size,png.length);
     assert.equal((await fetch(url+'/assets/uploads/../../content/site.json')).status,404);
-    current=await(await fetch(url+'/api/data')).json();
+    latest=await fetch(url+'/api/data');
+    revision=latest.headers.get('etag');
+    current=await latest.json();
     current.assets.find(a=>a.id===asset.id).alt='Minimal architectural test image';
     current.assets.find(a=>a.id===asset.id).credit='TA Test';
     const record=current.collections.find(c=>c.id==='projects').records.find(r=>r.slug==='balkan-house');
     record.cover=asset.id;
-    const updated=await fetch(url+'/api/data',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(current)});
+    const updated=await fetch(url+'/api/data',{method:'PUT',headers:{'Content-Type':'application/json','If-Match':revision},body:JSON.stringify(current)});
     assert.equal(updated.status,200);
     const reload=JSON.parse(await readFile(path.join(storage,'content','site.json'),'utf8'));
     validate(reload);

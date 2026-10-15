@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { readFile, writeFile, rename, unlink, mkdir } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { validate } from './model.mjs';
@@ -34,8 +34,16 @@ function cleanFilename(value){
   return name.slice(0,160);
 }
 
-function respond(res, status, content, type='application/json; charset=utf-8') {
-  res.writeHead(status, {'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+function revision(content) {
+  return '"'+createHash('sha256').update(content).digest('hex')+'"';
+}
+function conflictStatus(requestTag,current) {
+  if (!requestTag) return {status:428,error:'Reload to obtain the current file revision before saving.'};
+  if (requestTag!==revision(current)) return {status:409,error:'JSON changed in another tab or process. Export unsaved JSON before reloading and reconciling.'};
+  return null;
+}
+function respond(res, status, content, type='application/json; charset=utf-8', extra={}) {
+  res.writeHead(status, {'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...extra});
   res.end(content);
 }
 async function readBody(req) {
@@ -50,8 +58,10 @@ async function readBody(req) {
 }
 async function atomicSave(payload) {
   const temporary=`${contentFile}.${randomUUID()}.tmp`;
-  try { await writeFile(temporary,JSON.stringify(payload,null,2)+'\n',{flag:'wx'}); await rename(temporary,contentFile); }
+  const content=JSON.stringify(payload,null,2)+'\n';
+  try { await writeFile(temporary,content,{flag:'wx'}); await rename(temporary,contentFile); }
   finally { await unlink(temporary).catch(()=>{}); }
+  return revision(content);
 }
 const server = http.createServer(async (req,res)=>{
   const origin=req.headers.origin;
@@ -66,9 +76,13 @@ const server = http.createServer(async (req,res)=>{
     // Shared styling for the public site and the editor preview, not arbitrary file serving.
     if(req.method==='GET' && pathname==='/src/public.css')
       return respond(res,200,await readFile(path.join(root,'src','public.css')),'text/css; charset=utf-8');
-    // Fixed, allowlisted module: pure canvas grid editor math; no arbitrary file serving.
-    if(req.method==='GET' && pathname==='/src/grid-editor.mjs')
-      return respond(res,200,await readFile(path.join(root,'src','grid-editor.mjs')),'text/javascript; charset=utf-8');
+    // Explicit helper allowlist for Studio-only tree editing logic.
+    if(req.method==='GET' && pathname==='/src/editor-history.mjs')
+      return respond(res,200,await readFile(path.join(root,'src','editor-history.mjs')),'text/javascript; charset=utf-8');
+    if(req.method==='GET' && pathname==='/src/tree-editor.mjs')
+      return respond(res,200,await readFile(path.join(root,'src','tree-editor.mjs')),'text/javascript; charset=utf-8');
+    if(req.method==='GET' && pathname==='/src/model.mjs')
+      return respond(res,200,await readFile(path.join(root,'src','model.mjs')),'text/javascript; charset=utf-8');
     // Allow the editor to import the *same* ESM renderer that the static build uses.
     if(req.method==='GET' && pathname==='/src/render.mjs')
       return respond(res,200,await readFile(path.join(root,'src','render.mjs')),'text/javascript; charset=utf-8');
@@ -78,49 +92,75 @@ const server = http.createServer(async (req,res)=>{
       try {return respond(res,200,await readFile(path.join(uploadsDir,name)),{png:'image/png',jpg:'image/jpeg',webp:'image/webp',gif:'image/gif'}[name.split('.').pop()]);}
       catch(err){if(err.code==='ENOENT')return respond(res,404,JSON.stringify({error:'Not found'}));throw err;}
     }
-    // Shared asset path, strictly allow-listed to known demo SVGs (no file traversal).
-    if(req.method==='GET' && /^\/assets\/demo\/[a-z0-9-]+\.svg$/.test(pathname)) {
+    // Checked-in, inert SVGs are served from a narrow path allowlist. User uploads
+    // stay raster-only to avoid executing untrusted SVG content.
+    if(req.method==='GET' && /^\/assets\/(?:demo|placeholder)\/[a-z0-9-]+\.svg$/.test(pathname)) {
       const name=path.posix.basename(pathname);
-      const file=path.join(root,'assets','demo',name);
+      const group=pathname.startsWith('/assets/placeholder/')?'placeholder':'demo';
+      const file=path.join(root,'assets',group,name);
       try{return respond(res,200,await readFile(file),'image/svg+xml; charset=utf-8');}
       catch(err){if(err.code==='ENOENT')return respond(res,404,JSON.stringify({error:'Not found'}));throw err;}
     }
     if (pathname==='/api/data' && req.method==='GET') {
       const content=await readFile(contentFile,'utf8');
       validate(JSON.parse(content));
-      return respond(res,200,content);
+      return respond(res,200,content,undefined,{'ETag':revision(content)});
     }
     if(pathname==='/api/assets' && req.method==='POST') {
       const mediaType=String(req.headers['content-type']||'').split(';')[0].toLowerCase();
       const ext=allowedImages.get(mediaType);
       if(!ext)return respond(res,415,JSON.stringify({error:'Use PNG, JPEG, WebP or GIF images (SVG is not supported for upload)'}));
-      const filename=cleanFilename(new URL(req.url,`http://${host}:${port}`).searchParams.get('filename'));
+      const params=new URL(req.url,`http://${host}:${port}`).searchParams;
+      const filename=cleanFilename(params.get('filename'));
+      const replaceId=params.get('replaceId');
+      if(replaceId!==null&&!/^[a-zA-Z0-9_-]{1,120}$/.test(replaceId))
+        return respond(res,400,JSON.stringify({error:'Unsafe asset replacement ID'}));
       if(!filename || /[\/\\\x00-\x1f]/.test(filename) || filename.includes('..'))return respond(res,400,JSON.stringify({error:'Unsafe or missing file name'}));
       const suffix=path.extname(filename).toLowerCase();
       if(!(ext==='jpg'?['.jpg','.jpeg'].includes(suffix):suffix==='.'+ext))return respond(res,415,JSON.stringify({error:'File extension does not match image type'}));
       const bytes=await readBinary(req,maxUploadBytes);
       if(fileType(bytes)!==mediaType)return respond(res,415,JSON.stringify({error:'Image contents do not match its declared type'}));
-      const newAsset=await mutate(async()=>{
-        const data=validate(JSON.parse(await readFile(contentFile,'utf8')));
+      const result=await mutate(async()=>{
+        const content=await readFile(contentFile,'utf8');
+        const conflict=conflictStatus(req.headers['if-match'],content);
+        if(conflict){const err=new Error(conflict.error);err.status=conflict.status;throw err;}
+        const data=validate(JSON.parse(content));
         const key=randomUUID().replaceAll('-','');
         const dest=path.join(uploadsDir,`${key}.${ext}`);
-        const asset={id:`asset_${key}`,name:filename.replace(/\.[^.]+$/,'').slice(0,120),src:`/assets/uploads/${key}.${ext}`,alt:'',caption:'',credit:'',tags:[],properties:{filename,mime:mediaType,bytes:bytes.length}};
-        const next={...data,assets:[...data.assets,asset]};
+        const old=replaceId===null?null:data.assets.find(a=>a.id===replaceId);
+        if(replaceId!==null&&!old){const err=new Error('Asset to replace was not found');err.status=404;throw err;}
+        const asset=old?{
+          ...old,
+          src:`/assets/uploads/${key}.${ext}`,
+          alt:old.placeholder?'':old.alt,
+          caption:old.placeholder?'':old.caption,
+          credit:old.placeholder?'':old.credit,
+          tags:old.placeholder?(old.tags||[]).filter(tag=>tag!=='Placeholder'):old.tags,
+          placeholder:false,
+          properties:{...(old.properties||{}),filename,mime:mediaType,bytes:bytes.length}
+        }:{id:`asset_${key}`,name:filename.replace(/\.[^.]+$/,'').slice(0,120),src:`/assets/uploads/${key}.${ext}`,alt:'',caption:'',credit:'',tags:[],properties:{filename,mime:mediaType,bytes:bytes.length}};
+        const next={...data,assets:old?data.assets.map(a=>a.id===old.id?asset:a):[...data.assets,asset]};
         validate(next);
         await mkdir(uploadsDir,{recursive:true});
-        try {await writeFile(dest,bytes,{flag:'wx'});await atomicSave(next);}
+        let nextRevision;
+        try {await writeFile(dest,bytes,{flag:'wx'});nextRevision=await atomicSave(next);}
         catch(error){await unlink(dest).catch(()=>{});throw error;}
-        return asset;
+        return {asset,etag:nextRevision};
       });
-      return respond(res,201,JSON.stringify({ok:true,asset:newAsset}));
+      return respond(res,replaceId===null?201:200,JSON.stringify({ok:true,asset:result.asset}),undefined,{'ETag':result.etag});
     }
     if (pathname==='/api/data' && req.method==='PUT') {
       if (!String(req.headers['content-type']||'').startsWith('application/json'))
         return respond(res,415,JSON.stringify({error:'Content-Type must be application/json'}));
       const payload=JSON.parse(await readBody(req));
       validate(payload);
-      await mutate(()=>atomicSave(payload));
-      return respond(res,200,JSON.stringify({ok:true}));
+      const newRevision=await mutate(async()=>{
+        const content=await readFile(contentFile,'utf8');
+        const conflict=conflictStatus(req.headers['if-match'],content);
+        if(conflict){const err=new Error(conflict.error);err.status=conflict.status;throw err;}
+        return atomicSave(payload);
+      });
+      return respond(res,200,JSON.stringify({ok:true}),undefined,{'ETag':newRevision});
     }
     if (req.method!=='GET' && req.method!=='HEAD')
       return respond(res,405,JSON.stringify({error:'Method not allowed'}));

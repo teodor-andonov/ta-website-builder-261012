@@ -65,6 +65,7 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 
 
 :is(.published-site,.editor-shell) .b-text{overflow-wrap:anywhere;white-space:pre-line}
+:is(.published-site,.editor-shell) :is(h1,h2,h3).b-text{margin:0}
 :is(.published-site,.editor-shell) .b-text.eyebrow{
  font:500 0.68cqw/1.55 var(--ta-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ta-grey-600);
 }
@@ -155,6 +156,8 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
  font:.9cqw var(--ta-mono);padding:1cqw;
 }
 :is(.published-site,.editor-shell) .skip-link:focus{top:1cqw}
+:is(.published-site,.editor-shell) #main-content:focus{outline:none}
+:is(.published-site,.editor-shell) :is(a,button,input,select,textarea):focus-visible{outline:2px solid currentColor;outline-offset:2px}
 :is(.published-site,.editor-shell) :is(a,.card-record):focus-visible{outline:1px solid #333;outline-offset:.3cqw}
 
 /* Source-driven results render as Cards with direct Items, not anonymous rows. */

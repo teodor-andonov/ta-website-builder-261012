@@ -45,6 +45,10 @@
       },
       "pad": 1,
       "gap": 1
+    },
+    "contact": {
+      "email": "",
+      "bookingUrl": ""
     }
   },
   "collections": [
@@ -67,6 +71,12 @@
           "options": ""
         },
         {
+          "key": "projectCode",
+          "label": "Project code (stable)",
+          "type": "text",
+          "options": ""
+        },
+        {
           "key": "year",
           "label": "Year",
           "type": "number",
@@ -82,7 +92,7 @@
           "key": "status",
           "label": "Status",
           "type": "select",
-          "options": "In progress,Complete,Research,Concept"
+          "options": "Draft,In progress,Complete,Research,Concept"
         },
         {
           "key": "summary",
@@ -130,7 +140,10 @@
             "Architecture",
             "Systems"
           ],
-          "body": "## A repeatable housing system\n\nA design investigation into adaptable residential typologies, parametric rules and efficient construction."
+          "body": "## A repeatable housing system\n\nA design investigation into adaptable residential typologies, parametric rules and efficient construction.",
+          "projectCode": "",
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "p-facade",
@@ -146,7 +159,10 @@
             "Façades",
             "Research"
           ],
-          "body": "## The envelope as an active system\n\nAn ongoing study of performative architectural skins."
+          "body": "## The envelope as an active system\n\nAn ongoing study of performative architectural skins.",
+          "projectCode": "",
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "p-typology",
@@ -162,7 +178,10 @@
             "Computation",
             "Research"
           ],
-          "body": "A library of repeatable geometric ideas."
+          "body": "A library of repeatable geometric ideas.",
+          "projectCode": "",
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "p-fields",
@@ -178,7 +197,10 @@
             "Graphics",
             "Research"
           ],
-          "body": "From discrete modules to a continuous visual field."
+          "body": "From discrete modules to a continuous visual field.",
+          "projectCode": "",
+          "placeholder": true,
+          "approvedForPublication": false
         }
       ]
     },
@@ -270,7 +292,9 @@
             "Computation",
             "Process"
           ],
-          "featured": true
+          "featured": true,
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "post-two",
@@ -286,7 +310,9 @@
             "Studio",
             "News"
           ],
-          "featured": true
+          "featured": true,
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "post-three",
@@ -302,7 +328,9 @@
             "Research",
             "Computation"
           ],
-          "featured": true
+          "featured": true,
+          "placeholder": true,
+          "approvedForPublication": false
         },
         {
           "id": "post-four",
@@ -318,7 +346,9 @@
             "Visual",
             "Brand"
           ],
-          "featured": false
+          "featured": false,
+          "placeholder": true,
+          "approvedForPublication": false
         }
       ]
     }
@@ -563,7 +593,8 @@
                 "y1": 1,
                 "x2": 2,
                 "y2": 2
-              }
+              },
+              "headingLevel": 1
             }
           ]
         },
@@ -936,7 +967,7 @@
             {
               "id": "b_kjufyt",
               "type": "text",
-              "text": "HAVE A PROJECT IN MIND?",
+              "text": "HAVE A BRIEF OR QUESTION?",
               "style": "eyebrow",
               "area": {
                 "x1": 1,
@@ -948,7 +979,7 @@
             {
               "id": "b_g0vd1t",
               "type": "text",
-              "text": "Let’s make something useful.",
+              "text": "Discuss your project, idea or tool.",
               "style": "heading",
               "area": {
                 "x1": 2,
@@ -960,8 +991,8 @@
             {
               "id": "b_1f0qjq",
               "type": "button",
-              "text": "Start a conversation ↗",
-              "href": "mailto:hello@example.com",
+              "text": "Book a 15-minute introduction ↗",
+              "href": "{{site.contact.bookingUrl}}",
               "area": {
                 "x1": 1,
                 "y1": 2,
@@ -1069,7 +1100,8 @@
                 "y1": 1,
                 "x2": 2,
                 "y2": 5
-              }
+              },
+              "loading": "lazy"
             },
             {
               "id": "b_46i46m",
@@ -1432,7 +1464,7 @@
             {
               "id": "m6-methods-heading",
               "type": "text",
-              "text": "Across scales and disciplines.",
+              "text": "Architecture, computation, facades and research.",
               "style": "heading",
               "area": {
                 "x1": 5,
@@ -1472,7 +1504,7 @@
                 {
                   "id": "m6-architecture-copy",
                   "type": "text",
-                  "text": "Architectural ideas developed through spatial logic, materials and making.",
+                  "text": "Architecture from early spatial ideas to systems, material choices and buildable detail.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1529,7 +1561,7 @@
                 {
                   "id": "m6-computation-copy",
                   "type": "text",
-                  "text": "Computational approaches that make complexity legible, reusable and adaptable.",
+                  "text": "Parametric design, generative tools and custom workflows that help teams explore and deliver.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1562,7 +1594,7 @@
                 {
                   "id": "m6-research-num",
                   "type": "text",
-                  "text": "03  /  RESEARCH",
+                  "text": "03  /  FACADES & RESEARCH",
                   "style": "eyebrow",
                   "area": {
                     "x1": 1,
@@ -1574,7 +1606,7 @@
                 {
                   "id": "m6-research-title",
                   "type": "text",
-                  "text": "Questions & experiments.",
+                  "text": "Envelopes & experiments.",
                   "style": "heading",
                   "area": {
                     "x1": 1,
@@ -1586,7 +1618,7 @@
                 {
                   "id": "m6-research-copy",
                   "type": "text",
-                  "text": "Prototyping across façades, digital fabrication, geometry and visual systems.",
+                  "text": "Façade strategies, geometry and material studies, tested through design and computation.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1634,7 +1666,7 @@
                 {
                   "id": "m6-approach-label",
                   "type": "text",
-                  "text": "03  /  WORKING TOGETHER",
+                  "text": "03  /  HOW WE WORK",
                   "style": "eyebrow",
                   "area": {
                     "x1": 1,
@@ -1646,7 +1678,7 @@
                 {
                   "id": "m6-approach-heading",
                   "type": "text",
-                  "text": "A useful process starts with the right arrangement.",
+                  "text": "Choose the right way to work together.",
                   "style": "heading",
                   "area": {
                     "x1": 1,
@@ -1658,7 +1690,7 @@
                 {
                   "id": "m6-approach-note",
                   "type": "text",
-                  "text": "Three engagement formats we're developing. Specific deliverables and terms are defined around each brief.",
+                  "text": "Three possible arrangements. Scope, timing and fees are confirmed before any engagement.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1703,7 +1735,7 @@
                 {
                   "id": "m6-fixed-body",
                   "type": "text",
-                  "text": "Defined scope. Clear deliverables.",
+                  "text": "A defined brief with agreed deliverables, inputs, timeframe and fixed fee.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1748,7 +1780,7 @@
                 {
                   "id": "m6-subscription-body",
                   "type": "text",
-                  "text": "Ongoing design and computation support.",
+                  "text": "Reserved design and computation capacity for iterative or ongoing work.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1793,7 +1825,7 @@
                 {
                   "id": "m6-custom-body",
                   "type": "text",
-                  "text": "A tailored arrangement for a unique challenge.",
+                  "text": "A project-specific brief and contract for architecture, facades or custom systems.",
                   "style": "body",
                   "area": {
                     "x1": 1,
@@ -1992,8 +2024,24 @@
           "border": false,
           "constrainHeight": true,
           "heightFactor": 0.28
+        },
+        {
+          "id": "home-contact-cta",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "x1",
+          "padding": "x1",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [],
+          "reference": "contact-cta"
         }
-      ]
+      ],
+      "placeholder": true,
+      "approvedForPublication": false
     },
     {
       "id": "work",
@@ -2080,7 +2128,9 @@
             }
           ]
         }
-      ]
+      ],
+      "placeholder": true,
+      "approvedForPublication": false
     },
     {
       "id": "journal",
@@ -2167,7 +2217,9 @@
             }
           ]
         }
-      ]
+      ],
+      "placeholder": true,
+      "approvedForPublication": false
     },
     {
       "id": "studio",
@@ -2307,64 +2359,76 @@
   "assets": [
     {
       "id": "field",
-      "name": "Diffuse field / 01",
-      "src": "demo:field",
-      "alt": "Abstract monochrome modular field",
-      "caption": "Diffusion study / 01",
-      "credit": "TA Design",
+      "name": "Neutral field",
+      "src": "/assets/placeholder/field.svg",
+      "alt": "Neutral light-grey placeholder illustration; not a project photograph",
+      "caption": "Placeholder media — replace with project artwork in Studio",
+      "credit": "TA / generated placeholder",
       "tags": [
         "Brand",
-        "Abstract"
+        "Abstract",
+        "Placeholder"
       ],
       "properties": {
         "family": "B / Soft field",
-        "licence": "Original"
-      }
+        "licence": "Original",
+        "projectCode": ""
+      },
+      "placeholder": true
     },
     {
       "id": "house",
-      "name": "Housing study / 01",
-      "src": "demo:house",
-      "alt": "Modular architectural study",
-      "caption": "Balkan House system study",
-      "credit": "TA Design",
+      "name": "Housing study placeholder",
+      "src": "/assets/placeholder/house.svg",
+      "alt": "Neutral light-grey placeholder illustration; not a project photograph",
+      "caption": "Placeholder media — replace with project artwork in Studio",
+      "credit": "TA / generated placeholder",
       "tags": [
         "Architecture",
-        "Project"
+        "Project",
+        "Placeholder"
       ],
       "properties": {
-        "project": "Balkan House"
-      }
+        "project": "Balkan House",
+        "projectCode": ""
+      },
+      "placeholder": true
     },
     {
       "id": "facade",
-      "name": "Facade pattern / 01",
-      "src": "demo:facade",
-      "alt": "Rhythmic façade fins",
-      "caption": "Façade performance study",
-      "credit": "TA Design",
+      "name": "Facade study placeholder",
+      "src": "/assets/placeholder/facade.svg",
+      "alt": "Neutral light-grey placeholder illustration; not a project photograph",
+      "caption": "Placeholder media — replace with project artwork in Studio",
+      "credit": "TA / generated placeholder",
       "tags": [
         "Research",
-        "Geometry"
+        "Geometry",
+        "Placeholder"
       ],
       "properties": {
-        "stage": "Concept"
-      }
+        "stage": "Concept",
+        "projectCode": ""
+      },
+      "placeholder": true
     },
     {
       "id": "glyph",
-      "name": "Glyph system / 01",
-      "src": "demo:glyph",
-      "alt": "Rounded geometric modules",
-      "caption": "TA glyph exploration",
-      "credit": "TA Design",
+      "name": "Graphic study placeholder",
+      "src": "/assets/placeholder/glyph.svg",
+      "alt": "Neutral light-grey placeholder illustration; not a project photograph",
+      "caption": "Placeholder media — replace with project artwork in Studio",
+      "credit": "TA / generated placeholder",
       "tags": [
         "Brand",
-        "Vector"
+        "Vector",
+        "Placeholder"
       ],
       "properties": {
-        "family": "A / Glyphs"
-      }
+        "family": "A / Glyphs",
+        "projectCode": ""
+      },
+      "placeholder": true
     }
   ]
 }

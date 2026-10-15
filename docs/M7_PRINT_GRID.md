@@ -3,11 +3,11 @@
 Confirmed intent: one presentation/print-like fixed composition rendered consistently across page widths, **not** a conventional responsive layout.
 
 ## Model
-- **Card** = equal CSS Grid with integer `columns` and `rows`. Cards can contain Cards and single-payload Objects.
+- **Card** = equal CSS Grid with integer `columns` and `rows`. Cards can contain other Cards and single-payload **Items**.
 - Each direct child occupies a zero-ambiguity 1-indexed **grid rectangle** `area:{x1,y1,x2,y2}`. Starts are inclusive, ends exclusive. A 2×2 Card child occupying the left column is `{x1:1,y1:1,x2:2,y2:3}`.
 - The Page is a master Card with stacked section Cards. Header/nav and footer are semantic Grid Cards and keep their website navigation roles.
 - **Height constraint:** a Card with `constrainHeight:true` sets `aspect-ratio:1 / heightFactor`, i.e. height = its own width × heightFactor. With `false`, grid rows use content heights. Intended especially for stacked Page section Cards.
-- No breakpoints or automatic number-of-columns changes. Children retain their cells at every screen size; overflow within a grid item is scrollable but scrollbars are visually hidden.
+- No breakpoints or automatic number-of-columns changes. Children retain their cells at every screen size; **Item overflow clips by default** and internal scrolling is opt-in with visually hidden scrollbars and document scroll chaining.
 - **Page unit** 1u = page width / 100 via 1cqw. All layout spacing, typographic sizes, padding, radii and heights are based on page width.
 - Card backgrounds: `transparent,white,grey-100,grey-200,grey-300,grey-600,black`. No saturated colors.
 - **Master spacing:** `site.design.pad` and `site.design.gap` are independent numerical multiples of `u`, default `1u` each. Every Card must set `padding` and `gap` to `x1`, `x2`, or `x4` (the multiplier of the corresponding master). Even 1-object Cards and transparent grouping Cards have at least `1×` padding. No `padding:none` Card.

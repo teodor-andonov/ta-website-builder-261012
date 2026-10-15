@@ -5,6 +5,96 @@ import { validate } from '../src/model.mjs';
 const fixture=JSON.parse(await readFile(new URL('../content/site.json', import.meta.url),'utf8'));
 const copy = () => structuredClone(fixture);
 test('initial content is valid',()=>assert.equal(validate(copy()).version,2));
+test('M8 rejects duplicate IDs across a Card and its descendant within one page',()=>{
+  const d=copy();
+  const parent=d.pages[0].blocks.find(n=>n.type==='card'&&n.children?.length);
+  assert.ok(parent);
+  parent.children[0].id=parent.id;
+  assert.throws(()=>validate(d),/Duplicate node ID in home: /);
+});
+test('M8 rejects duplicate sibling IDs in one authoring scope',()=>{
+  const d=copy();
+  const parent=d.pages[0].blocks.find(n=>n.type==='card'&&n.children?.length>1);
+  assert.ok(parent);
+  parent.children[1].id=parent.children[0].id;
+  assert.throws(()=>validate(d),/Duplicate node ID in home: /);
+});
+test('M8 rejects duplicate node IDs in a component independently of pages',()=>{
+  const d=copy();
+  const parent=d.components.find(x=>x.blocks.some(n=>n.type==='card'&&n.children?.length));
+  const card=parent.blocks.find(n=>n.type==='card'&&n.children?.length);
+  card.children[0].id=card.id;
+  assert.throws(()=>validate(d),new RegExp('Duplicate node ID in '+parent.id+': '));
+});
+test('M8 allows node IDs reused in independent page scopes',()=>{
+  const d=copy();
+  d.pages[1].blocks[0].id=d.pages[0].blocks[0].id;
+  assert.doesNotThrow(()=>validate(d));
+});
+test('M8 rejects direct self-reference in reusable components',()=>{
+  const d=copy(),component=d.components[0];
+  component.blocks[0].children=[];component.blocks[0].reference=component.id;
+  assert.throws(()=>validate(d),/Circular component reference: contact-cta -> contact-cta/);
+});
+test('M8 rejects indirect cycles across two reusable components',()=>{
+  const d=copy(),[first,second]=d.components;
+  first.blocks[0].children=[];second.blocks[0].children=[];
+  first.blocks[0].reference=second.id;
+  second.blocks[0].reference=first.id;
+  assert.throws(()=>validate(d),/Circular component reference:/);
+});
+test('M8 rejects a collection Card that recursively instantiates its own component',()=>{
+  const d=copy(),component=d.components[0];
+  component.blocks[0].children=[];
+  component.blocks[0].source={
+    collection:d.collections[0].id,
+    template:component.id,
+    layout:'grid',sort:'newest',filter:'featured',count:4
+  };
+  assert.throws(()=>validate(d),/Circular component reference:/);
+});
+// Safety and large-composition regression tests: no silent content loss.
+const simpleCard=(id,children=[])=>({
+ id,type:'card',columns:1,rows:1,background:'transparent',padding:'x1',gap:'x1',
+ border:false,constrainHeight:false,heightFactor:0.5,children
+});
+const cell={x1:1,y1:1,x2:2,y2:2};
+const nestedDocument=depth=>{
+ let node={id:'deep-leaf',type:'text',text:'VISIBLE_DEEP_CONTENT',area:{...cell}};
+ for(let i=depth-1;i>=0;i--)node={...simpleCard('deep-card-'+i,[node]),area:{...cell}};
+ delete node.area;
+ return node;
+};
+test('M8 renders twelve nested Card levels, previously silently truncated at ten',()=>{
+  const d=copy();d.pages[0].blocks.push(nestedDocument(12));
+  assert.doesNotThrow(()=>validate(d));
+  const html=renderBlocks([d.pages[0].blocks.at(-1)],null,d);
+  assert.match(html,/VISIBLE_DEEP_CONTENT/);
+});
+test('M8 rejects nesting beyond the validated renderer limit',()=>{
+  const d=copy();d.pages[0].blocks.push(nestedDocument(34));
+  assert.throws(()=>validate(d),/Composition nesting exceeds 32 levels in home/);
+});
+test('M8 rejects unknown Items and hidden child Items',()=>{
+  const d=copy(),item=d.pages[0].blocks[0].children[0].children[0];
+  const oldType=item.type;item.type='mystery';
+  assert.throws(()=>validate(d),/Invalid Item type/);
+  item.type=oldType;
+  item.children=[{id:'hidden-child',type:'text',text:'Invisible',area:{...cell}}];
+  assert.throws(()=>validate(d),/Items cannot contain children/);
+});
+test('M8 rejects hidden authored children under reference and query Cards',()=>{
+  const d=copy(),ref=d.pages.find(p=>p.id==='studio').blocks;
+  const find=(nodes,predicate)=>{for(const node of nodes){if(predicate(node))return node;const found=find(node.children||[],predicate);if(found)return found}return null};
+  const referenced=find(ref,n=>n.type==='card'&&n.reference);
+  assert.ok(referenced);
+  referenced.children.push({id:'hidden-under-component',type:'text',text:'Unrendered',area:{...cell}});
+  assert.throws(()=>validate(d),/Generated or referenced Card cannot contain hidden authored children/);
+  const e=copy(),query=find(e.pages.find(p=>p.id==='home').blocks,n=>n.type==='card'&&n.source);
+  assert.ok(query);
+  query.children.push({id:'hidden-under-query',type:'text',text:'Unrendered',area:{...cell}});
+  assert.throws(()=>validate(e),/Generated or referenced Card cannot contain hidden authored children/);
+});
 test('duplicate slugs rejected',()=>{
   const d=copy();d.collections[1].records[1].slug=d.collections[1].records[0].slug;
   assert.throws(()=>validate(d),/Duplicate posts slug/);
@@ -21,7 +111,7 @@ test('broken template links rejected',()=>{
   const d=copy();d.collections[0].defaultTemplate='nonexistent';
   assert.throws(()=>validate(d),/Missing default template/);
 });
-import { collectPages } from '../src/render.mjs';
+import { collectPages,renderBlocks } from '../src/render.mjs';
 test('builds real project and post routes but not drafts',()=>{
   const pages=collectPages(copy());
   assert.ok(pages.some(x=>x.route==='/posts/designing-with-code/' && x.html.includes('On designing with code')));

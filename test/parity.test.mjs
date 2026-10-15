@@ -79,7 +79,7 @@ test('text payloads, links and image asset paths are escaped or constrained',()=
   assert.ok(output.includes('&lt;script&gt;'));
   assert.ok(!output.includes('<script>'));
   assert.ok(!output.includes('href="javascript:'));
-  assert.match(output,/src="\/assets\/demo\//);
+  assert.match(output,/src="\/assets\/placeholder\/field\.svg"/);
 });
 
 test('component references remain Cards and recursion stops at maximum depth',()=>{

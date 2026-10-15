@@ -7,7 +7,16 @@
     "dev": "node src/server.mjs",
     "test": "node --test test/*.test.mjs",
     "build": "node src/build.mjs",
-    "preview": "node scripts/preview.mjs"
+    "preview": "node scripts/preview.mjs",
+    "audit:content": "node scripts/content-readiness.mjs",
+    "backup:create": "node scripts/site-snapshot.mjs create",
+    "backup:verify": "node scripts/site-snapshot.mjs verify",
+    "backup:restore": "node scripts/site-snapshot.mjs restore",
+    "audit:media": "node scripts/media-budget.mjs",
+    "package:site": "node scripts/package-site.mjs",
+    "release:rehearse": "node scripts/rehearse-release.mjs",
+    "package:verify": "node scripts/verify-site-package.mjs",
+    "v1:staging-check": "node scripts/v1-staging-acceptance.mjs"
   },
   "engines": {
     "node": ">=20"
