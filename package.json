@@ -7,7 +7,8 @@
     "dev": "node src/server.mjs",
     "test": "node --test test/*.test.mjs",
     "build": "node src/build.mjs",
-    "preview": "node scripts/preview.mjs"
+    "preview": "node scripts/preview.mjs",
+    "audit:content": "node scripts/content-readiness.mjs"
   },
   "engines": {
     "node": ">=20"
