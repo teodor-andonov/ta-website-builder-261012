@@ -8,7 +8,10 @@
     "test": "node --test test/*.test.mjs",
     "build": "node src/build.mjs",
     "preview": "node scripts/preview.mjs",
-    "audit:content": "node scripts/content-readiness.mjs"
+    "audit:content": "node scripts/content-readiness.mjs",
+    "backup:create": "node scripts/site-snapshot.mjs create",
+    "backup:verify": "node scripts/site-snapshot.mjs verify",
+    "backup:restore": "node scripts/site-snapshot.mjs restore"
   },
   "engines": {
     "node": ">=20"
