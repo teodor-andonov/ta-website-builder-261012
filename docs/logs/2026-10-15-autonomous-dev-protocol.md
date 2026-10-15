@@ -15,5 +15,6 @@
 
 ## Files and validation
 
-- Updated [AGENTS.md](../../AGENTS.md) and [living implementation plan](../IMPLEMENTATION_PLAN.md) to supersede the earlier per-milestone merge/delete instructions.
-- No code or deployment changes were made. A 24-run hourly automation pilot is being configured separately; its status is owned by the Automations system, not GitHub. At each trigger the task must re-read these rules and actual branch state.
+- Updated [AGENTS.md](../../AGENTS.md), [living implementation plan](../IMPLEMENTATION_PLAN.md), [architecture](../ARCHITECTURE.md) and [M8 editor plan](../M8_EDITOR_PLAN.md) to supersede conflicting per-milestone merge/delete instructions.
+- **Hourly 24-run automation pilot was created and enabled successfully** using the Automation system, with substantial M8–M11 cycle instructions and explicit no-merge/no-delete guards. The Automation system owns the schedule and task status; GitHub records development progress.
+- No code, merge or deployment changes were made. Each triggered run must re-read these rules and actual branch state.
