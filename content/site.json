@@ -92,7 +92,7 @@
           "key": "status",
           "label": "Status",
           "type": "select",
-          "options": "In progress,Complete,Research,Concept"
+          "options": "Draft,In progress,Complete,Research,Concept"
         },
         {
           "key": "summary",
