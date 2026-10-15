@@ -4,12 +4,12 @@
 > Updated: **2026-10-15** · Maintained after each substantive development cycle.
 > Change history goes in [dated implementation logs](logs/README.md), while specialist documents describe *how* the system works.
 >
-> This plan describes the active **rolling V1 development branch** covering M8–M11. The user **pre-authorised the final V1 squash merge on 2026-10-15**, provided the entire M8–M11 acceptance criteria pass. One additional post-V1 squash merge is authorised at the fully verified end of M12–M17. No branch deletion.
+> This plan describes the **rolling V2 development branch** covering M12–M17. V1 software/staging was merged; public production remains deferred. The user **pre-authorised the final V1 squash merge on 2026-10-15**, provided the entire M8–M11 acceptance criteria pass. One additional post-V1 squash merge is authorised at the fully verified end of M12–M17. No branch deletion.
 
 ## Current position
 
-- **Stage:** **V1 software/staging acceptance approved for one squash merge; V2 M12–M17 starts immediately afterwards.** All M8–M11 automated software checks pass. Real content, booking/contact, production host/domain and human QA are explicitly **deferred until after V2** by the user (2026-10-15); they remain blockers only to an **indexed public launch**, not the unindexed V1 staging merge. [V1 closeout](V1_RELEASE_CANDIDATE.md).
-- **V1 branch:** `feature/m8-advanced-editor`, [PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23), to be squash-merged once latest-head CI is checked. **V2:** create exactly one branch from the resulting `main` squash commit; do not delete V1 branch.
+- **Stage:** **M12 — unified page/template system in progress**, on the one rolling V2 branch. V1 software/staging was successfully squash-merged and its unindexed Pages workflow passed. Real content, booking/contact, production host/domain and human QA are explicitly **deferred until after V2** by the user (2026-10-15); they remain blockers only to an **indexed public launch**, not the unindexed V1 staging merge. [V1 closeout](V1_RELEASE_CANDIDATE.md).
+- **V1 merged:** [PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23) → `main` at `7d5b445` (staging deploy green); V1 branch retained. **V2:** `feature/v2-unified-studio`, [rolling draft PR #24](https://github.com/teodor-andonov/ta-website-builder-261012/pull/24), based on that exact `main` merge.
 - **Staging publication:** GitHub Pages on `main` deploys **unindexed staging** with static content only. User expressly authorised the V1 software merge before real launch content/hosting; keep `noindex` and the independent strict production-indexing safeguards.
 - **Local editor:** `npm run dev` → http://127.0.0.1:5173/ ; **local static preview:** `npm run preview` → http://127.0.0.1:4173/.
 - **Public demonstration:** https://teodor-andonov.github.io/ta-website-builder-261012/ — placeholder content, deliberately `noindex`, **not** the production launch.
@@ -27,10 +27,10 @@
 | M5 | GitHub Pages static staging through Actions, repository base path | Complete · [PR #9](https://github.com/teodor-andonov/ta-website-builder-261012/pull/9) | [Design + deployment](logs/2026-10-13-to-14-design-and-deploy.md) |
 | M6 | Soft Precision grayscale identity, initial homepage | Initial pass complete · [PR #11](https://github.com/teodor-andonov/ta-website-builder-261012/pull/11) | [Design + deployment](logs/2026-10-13-to-14-design-and-deploy.md) |
 | M7 | Print-native recursive Cards/Items, grid areas, spacing, outlines, nontrapping scroll | Functional pass complete · [PRs #13–#17](https://github.com/teodor-andonov/ta-website-builder-261012/pull/17) | [Design + deployment](logs/2026-10-13-to-14-design-and-deploy.md) |
-| M8 | Usable structure-first visual editor for Cards/Items | **Technically complete — on rolling V1 draft PR #23, not merged** | [M8 reliability handoff](logs/2026-10-15-m8-recovery-and-m9-start.md) |
+| M8 | Usable structure-first visual editor for Cards/Items | **Complete in merged V1 staging** | [M8 reliability handoff](logs/2026-10-15-m8-recovery-and-m9-start.md) |
 | M9 | TA projects/posts and editor-ready placeholder portfolio, services & How We Work | **Functionally complete with intentional placeholders — pending actual production media/copy review** | [M9 placeholder and asset authoring](logs/2026-10-15-m9-placeholders-and-m10-snapshots.md) |
 | M10 | Production QA, accessibility, metadata/SEO, performance, backups, acceptance | **Automated implementation complete; manual assistive-tech/device and real-media QA deferred to release gate** | [M10 accessibility handoff](logs/2026-10-15-m10-accessibility-m11-package.md) |
-| M11 | Production domain/hosting (Hostinger or equivalent), asset deployment, launch/maintenance | **V1 staging candidate green; actual host/launch, manual acceptance and merge gate pending** | [V1 release review](logs/2026-10-15-v1-release-candidate.md) |
+| M11 | Production domain/hosting (Hostinger or equivalent), asset deployment, launch/maintenance | **V1 staging merged; external public-host/manual acceptance deferred until after V2** | [V1 release review](logs/2026-10-15-v1-release-candidate.md) |
 
 *Milestone numbering evolved: advanced editor moved to M8 after the print-native Card architecture was separated into M7. Historical documents use their original numbering.*
 
@@ -108,7 +108,7 @@ The original [M0–M3 baseline implementation plan](logs/2026-10-12-foundations.
 
 > **Decisions confirmed 2026-10-15.** This extension follows and **does not replace, reorder, or expand the agreed scope of the original M8–M11 roadmap above**. First complete M8 editor acceptance → M9 real TA content → M10 production QA/backups → M11 hosting and V1 launch. Post-V1 work must not block V1. **The TA website is the only required real project; do not build another demo website.**
 >
-> **Full implementation specification:** [Post-V1 architecture and queries](POST_V1_ARCHITECTURE.md). It owns detailed semantics, not milestone status. Planning resolution is recorded in [2026-10-15 design log](logs/2026-10-15-post-v1-planning.md). All steps below are **planned, not implemented**.
+> **Full implementation specification:** [Post-V1 architecture and queries](POST_V1_ARCHITECTURE.md). It owns detailed semantics, not milestone status. Planning resolution is recorded in [2026-10-15 design log](logs/2026-10-15-post-v1-planning.md). M12 implementation has begun on the retained V2 branch; later milestones remain planned.
 
 ### Agreed product model
 
@@ -125,7 +125,7 @@ The original [M0–M3 baseline implementation plan](logs/2026-10-12-foundations.
 
 | Stage | Small delivery slices (proposed) | Acceptance / TA use case | Effort estimate |
 | --- | --- | --- | --- |
-| **M12 — Unified page and template system** | 12.1 validate one-slot contract; 12.2 page/record assembly; 12.3 componentize Nav/Header/Footer; 12.4 isolated preview + regression migration | Home, Work and Studio choose different/shared templates without duplicating navbar/footer or changing published layout unexpectedly | ~2–4 sessions |
+| **M12 — Unified page and template system** | **In progress:** 12.1 validated one-slot Card contract; 12.2 opt-in page assembly in preview/static build; next 12.3 componentized Nav/Header/Footer and 12.4 isolated authoring/migration | Home, Work and Studio share templates without duplicating structural elements; V1 remains stable until migration | ~2–4 sessions |
 | **M13 — Site design system** | 13.1 design tokens/schema; 13.2 named styles + resolver; 13.3 local overrides; 13.4 Studio Design controls and migration | Edit TA typography, palette, rounding and spacing in Studio; appearance preserved unless explicitly changed | ~2–4 sessions |
 | **M14 — Record compositions** | 14.1 validated root Card per record; 14.2 collection default/record template override; 14.3 isolated record composition editor; 14.4 tests on real projects/posts | Two projects share Project Detail template but have completely different editable narratives and media | ~2–4 sessions |
 | **M15 — Generic collections and asset queries** | 15.1 typed field/record editor; 15.2 asset projectCode and tag metadata; 15.3 contextual equality/contains queries and rendering; 15.4 TA media integration test | Project Detail automatically displays assets matching the current project code and tagged highlighted; no relationship manager needed | ~3–5 sessions |
@@ -134,12 +134,11 @@ The original [M0–M3 baseline implementation plan](logs/2026-10-12-foundations.
 
 Effort is in focused development sessions, **not guaranteed calendar days**. M12–M17 share **one retained post-V1 development branch** (created after the verified and already-authorised V1 squash merge), with incremental implementation, tests, screenshots and progress logs across stages. The user has pre-authorised one final squash merge at the verifiably completed end of this phase. No branch deletion. Large or multiple substeps can be completed per development run when coherent.
 
-**Automation policy (2026-10-15):** The earlier 24-run pilot is superseded by a continuing **hourly development automation** that proceeds through the full roadmap while work remains. After verified completion of M17 and the final squash merge, mark the roadmap complete and disable the automation if possible; otherwise later invocations must stop without further changes. Never substitute a time limit for milestone completion.
+**Execution policy (2026-10-15):** manual user prompts; the previous hourly automation remains paused. No background commitments. Commit tested M12–M17 progress to one V2 branch, never delete the source branch, and perform the pre-authorised final squash merge only when the complete V2 software scope and latest CI are verified.
 
 ### Next actions and boundaries
 
-1. **Now:** complete remaining M8 structural usability, visual/keyboard QA and save-recovery verification, record internal acceptance and then proceed directly to M9 on the same V1 branch. Do not merge before whole-V1 user acceptance.
-2. **Then:** execute unchanged original M9, M10 and M11 toward TA website + Content Studio V1 launch, keeping all new commits on the same V1 development branch.
-3. **After fully checked V1 merge:** create a single new post-V1 branch and begin M12; consult [the locked post-V1 specification](POST_V1_ARCHITECTURE.md) at each subsequent milestone. Continue through M17 and perform the already-authorised final squash merge when the phase is complete. Only implementation-level UI field names/serialization choices remain flexible—not the product decisions above.
-4. Do not turn contextual asset queries, formal relationship systems or unified templates into emergency M8 work. The current renderer does **not** yet implement these post-V1 extensions. Formal relationships are explicitly deferred.
-
+1. **Now — M12:** validate slot-based page templates and isolated root compositions without modifying existing V1 site output. Implement shareable Navbar/Header/Footer composition, full page assembly and isolated editing/preview with regression tests on TA's existing routes.
+2. **Then:** M13 named styles and design tokens → M14 record compositions → M15 typed generic collections/assets queries → M16 authoring polish → M17 portable Studio handoff, all on `feature/v2-unified-studio` and [PR #24](https://github.com/teodor-andonov/ta-website-builder-261012/pull/24).
+3. **At verified M17 completion:** one already-authorised V2 squash merge after green exact-head CI, never delete branches. Keep public production indexing, host deployment, real content/booking and manual QA for **after V2**.
+4. **Boundaries:** no new test/demo website, Markdown store, responsive reflow, generic relationship manager or scripting eval. Use the one TA site and source JSON with the same renderer.
