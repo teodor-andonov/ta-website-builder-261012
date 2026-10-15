@@ -123,6 +123,8 @@ export function validate(data) {
       if(b.type==='query'||b.type==='component')fail(`Legacy directive must be a source/reference Card: ${b.id}`);
       if(b.type!=='card'){
         if(!itemTypes.has(b.type))fail(`Invalid Item type on ${b.id}: ${b.type}`);
+        if(b.headingLevel!==undefined&&(b.type!=='text'||![1,2,3].includes(b.headingLevel)))
+          fail(`Invalid semantic heading level on ${b.id}`);
         if(b.children!==undefined)fail(`Items cannot contain children: ${b.id}`);
         continue;
       }
