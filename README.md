@@ -2,7 +2,7 @@
 
 Local, file-first JSON website builder and Content Studio for TA architecture, computation and design. **The project works without GitHub, a cloud CMS or a build service.**
 
-## Everyday workflow (Node.js 20+)
+## Everyday workflow (Node.js 20+; Node.js 22 recommended for local Chromium tests)
 
 No `npm install` or third-party runtime dependencies required.
 
