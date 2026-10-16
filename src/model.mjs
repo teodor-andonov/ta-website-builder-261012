@@ -238,6 +238,11 @@ export function validate(data) {
     if (collection.defaultTemplate && !templateIds.has(collection.defaultTemplate)) fail(`Missing default template ${collection.defaultTemplate}`);
     for (const id of Object.values(collection.formatTemplates ?? {}))
       if (!templateIds.has(id)) fail(`Missing format template ${id}`);
+    if(collection.compositionTemplate!==undefined){
+      const t=data.templates.find(t=>t.id===collection.compositionTemplate);
+      if(!t||t.layoutMode!=='slot'||t.collection!==collection.id)
+        fail('Invalid collection compositionTemplate: '+collection.id);
+    }
   }
   // M12 is opt-in: V1 pages and record-detail templates remain untouched.
   for(const template of data.templates){
@@ -260,6 +265,24 @@ export function validate(data) {
   }
   for(const component of data.components)
     if(slotsIn(component.blocks).length)fail('Component cannot own a page slot: '+component.id);
+  for(const collection of data.collections)for(const record of collection.records){
+    if(record.template===undefined&&record.composition===undefined)continue;
+    const choice=record.template || collection.formatTemplates?.[record[collection.formatField]] || collection.defaultTemplate;
+    const template=data.templates.find(t=>t.id===choice);
+    if(!template||template.collection!==collection.id)
+      fail('Invalid record detail template: '+record.id);
+    if(record.composition===undefined){
+      if(template.layoutMode==='slot')fail('Record slot template needs a composition: '+record.id);
+      continue;
+    }
+    if(template.layoutMode!=='slot'||!record.template)
+      fail('Record composition requires an explicit slot template: '+record.id);
+    const root=record.composition;
+    if(!root||root.type!=='card'||root.area!==undefined||root.slot!==undefined||
+       slotsIn([root]).length||root.source||root.reference)
+      fail('Record requires exactly one root Card without area or slot: '+record.id);
+    checkBlocks([root],collection.id+'/'+record.id+' composition');
+  }
   for(const page of data.pages){
     if(slotsIn(page.blocks).length)fail('Page authoring cannot contain a template slot: '+page.id);
     if(page.template!==undefined || page.composition!==undefined){
