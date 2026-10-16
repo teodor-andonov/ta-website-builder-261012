@@ -530,11 +530,20 @@ else if(['page','template','component'].includes(ui.section)){let scope=currentS
   h+='<button class="btn sm" data-act="new-page-template" style="margin-left:5px">New page template</button>';
   h+=placeholderSelect('page',scope.placeholder===true)+publicationApprovalSelect('page',scope.approvedForPublication===true)+`<div class="rule"></div><div class="upper">MASTER SPACING · U = PAGE WIDTH / 100</div>`+nodeField('pad · units','site-pad',db.site.design?.pad??1)+nodeField('gap · units','site-gap',db.site.design?.gap??1)+`<div class="rule"></div><div class="upper">GLOBAL CARD DISPLAY</div><div class="field"><label>Card outlines</label><select class="control" data-site-design="cardBorders"><option value="false" ${db.site.design?.cardBorders?'':'selected'}>Off (individual outlines still work)</option><option value="true" ${db.site.design?.cardBorders?'selected':''}>On · outline all Cards at 20%</option></select></div>`+frameConstraintField('header','Navigation')+frameConstraintField('footer','Footer')}else if(ui.section==='template'){
   h+=inputField('Template name',scope.name,'template','name');
+  h+='<div class="rule"></div><div class="upper">SHARED SITE FRAME</div><p class="help">Templates can use site-wide defaults or override the Navbar/Footer independently.</p>';
+  for(const [role,label] of [['navigation','Navbar'],['footer','Footer']]){
+    const chosen=scope.chrome?.[role]||'',effective=chosen||db.site.chrome?.[role]||'';
+    const frames=db.components.filter(c=>c.frameRole===role);
+    h+='<div class="field"><label>'+label+'</label><select class="control" data-template-chrome="'+role+'">'+
+      '<option value=""'+(chosen?'':' selected')+'>Inherit site default</option>'+
+      frames.map(c=>'<option value="'+e(c.id)+'"'+(chosen===c.id?' selected':'')+'>'+e(c.name)+'</option>').join('')+
+      '</select></div><button class="btn sm" data-act="edit-component" data-id="'+e(effective)+'"'+(effective?'':' disabled')+'>Edit '+label+' ↗</button>';
+  }
   if(scope.layoutMode==='slot')h+='<div class="rule"></div><div class="upper">PAGE TEMPLATE</div><p class="help">One required main Card slot. All other Cards can reference reusable Components. Used by '+db.pages.filter(p=>p.template===scope.id).length+' Pages.</p><button class="btn sm" data-act="new-page-template">New page template</button>';
   else h+='<div class="field"><label>Collection</label><select class="control" data-edit="template" data-key="collection">'+optionsHtml(db.collections.map(c=>[c.id,c.name]),scope.collection)+'</select></div>';
 }else {
   h+=inputField('Component name',scope.name,'component','name');
-  if(scope.frameRole)h+='<div class="rule"></div><div class="upper">SEMANTIC SITE COMPONENT</div><p class="help">This root Card is the actual '+e(scope.frameRole==='navigation'?'nav':'footer')+' landmark. You can edit its Items and Card appearance; navigation links are sourced only from Website settings.</p>';
+  if(scope.frameRole)h+='<div class="rule"></div><div class="upper">SEMANTIC SITE COMPONENT</div><p class="help">This root Card is the actual '+e(scope.frameRole==='navigation'?'nav':'footer')+' landmark. You can edit its Items and Card appearance; navigation links are sourced only from Website settings.</p><button class="btn sm" data-act="duplicate-frame">Duplicate to create an alternate '+e(scope.frameRole)+' ↗</button>';
  }
  h+='<div class="rule"></div>'+(frameComponent()?'<p class="help">The semantic root Card is required. Select it to edit its grid, padding, colour and height.</p>':`<button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section</button>`);if(ui.section!=='page')h+=`<div class="rule"></div><button class="btn sm" data-act="delete-scope">${ic('trash')} Delete ${ui.section}</button>`}
 else {let n=found.node;const lock=protectedNode(n.id)?' disabled':'';h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+nodeField('Structure label','label',n.label||'')+`<div style="display:flex;gap:5px;margin:0 0 22px"><button class="btn sm" data-act="move-node" data-delta="-1" ${lock} title="Move up">${ic('up')}</button><button class="btn sm" data-act="move-node" data-delta="1" ${lock} title="Move down">${ic('down')}</button><button class="btn sm" data-act="duplicate-node" ${lock} title="Duplicate">${ic('duplicate')}</button><button class="btn sm" data-act="delete-node" ${lock} title="Delete">${ic('trash')}</button></div>`;
@@ -734,6 +743,14 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    try{validateSiteData(candidate)}catch(error){alert(error.message);break}
    db=candidate;editorHistory.clear();ui.node=null;persist();renderAll();break;
  }
+ case'duplicate-frame':{
+   const source=component();if(!source?.frameRole)break;
+   const candidate=clone(db),copy=clone(source);
+   copy.id=uid('cmp');copy.name=source.name+' · Variant';
+   copy.blocks.forEach(regenIds);candidate.components.push(copy);
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;persist();choose('component',copy.id);break;
+ }
  case'new-component':createModal('component');break;
  case'new-field':createModal('field');break;
  case'new-record':{let c=coll();let n=c.records.length+1,r={id:uid('r'),placeholder:true,approvedForPublication:false};for(let f of c.fields){r[f.key]=f.type==='boolean'?false:f.type==='tags'?[]:'';}r.title=`Untitled ${n}`;r.slug='untitled-'+n;r.status='Draft';if(c.id==='posts'){r.format='Note';r.status='Draft';r.date=new Date().toISOString().slice(0,10)}c.records.unshift(r);persist();openRecord(r.id,c.id);ui.mode='fields';renderAll();break}
@@ -779,7 +796,10 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    break;
  }
  case'delete-scope':{let s=currentScope();if(!s||!confirm('Delete this '+ui.section+'?'))break;
-  if(ui.section==='component'&&(Object.values(db.site.chrome||{}).includes(s.id)||s.frameRole)){alert('Site frame Components must be reassigned before deletion.');break;}if(ui.section==='template'){if(db.pages.some(p=>p.template===s.id)||db.collections.some(c=>c.defaultTemplate===s.id||Object.values(c.formatTemplates||{}).includes(s.id))){alert('Template is in use. Reassign Pages or Collections before deleting it.');break}if(db.templates.length<=1){alert('Keep at least one template.');break}db.templates=db.templates.filter(x=>x.id!==s.id);choose('template',db.templates[0].id)}else if(ui.section==='component'){db.components=db.components.filter(x=>x.id!==s.id);choose('component',db.components[0]?.id)}persist();break}
+  if(ui.section==='component'&&(
+   Object.values(db.site.chrome||{}).includes(s.id)||
+   db.templates.some(t=>Object.values(t.chrome||{}).includes(s.id))
+  )){alert('Component is referenced by a site or page template frame. Reassign it before deleting.');break;}if(ui.section==='template'){if(db.pages.some(p=>p.template===s.id)||db.collections.some(c=>c.defaultTemplate===s.id||Object.values(c.formatTemplates||{}).includes(s.id))){alert('Template is in use. Reassign Pages or Collections before deleting it.');break}if(db.templates.length<=1){alert('Keep at least one template.');break}db.templates=db.templates.filter(x=>x.id!==s.id);choose('template',db.templates[0].id)}else if(ui.section==='component'){db.components=db.components.filter(x=>x.id!==s.id);choose('component',db.components[0]?.id)}persist();break}
  case'apply-json':{let scope=btn.dataset.scope;try{let obj=JSON.parse($('#jsonEditor').value);applyValidatedJSON(scope,obj);ui.jsonMessage='JSON applied successfully.';renderAll()}catch(err){ui.jsonMessage='Error: '+err.message;let x=$('#jsonNotice');if(x){x.textContent=ui.jsonMessage;x.className='notice error'}}break}
  case'copy-json':navigator.clipboard?.writeText($('#jsonEditor').value).then(()=>{if($('#jsonNotice'))$('#jsonNotice').textContent='Copied to clipboard.'}).catch(()=>{});break;
  case'export':exportJSON();break;
@@ -986,6 +1006,18 @@ document.addEventListener('dragend',()=>{draggingId=null;clearTreeDrag()});
 
 document.addEventListener('click',event=>{let target=event.target.closest('[data-act]');if(target){handleAction(target);return}let n=event.target.closest('[data-node-id]');if(n&&ui.mode==='design'){event.preventDefault();selectStudioNode(n.dataset.nodeId);return}let g=event.target.closest('[data-open-generated]');if(g&&ui.mode!=='design'){event.preventDefault();openRecord(g.dataset.openGenerated,g.dataset.forCollection);return}let nav=event.target.closest('[data-site-route]');if(nav){event.preventDefault();let p=db.pages.find(p=>p.slug===nav.dataset.siteRoute);if(p)choose('page',p.id);return}if(event.target.id==='modalBack')closeModal()});
 document.addEventListener('change',event=>{let el=event.target;
+ if(el.dataset.templateChrome){
+   const role=el.dataset.templateChrome;
+   if(ui.section!=='template'||!['navigation','footer'].includes(role))return;
+   const candidate=clone(db),target=candidate.templates.find(t=>t.id===ui.template);
+   if(!target)return;
+   target.chrome||={};
+   if(el.value)target.chrome[role]=el.value;
+   else delete target.chrome[role];
+   if(!Object.keys(target.chrome).length)delete target.chrome;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
+   db=candidate;persist();renderAll();return;
+ }
  if(el.dataset.siteNavIndex!==undefined){
    const index=Number(el.dataset.siteNavIndex),key=el.dataset.siteNavField;
    if(!Number.isInteger(index)||!['label','href'].includes(key)||!db.site.navigation?.[index])return;
