@@ -21,7 +21,7 @@ npm run preview
 
 A browserless diagnostic is possible with `node scripts/release-check.mjs --no-browser`, but it exits with a nonzero status and reports **partial**, not release-ready. Node, browser and build failures also fail the release audit. Check its JSON report for the failing step and output.
 
-`npm run release:visual` builds a local public site and captures **10 actual Chromium PNGs**: Home, Work, Journal, Balkan House and a Post at desktop and narrow widths. It writes the images and a hash/dimension manifest under `release/review/YYMMDD-HHmm_m17-visual/`. The manifest explicitly says **PENDING HUMAN INSPECTION**; screenshots do not self-certify visual quality.
+`npm run release:visual` builds a local public site and captures **five desktop-only Chromium PNGs** at 1440×900: Home, Work, Journal, Balkan House and a Post. Narrow/mobile screenshots are **not required for V2 visual signoff**; the public layout is intended to retain the same Card/Item composition with proportional scaling at smaller widths. It writes the images and a hash/dimension manifest under `release/review/YYMMDD-HHmm_m17-visual/`. The manifest explicitly says **PENDING HUMAN INSPECTION**; screenshots do not self-certify visual quality.
 
 `npm run package:site` creates `release/website.zip` (root-domain static paths). The verifier independently checks ZIP headers, compressed bytes, CRC, SHA-256, manifest inventory, missing/private files, robots/indexing metadata and sitemap agreement. The archive contains the **public website only**, never Studio, JSON, logs, unpublished drafts or project source. Upload/extract the ZIP to the **document root** of a static host such as Hostinger; it is not a deploy button. `npm run preview` serves the built public site locally on loopback.
 
@@ -39,7 +39,7 @@ Keep the snapshot **outside** the public ZIP. It contains editable `content/site
 
 ## Human release signoff
 
-- Review the desktop/narrow screenshots for Card nesting, text overflow, Image crop, gallery layout, navigation, typography, contrast, and project/post detail pages. In the Studio at `npm run dev`, also review the draft Studio Page, Card drag/reorder, resize/grid picking, selection hierarchy, undo/redo, asset replacement, record Fields vs Design vs Preview, and filter changes. These are not all judged by screenshots.
+- Review the five desktop screenshots for Card nesting, text overflow, Image crop, gallery layout, navigation, typography, contrast, and project/post detail pages. No separate narrow/mobile visual review is required for V2; proportional downscaling is the intended behaviour, not a new mobile layout. In the Studio at `npm run dev`, also review the draft Studio Page, Card drag/reorder, resize/grid picking, selection hierarchy, undo/redo, asset replacement, record Fields vs Design vs Preview, and filter changes. These are not all judged by screenshots.
 - Confirm the currently generated 10 public routes, omission of draft Studio and Post, route/link integrity, no missing media, no silent deletion of referenced assets, and complete restore of data plus uploaded media. Test the intended indexing setting, not only the temporary test fixture.
 - Confirm that an offline extracted ZIP opens correctly when **served** by a static server. Direct `file://` browsing may behave differently; use `npm run preview` or a local static server.
 - Agree on final domain/hosting and whether indexing should remain off before publishing.
@@ -54,7 +54,7 @@ Keep the snapshot **outside** the public ZIP. It contains editable `content/site
 | Chromium DOM/Studio/wheel browser tests | **Pending actual local execution** |
 | Root / GitHub Pages / indexable static builds | **Pending actual local execution** |
 | Restored JSON + media snapshot and ZIP verification | **Pending actual local execution** |
-| Desktop and narrow visual screenshots and human review | **Pending** |
+| Five desktop screenshots and human visual review | **Pending** |
 | Release ZIP handoff and independent hosting review | **Pending** |
 | User approval to merge to `main` | **Not granted** |
 
