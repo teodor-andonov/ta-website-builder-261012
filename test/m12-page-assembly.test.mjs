@@ -61,6 +61,40 @@ test('M12 one-slot template nests an independent page root Card without flatteni
   assert.equal(collectPages(d).find(x=>x.route===original.route).html,original.html,original.route);
  }
 });
+test('M12 shared page layout updates both Work and Journal, never duplicates their compositions',()=>{
+ const d=copy();
+ const general=d.templates.find(t=>t.id==='page-general');
+ const journal=d.pages.find(p=>p.id==='journal'),work=d.pages.find(p=>p.id==='work');
+ const beforeJournal=structuredClone(journal.composition),beforeWork=structuredClone(work.composition);
+ const before=collectPages(d);
+ general.blocks[0].background='grey-100';
+ const after=collectPages(d);
+ for(const route of ['/work/','/posts/']){
+  const oldHtml=before.find(x=>x.route===route).html,newHtml=after.find(x=>x.route===route).html;
+  assert.notEqual(newHtml,oldHtml,route+' should inherit shared template styling');
+  assert.match(newHtml,/bg-grey-100/);
+ }
+ assert.equal(after.find(x=>x.route==='/').html,before.find(x=>x.route==='/').html);
+ assert.deepEqual(journal.composition,beforeJournal);
+ assert.deepEqual(work.composition,beforeWork);
+ const journalClone=structuredClone(d);
+ journalClone.pages.find(p=>p.id==='journal').composition.children[0].text='JOURNAL PAGE ONLY';
+ const changed=collectPages(journalClone);
+ assert.match(changed.find(x=>x.route==='/posts/').html,/JOURNAL PAGE ONLY/);
+ assert.doesNotMatch(changed.find(x=>x.route==='/work/').html,/JOURNAL PAGE ONLY/);
+});
+test('M12 page authoring is isolated from the full assembled document',()=>{
+ const d=copy();
+ for(const id of ['work','journal']){
+  const page=d.pages.find(p=>p.id===id);
+  const isolatedHtml=renderPagePreview(d,[page.composition],null,{route:page.slug});
+  const fullHtml=renderPagePreview(d,page.blocks,null,{pageId:id,route:page.slug});
+  assert.ok(!isolatedHtml.includes('page-general-main'),'isolated root never embeds template slot');
+  assert.notEqual(fullHtml,isolatedHtml);
+  assert.ok(fullHtml.includes('card-grid')||fullHtml.includes('grid-card'));
+  assert.ok(collectPages(d).find(p=>p.route===(page.slug.endsWith('/')?page.slug:page.slug+'/')).html.includes(fullHtml));
+ }
+});
 test('M12 rejects missing, duplicated and malformed slot Cards',()=>{
  for(const variant of ['none','two','item','filled','referenced','wrong-grid']){
   const {d}=migratedPage(),template=d.templates.at(-1);
