@@ -701,7 +701,25 @@ else {let n=found.node;const lock=protectedNode(n.id)?' disabled':'';h=inspector
   ?'<p class="help">Generated or referenced Card: edit the source or component definition; direct children are not allowed.</p>'
   :`<button class="btn" data-act="show-blocks" data-inside="yes">${ic('add')} Add child object</button>`);
  if(n.type==='card'&&n.reference)h+=nodeField('Reusable component','reference',n.reference,db.components.map(c=>[c.id,c.name]))+`<button class="btn" data-act="edit-component" data-id="${e(n.reference)}">Edit definition ↗</button>`;
- if(n.type==='card'&&n.source){let src=n.source,cc=db.collections.find(c=>c.id===src.collection);h+=`<div class="rule"></div><div class="upper">DATA SOURCE · GENERATES RECORD CARDS</div>`+
+ if(n.type==='card'&&n.source?.kind==='assets'){
+  const src=n.source;
+  h+='<div class="rule"></div><div class="upper">ASSET SOURCE · TYPED AND QUERY</div>'+
+    '<p class="help">Match asset metadata against fixed values or this record’s {{projectCode}}, {{title}}, {{category}} or {{status}}. Every predicate must match. Empty context returns no assets.</p>'+
+    nodeField('Arrangement','source.layout',src.layout,[['grid','2 columns'],['three','3 columns'],['list','1 column']])+
+    nodeField('Sort','source.sort',src.sort,[['original','Asset library order'],['name','Name A–Z']])+
+    nodeField('Maximum images','source.count',src.count)+
+    nodeField('Show captions','source.caption',String(src.caption===true),[['true','Yes'],['false','No']]);
+  for(const [i,predicate] of src.where.entries()){
+    h+='<div class="field"><label>AND filter '+(i+1)+'</label>'+
+      '<select class="control" data-asset-filter-index="'+i+'" data-asset-filter-key="field">'+
+      Object.keys(ASSET_FILTERS).map(k=>'<option value="'+e(k)+'"'+(predicate.field===k?' selected':'')+'>'+e(k)+'</option>').join('')+
+      '</select><select class="control" style="margin-top:5px" data-asset-filter-index="'+i+'" data-asset-filter-key="op">'+
+      ASSET_FILTERS[predicate.field].map(op=>'<option value="'+e(op)+'"'+(predicate.op===op?' selected':'')+'>'+e(op==='eq'?'Equals':'Contains')+'</option>').join('')+
+      '</select><input class="control mono" style="margin-top:5px" data-asset-filter-index="'+i+'" data-asset-filter-key="value" value="'+e(predicate.value)+'" placeholder="{{projectCode}} or Architecture">'+
+      '<button class="btn sm" style="margin-top:5px" data-act="remove-asset-filter" data-id="'+i+'"'+(src.where.length===1?' disabled':'')+'>Remove filter</button></div>';
+  }
+  h+='<button class="btn sm" data-act="add-asset-filter"'+(src.where.length>=8?' disabled':'')+'>'+ic('add')+' Add AND filter</button>';
+ }else if(n.type==='card'&&n.source){let src=n.source,cc=db.collections.find(c=>c.id===src.collection);h+=`<div class="rule"></div><div class="upper">DATA SOURCE · GENERATES RECORD CARDS</div>`+
  nodeField('Collection','source.collection',src.collection,db.collections.map(c=>[c.id,c.name]))+
  nodeField('Record Card template','source.template',src.template,db.components.map(c=>[c.id,c.name]))+
  nodeField('Arrangement','source.layout',src.layout,[['grid','2 columns'],['three','3 columns'],['list','1 column']])+
