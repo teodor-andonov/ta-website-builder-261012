@@ -1,6 +1,6 @@
 // Host-independent, no-dependency static site ZIP packager.
 // A package is always a *local* deliverable, never a deployment.
-// By default it is noindex preview; production requires the existing gated build.
+// Includes the selected publishing mode; both indexable and noindex sites are valid exports.
 import {spawnSync} from 'node:child_process';
 import {readFile,writeFile,mkdir,readdir,lstat,realpath,stat} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
@@ -76,8 +76,9 @@ export async function packageSite({dist=join(root,'dist'),destination,build=true
  if(files.some(f=>/(^|\/)(?:studio|content|src|backups|logs)(\/|$)/.test(f.name)||/\.(?:mjs|map)$/.test(f.name)))
   throw Error('Private editor or source file is present in static output');
  const html=await readFile(join(dist,'index.html'),'utf8');
- if(!html.includes('<meta name="robots" content="index, follow">'))
-  throw Error('ZIP requires a normally published static website');
+ const indexable=html.includes('<meta name="robots" content="index, follow">');
+ if(!indexable&&!html.includes('<meta name="robots" content="noindex, nofollow">'))
+  throw Error('ZIP requires a valid site-wide robots indexing mode');
  let size=0;
  const entries=[],manifestFiles=[];
  for(const file of files){
@@ -87,13 +88,13 @@ export async function packageSite({dist=join(root,'dist'),destination,build=true
   entries.push({name:file.name,bytes});
   manifestFiles.push({path:file.name,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
  }
- const manifest={format:1,kind:'TA static site',indexable:true,files:manifestFiles};
+ const manifest={format:1,kind:'TA static site',indexable,files:manifestFiles};
  entries.push({name:'release-manifest.json',bytes:Buffer.from(JSON.stringify(manifest,null,2)+'\n')});
  const zip=zipEntries(entries);
  await mkdir(dirname(destination),{recursive:true});
  // Explicit package paths can be replaced (unlike a live content restore).
  await writeFile(destination,zip);
- return {destination,files:manifestFiles.length,bytes:size,zipBytes:zip.length,indexable:true};
+ return {destination,files:manifestFiles.length,bytes:size,zipBytes:zip.length,indexable};
 }
 const invoked=process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url);
 if(invoked){
