@@ -185,7 +185,7 @@ export function validate(data) {
       fail('Invalid semantic site frame component: '+component.id);
     if(component.frameRole==='navigation'){
       const logos=component.blocks[0].children.filter(node=>node.type==='button'&&node.variant==='site-logo');
-      if(logos.length!==1||logos[0].href!=='/')
+      if(logos.length!==1||logos[0].href!=='/'||logos[0].area?.x2>7)
         fail('Navigation component requires one Home logo Item: '+component.id);
       if(component.blocks[0].children.some(node=>node.area?.x2>7&&node.variant!=='site-logo'))
         fail('Navigation reserves the right half for generated links: '+component.id);
