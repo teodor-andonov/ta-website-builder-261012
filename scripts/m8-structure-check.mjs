@@ -97,6 +97,26 @@ try{
  if(indexing.original!==false||indexing.enabled!==true||indexing.disabled!==false||indexing.selected!=='false')
    throw Error('Studio search indexing switch failed: '+JSON.stringify(indexing));
  console.log('SITE_INDEXING_OK local Studio supports reversible site-wide publishing mode');
+ // M12: templated pages edit only their unique root, then assemble the shared layout on preview.
+ const pageAssembly=await evaluate(`(()=>{
+   const result={};
+   for(const id of ['work','journal']){
+     window.__TA_STUDIO__.navigate('page',id);
+     const isolated=document.querySelector('#workbody .card-page');
+     const root=window.__TA_STUDIO__.getData().pages.find(p=>p.id===id).composition.id;
+     result[id]={root,isolated:!!isolated,hasNavbar:!!document.querySelector('#workbody nav.card-nav'),
+       selectedRoot:!!document.querySelector('#workbody [data-node-id="'+root+'"]')};
+     document.querySelector('[data-act="mode"][data-mode="preview"]')?.click();
+     result[id].fullNavbar=!!document.querySelector('#workbody nav.card-nav');
+     result[id].fullFooter=!!document.querySelector('#workbody footer.card-footer');
+   }
+   return result;
+ })()`);
+ for(const [id,state] of Object.entries(pageAssembly)){
+   if(!state.isolated||state.hasNavbar||!state.selectedRoot||!state.fullNavbar||!state.fullFooter)
+     throw Error('M12 isolated Page composition/full preview mismatch: '+id+' '+JSON.stringify(state));
+ }
+ console.log('M12_PAGE_PREVIEW_OK two Pages edit composition alone and preview assembled template');
  // M9: verify the actual site-wide contact editor, typed URL guard, and CTA.
  const configured=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('dashboard');
