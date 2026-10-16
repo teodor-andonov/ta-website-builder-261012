@@ -35,7 +35,7 @@ test('every published page can be served from a GitHub Pages project base withou
     const transformed=prefixSitePaths(page.html,root);
     assert.ok(transformed.includes(`href="${root}site.css"`),page.route);
     assert.ok(transformed.includes(`href="${root}"`),page.route);
-    assert.ok(transformed.includes('name="robots" content="index, follow"'),page.route);
+    assert.ok(transformed.includes('name="robots" content="noindex, nofollow"'),page.route);
     assert.doesNotMatch(transformed,/\b(?:href|src)="\/(?!ta-website-builder-261012\/)/,page.route);
   }
 });
