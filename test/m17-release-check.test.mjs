@@ -7,6 +7,7 @@ import {validate} from '../src/model.mjs';
 import {collectPages} from '../src/render.mjs';
 import {prefixSitePaths} from '../src/deploy-paths.mjs';
 import {checkOutput,routeFile,fingerprintAuthoring} from '../scripts/release-check.mjs';
+import {VISUAL_REVIEW_ROUTES,VISUAL_REVIEW_VIEWPORTS} from '../scripts/release-screenshots.mjs';
 
 const sample=JSON.parse(await readFile(new URL('../content/site.json',import.meta.url),'utf8'));
 const copy=()=>structuredClone(sample);
@@ -85,4 +86,12 @@ test('M17 fingerprints all editable JSON and media, including assets not referen
   await writeFile(join(temp,'content','site.json'),'{"demo":false}\n');
   assert.notEqual((await fingerprintAuthoring(temp)).sha256,original.sha256);
  }finally{await rm(temp,{recursive:true,force:true})}
+});
+
+test('M17 visual acceptance is desktop-only across five representative public routes',()=>{
+ assert.deepEqual(VISUAL_REVIEW_VIEWPORTS,[['desktop',1440,900]]);
+ assert.equal(VISUAL_REVIEW_ROUTES.length,5);
+ assert.equal(new Set(VISUAL_REVIEW_ROUTES.map(([,route])=>route)).size,5);
+ const routes=new Set(collectPages(copy()).map(p=>p.route));
+ for(const [,route] of VISUAL_REVIEW_ROUTES)assert.ok(routes.has(route),route);
 });
