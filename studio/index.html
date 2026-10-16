@@ -112,7 +112,7 @@
 </div>
 <div id="modalHost"></div>
 <script type="module">
-import { renderBlocks as renderSharedBlocks, renderSiteFrame, assetSrc } from "/src/render.mjs";
+import { renderBlocks as renderSharedBlocks, renderSiteFrame, renderPagePreview, assetSrc } from "/src/render.mjs";
 import {moveTreeNode,moveTreeByIntent,findFreeArea,findAreaConflicts} from "/src/tree-editor.mjs";
 import {createEditorHistory} from "/src/editor-history.mjs";
 import {validate as validateSiteData} from "/src/model.mjs";
@@ -283,7 +283,20 @@ window.addEventListener('beforeunload',event=>{
 function choose(section,id){ui.section=section;ui.node=null;ui.structureCollapsed.clear();ui.areaDraft=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'};$('#sidebar').classList.remove('show');renderAll()}
 function visibleModes(){if(ui.section==='collection')return ['table','settings','json'];if(ui.section==='record')return ['preview','fields','json'];if(['page','template','component'].includes(ui.section))return ['design','preview','json'];if(ui.section==='assets')return ['grid','table','json'];return []}
 function currentScope(){if(ui.section==='page')return page();if(ui.section==='template')return tpl();if(ui.section==='component')return component();return null}
-function currentBlocks(){return currentScope()?.blocks||[]}
+// A templated Page owns exactly one editable composition root, not the template tree.
+function compositionPage(){return ui.section==='page'&&Boolean(page()?.template)}
+function currentBlocks(){const scope=currentScope();return compositionPage()?[scope.composition]:scope?.blocks||[]}
+function assignScopeBlocks(blocks){
+ const scope=currentScope();if(!scope)return false;
+ if(compositionPage()){
+   if(blocks.length!==1||blocks[0]?.type!=='card'||blocks[0].area!==undefined||blocks[0].slot!==undefined)return false;
+   scope.composition=blocks[0];
+ }else scope.blocks=blocks;
+ return true;
+}
+function compositionRoot(){return compositionPage()?page().composition:null}
+function protectedNode(id){return Boolean(compositionPage()&&id===compositionRoot()?.id)||Boolean(ui.section==='template'&&findNode(id)?.node?.slot==='main')}
+
 // M8 authoring history records only completed Card/Item mutations, never hover
 // state, selection changes, invalid numeric drafts or pending drag gestures.
 const editorHistory=createEditorHistory({limit:40,scopes:16});
@@ -299,7 +312,7 @@ function restoreScopeEdit(direction){
  if(!scope||!key)return false;
  const restored=direction==='redo'?editorHistory.redo(key):editorHistory.undo(key);
  if(!restored)return false;
- scope.blocks=restored.blocks;
+ if(!assignScopeBlocks(restored.blocks))return false;
  ui.node=restored.selected&&findNode(restored.selected)?restored.selected:null;
  ui.areaDraft=null;ui.areaDrag=null;
  // Reveal previously hidden parents if undo restored a nested selection.
@@ -325,7 +338,49 @@ function templateFor(c,r){let id=c?.formatTemplates?.[r?.[c.formatField]]||c?.de
 // Shared rendering contract: the preview and the published build import the same module.
 function renderBlocks(blocks,ctx=null,design=false){return renderSharedBlocks(blocks,ctx,db,{design,selectedId:ui.node,topLevel:true})}
 function siteFrame(content,design=false){let route='/';if(ui.section==='record'){const c=coll(),r=rec();if(c&&r)route=c.base+'/'+r.slug+'/'}else if(ui.section==='page')route=page()?.slug||'/';else if(ui.section==='template'){const c=db.collections.find(c=>c.id===tpl()?.collection),r=c?.records.find(r=>r.id===ui.sample);if(c&&r)route=c.base+'/'+r.slug+'/'}return renderSiteFrame(content,db,{design,route})}
-function designView(){let isT=ui.section==='template',isC=ui.section==='component',s=currentScope();if(!s)return `<div class="content-wrap"><div class="empty">Nothing selected.</div></div>`;if(ui.mode==='json')return jsonView(s,ui.section);let context=null;if(isT){let c=db.collections.find(c=>c.id===s.collection);context=c?.records.find(r=>r.id===ui.sample)||c?.records[0];}let design=ui.mode==='design';let pick=isT?db.templates:isC?db.components:db.pages;let modeText=isT?'TEMPLATE':isC?'COMPONENT':'CUSTOM PAGE';return `<div class="editor-shell"><div class="editor-meta"><div><div class="upper" style="margin-bottom:6px">${modeText} / ${isT?'AUTO GENERATED':isC?'REUSABLE':'UNIQUE'}</div><h1>${e(s.name||s.title)}</h1><small>${e(isT?db.collections.find(c=>c.id===s.collection)?.base+'/{slug}':isC?'Any page / template':s.slug)} · ${s.blocks.length} root objects</small></div><div class="editor-tools">${isT?`<select class="control" id="samplePicker" style="max-width:160px;font-size:11px" title="Preview with record">${(db.collections.find(c=>c.id===s.collection)?.records||[]).map(r=>`<option value="${e(r.id)}" ${context?.id===r.id?'selected':''}>${e(r.title)}</option>`).join('')}</select>`:''}${isT||isC?`<select class="control" id="scopePicker" style="max-width:160px;font-size:11px">${pick.map(x=>`<option value="${e(x.id)}" ${x.id===s.id?'selected':''}>${e(x.name||x.title)}</option>`).join('')}</select><button class="btn sm" data-act="new-${isT?'template':'component'}">${ic('add')}</button>`:''}</div></div>${siteFrame(renderBlocks(s.blocks,context,design),design)}${design?`<div class="add-area"><button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section / object</button></div>`:''}${!isC?`<div class="help" style="margin:17px 3px">${isT?'Bound values like {{title}} resolve against the selected sample record. Editing the template changes every generated page using it.':'All repeatable content comes from Collections. Query blocks display matching records using a shared component.'}</div>`:''}</div>`}
+function designView(){
+ const isT=ui.section==='template',isC=ui.section==='component',s=currentScope();
+ if(!s)return '<div class="content-wrap"><div class="empty">Nothing selected.</div></div>';
+ if(ui.mode==='json')return jsonView(s,ui.section);
+ const isPageLayout=isT&&s.layoutMode==='slot';
+ const isUniqueComposition=!isT&&!isC&&Boolean(s.template);
+ let context=null;
+ if(isT&&!isPageLayout){
+   const c=db.collections.find(c=>c.id===s.collection);
+   context=c?.records.find(r=>r.id===ui.sample)||c?.records[0];
+ }
+ const design=ui.mode==='design',pick=isT?db.templates:isC?db.components:db.pages;
+ const modeText=isPageLayout?'PAGE TEMPLATE':isT?'RECORD TEMPLATE':isC?'COMPONENT':'PAGE';
+ let canvas;
+ if(isUniqueComposition){
+   canvas=design
+     ?renderSiteFrame(renderBlocks(currentBlocks(),null,true),db,{design:true,isolated:true,route:s.slug})
+     :renderPagePreview(db,s.blocks,null,{pageId:s.id,route:s.slug});
+ }else if(isPageLayout){
+   const example=db.pages.find(p=>p.template===s.id);
+   canvas=design
+     ?renderSiteFrame(renderBlocks(s.blocks,null,true),db,{design:true,isolated:true,route:example?.slug||'/'})
+     :example?renderPagePreview(db,example.blocks,null,{pageId:example.id,route:example.slug})
+       :renderSiteFrame(renderBlocks(s.blocks,null,false),db,{route:'/'});
+ }else canvas=siteFrame(renderBlocks(s.blocks,context,design),design);
+ const label=isPageLayout?'One main content slot · used by '+db.pages.filter(p=>p.template===s.id).length+' pages'
+   :isUniqueComposition?'Unique composition · shared template: '+(db.templates.find(t=>t.id===s.template)?.name||s.template)
+   :isT?(db.collections.find(c=>c.id===s.collection)?.base||'Records')+'/{slug}'
+   :isC?'Reusable on any page / template':s.slug;
+ const count=isUniqueComposition?1:s.blocks.length;
+ const tools=isT&&!isPageLayout
+   ?`<select class="control" id="samplePicker" style="max-width:160px;font-size:11px" title="Preview with record">${(db.collections.find(c=>c.id===s.collection)?.records||[]).map(r=>`<option value="${e(r.id)}" ${context?.id===r.id?'selected':''}>${e(r.title)}</option>`).join('')}</select>`
+   :'';
+ const scopeChooser=(isT||isC)?`<select class="control" id="scopePicker" style="max-width:160px;font-size:11px">${pick.map(x=>`<option value="${e(x.id)}" ${x.id===s.id?'selected':''}>${e(x.name||x.title)}</option>`).join('')}</select><button class="btn sm" data-act="${isT?'new-page-template':'new-component'}">${ic('add')}</button>`:'';
+ const secondary=isUniqueComposition?`<button class="btn sm" data-act="edit-template" data-id="${e(s.template)}">Edit shared template ↗</button>`:'';
+ const editMessage=isUniqueComposition
+   ?'Design edits only this Page’s root composition. Preview assembles it inside the selected template, including shared site chrome.'
+   :isPageLayout?'Design edits the reusable Page template only. The marked main slot receives a Page composition in Preview.'
+   :isT?'Bound values such as {{title}} resolve against the selected record. Edits affect every generated page using this template.'
+   :isC?'This Component is reusable by reference; edits propagate to every instance.'
+   :'Repeatable content comes from Collections; query Cards render matching records.';
+ return `<div class="editor-shell"><div class="editor-meta"><div><div class="upper" style="margin-bottom:6px">${modeText} / ${design?'ISOLATED DESIGN':'ASSEMBLED PREVIEW'}</div><h1>${e(s.name||s.title)}</h1><small>${e(label)} · ${count} root Card${count===1?'':'s'}</small></div><div class="editor-tools">${tools}${scopeChooser}${secondary}</div></div>${canvas}${design?`<div class="add-area"><button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section / object</button></div>`:''}<p class="help" style="margin:17px 3px">${e(editMessage)}</p></div>`;
+}
 function recordFieldHtml(f,r){let v=r[f.key],k=e(f.key);if(f.type==='boolean')return `<div class="field" style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-record-field="${k}" ${v?'checked':''} id="fld_${k}"><label for="fld_${k}" style="margin:0">${e(f.label)}</label></div>`;if(f.type==='select')return `<div class="field"><label>${e(f.label)}</label><select class="control" data-record-field="${k}">${(f.options||'').split(',').map(x=>x.trim()).map(x=>`<option value="${e(x)}" ${v===x?'selected':''}>${e(x)}</option>`).join('')}</select></div>`;if(f.type==='asset')return `<div class="field"><label>${e(f.label)}</label><select class="control" data-record-field="${k}"><option value="">— no image —</option>${db.assets.map(a=>`<option value="${e(a.id)}" ${v===a.id?'selected':''}>${e(a.name)}</option>`).join('')}</select></div>`;if(f.type==='textarea')return `<div class="field"><label>${e(f.label)}</label><textarea class="control tall" data-record-field="${k}" rows="${f.key==='body'?'13':'4'}">${e(valText(v))}</textarea></div>`;return `<div class="field"><label>${e(f.label)}</label><input class="control" data-record-field="${k}" type="${f.type==='date'?'date':f.type==='number'?'number':'text'}" value="${e(valText(v))}"></div>`}
 function inputField(label,val,scope,key,type='text'){return `<div class="field"><label>${e(label)}</label><input class="control" data-edit="${e(scope)}" data-key="${e(key)}" type="${type}" value="${e(valText(val))}"></div>`}
 function assetView(){if(ui.mode==='json')return jsonView(db.assets,'assets');let assets=db.assets.filter(a=>!ui.search||(a.name+' '+a.tags.join(' ')+' '+(a.properties?.projectCode||'')).toLowerCase().includes(ui.search.toLowerCase()));if(ui.mode==='table')return `<div class="content-wrap">${titleBar('LIBRARY / ASSETS','Image properties','Files are stored separately from editable image metadata.',`<button class="btn dark" data-act="upload">${ic('add')} Upload</button>`)}<div class="table-wrap"><table><thead><tr><th>IMAGE</th><th>NAME</th><th>ALT TEXT</th><th>CAPTION</th><th>CREDIT</th><th>TAGS</th><th>PROJECT CODE</th></tr></thead><tbody>${assets.map(a=>`<tr><td><button data-act="asset-select" data-id="${e(a.id)}"><img class="small-thumb" src="${e(src(a))}" alt=""></button></td>${['name','alt','caption','credit','tags'].map(k=>`<td><input class="cell long" data-asset-cell="${k}" data-id="${e(a.id)}" value="${e(valText(a[k]))}"></td>`).join('')}<td><input class="cell" data-asset-project-code="${e(a.id)}" value="${e(a.properties?.projectCode||'')}"></td></tr>`).join('')}</tbody></table></div></div>`;return `<div class="content-wrap">${titleBar('LIBRARY / ASSETS','Image library','Uploaded image files, descriptions, captions, tags and custom properties.',`<button class="btn" data-act="new-asset">${ic('add')} Reference</button><button class="btn dark" data-act="upload">${ic('add')} Upload image</button>`)}<div class="table-toolbar"><input class="search" id="assetSearch" placeholder="Search images and tags…" value="${e(ui.search)}"><span class="upper">${assets.length} ASSETS · PNG / JPEG / WEBP / GIF · MAX 12 MB</span></div><div class="asset-grid">${assets.map(a=>`<button class="asset-card ${ui.asset===a.id?'selected':''}" data-act="asset-select" data-id="${e(a.id)}"><img src="${e(src(a))}" alt="${e(a.alt||'')}"><div class="asset-info"><strong>${e(a.name)}</strong><small>${e(a.tags.join(' / '))}</small></div></button>`).join('')}</div></div>`}
@@ -380,7 +435,7 @@ function applyTreeMove(intent){
  const result=moveTreeByIntent(currentBlocks(),ui.node,intent);
  if(!result.ok)return false;
  const scope=currentScope(),before=snapshotScope(),selectedBefore=ui.node;
- scope.blocks=result.blocks;
+ if(!assignScopeBlocks(result.blocks))return false;
  if(result.parentId)ui.structureCollapsed.delete(result.parentId);
  const path=findNodePath(ui.node);
  for(const n of path?.slice(0,-1)||[])ui.structureCollapsed.delete(n.id);
