@@ -34,11 +34,11 @@ function run(label,args,env,timeout=180000){
  return {command:'node '+args.join(' '),output:((outcome.stdout||'')+'\n'+(outcome.stderr||'')).slice(-2200)};
 }
 function ensure(condition,message){if(!condition)throw Error(message)}
-function routeFile(route){
+export function routeFile(route){
  ensure(/^\/(?:[a-z0-9-]+\/)*$/.test(route),'Unsafe generated route: '+route);
  return route==='/'?'index.html':route.slice(1)+'index.html';
 }
-async function checkOutput(dir,data,{base='/',indexing=false,origin=null}={}){
+export async function checkOutput(dir,data,{base='/',indexing=false,origin=null}={}){
  const routes=collectPages(data).map(p=>p.route),required=new Set(routes.map(routeFile));
  const mode=indexing?yesIndex:noIndex;
  for(const name of required){
