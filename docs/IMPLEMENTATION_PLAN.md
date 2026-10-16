@@ -1,12 +1,12 @@
 # TA Content Studio — living implementation plan
 
-> Updated 2026-10-15 · Source of truth for milestone status. Previous V1 technical history is preserved in [dated development logs](logs/README.md) and Git history. The [V2 architecture](POST_V1_ARCHITECTURE.md) contains the detailed specification.
+> Updated 2026-10-16 · Source of truth for milestone status. Previous V1 technical history is preserved in [dated development logs](logs/README.md) and Git history. The [V2 architecture](POST_V1_ARCHITECTURE.md) contains the detailed specification.
 
 ## Current state
 
-- **Working stage:** **V2 / M12** — unified page, template and component composition. First implementation: opt-in one-main-slot Card templates and root page composition with backward-compatible rendering. Next: use the template in Studio and extract shared Navbar/Header/Footer without duplicate authored content.
+- **Working stage:** **V2 / M12** — **shared page templates and independent page compositions now work in canonical JSON and Studio**. The published Work and Journal indexes share `page-general` while keeping distinct root Cards. Design mode is composition-only; Preview assembles the template and shared website frame. New Pages create a root composition by default, Page template selection/creation and explicit legacy conversion are in Studio, and structural root/slot deletion is guarded. Home and Studio deliberately remain legacy until geometry/visual review. **Next M12 task: replace hardcoded Navbar/Header/Footer with truly reusable editable Components, preserving semantic HTML and navigation behaviour.**
 - **Branch:** `feature/v2-unified-studio` · [rolling PR #24](https://github.com/teodor-andonov/ta-website-builder-261012/pull/24). One V2 branch for M12–M17; one final squash merge when software milestones pass. `main` remains the V1 release until that merge. V1 [PR #23](https://github.com/teodor-andonov/ta-website-builder-261012/pull/23) was merged at `7d5b445`; both original branches are retained.
-- **Current handoff before further M12:** The local-first publishing/tooling cleanup is committed. On 2026-10-16 a **single site-wide indexing switch** was added under Studio Overview, backed by `site.publishing.indexing` in canonical JSON; the placeholder TA site currently chooses **Off**. Local `dist/`, Pages builds and ZIPs honor it without content approval gates. **Local Node/browser/build/ZIP checks still need to be run on a checkout**; no GitHub test workflows or remote CI have been reinstated.
+- **Current verification policy:** Per user decision on 2026-10-16, **continue V2 development with code review, static syntax checks and targeted in-memory model/render smoke checks; postpone full local Node, Chrome, build, ZIP and visual acceptance until the end of V2**. Do not claim the unrun full suites passed. The search-indexing switch in `site.publishing.indexing` is currently **Off** while placeholder content remains. No GitHub test workflows or CI have been reinstated.
 - **Publishing:** [GitHub Pages is the current website](https://teodor-andonov.github.io/ta-website-builder-261012/), **not a staging environment**. Builds are generated from JSON + media with `npm run build` → `dist/`. `npm run preview` is a localhost view of the generated site (requires Node, not internet); optional `npm run package:site` writes `release/website.zip` for future Hostinger/other static hosting. `main` Pages publishing is the sole automatic GitHub workflow. Search indexing is controlled separately in Studio; Off does not hide public pages.
 - **Important timing:** the publishing cleanup and new indexing switch are committed to the **V2 branch only**. The live `main` Pages website retains V1's noindex output and old workflows until the authorised final V2 merge (or a separately approved hotfix). A local Studio toggle does not deploy by itself.
 - **Content:** editable project/post/media placeholders are allowed. Real material, 15-minute booking link, eventual Hostinger/domain migration and manual human QA are deferred until **after V2**. Do not fabricate missing real details and do not impose an approval gate on normal builds.
@@ -17,7 +17,7 @@
 | Stage | Work | Status |
 |---|---|---|
 | V1 / M0–M11 | File-first Studio, public TA site, editor, content models, local media and static builds | **Merged to main** |
-| V2 / M12 | Unified page/template composition: one main slot, independent page root, shared Nav/Header/Footer, isolated page preview/editing | **In progress** |
+| V2 / M12 | Shared one-slot Page template used by Work + Journal, composition-only Studio Design and full Preview, creation/selection/migration controls, then reusable Nav/Header/Footer extraction | **Major progress; shared chrome extraction pending** |
 | M13 | Design tokens, named styles, local overrides and Studio Design controls | Planned |
 | M14 | Per-record root Card compositions, collection defaults and record overrides | Planned |
 | M15 | Generic typed collections, asset project-code/tag queries and equality/contains filtering | Planned |
@@ -42,6 +42,6 @@ Backups: `npm run backup:create` and `npm run backup:restore -- <snapshot> <new-
 ## Working policy
 
 - Preserve JSON as the single authoring source, the shared rendering contract and the nonadaptive print-style public Card/Item grid. Studio remains desktop-focused. Leave `prototype-v2/` historical and untouched.
-- Prefer one meaningful, tested step per user-triggered cycle (larger coherent steps are welcome). No new background automation and no automatic screenshots. Verify both indexing states on disposable local data before final acceptance.
+- Prefer one meaningful, reviewed step per user-triggered cycle (larger coherent steps are welcome). Targeted static/in-memory checks are useful interim evidence, but full Node/browser/build/ZIP/visual tests and both indexing states are reserved for final V2 acceptance by user decision. No new background automation and no automatic screenshots.
 - After substantial changes, update this plan and add a dated [log](logs/README.md). Be clear about unrun local tests when the environment cannot execute the repository.
 - Keep `main` as current public GitHub Pages site; V2 PR is not a live deployment. Do not merge/delete branches, alter production hosting or require third-party access without the appropriate user instruction.
