@@ -31,7 +31,7 @@ for(const page of pages){
   await writeFile(path.join(folder,'index.html'),prefixSitePaths(page.html,basePath));
 }
 console.log(`Built ${pages.length} static pages to dist/`);
-if(publication.origin){
+if(publication.indexing&&publication.origin){
   const urls=pages.map(({route})=>publication.origin+route).sort();
   const sitemap='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+
     urls.map(loc=>'  <url><loc>'+loc+'</loc></url>').join('\n')+'\n</urlset>\n';
