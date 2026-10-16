@@ -11,7 +11,9 @@
     "test:browser": "node scripts/test-browser.mjs",
     "package:site": "node scripts/package-site.mjs",
     "backup:create": "node scripts/site-snapshot.mjs create",
-    "backup:restore": "node scripts/site-snapshot.mjs restore"
+    "backup:restore": "node scripts/site-snapshot.mjs restore",
+    "release:check": "node scripts/release-check.mjs",
+    "release:visual": "node scripts/release-screenshots.mjs"
   },
   "engines": {
     "node": ">=20"
