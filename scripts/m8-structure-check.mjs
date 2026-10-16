@@ -200,7 +200,7 @@ try{
    throw Error('M14 record composition Studio integration failed: '+JSON.stringify(recordComposition));
  console.log('M14_RECORDS_OK isolated draft record editor, assembled preview and independent new project root');
  // M15: the converted Balkan House Record uses a contextual asset gallery.
- const assetQueryEditing=await evaluate(\`(()=>{
+ const assetQueryEditing=await evaluate(`(()=>{
    const app=window.__TA_STUDIO__;
    app.navigate('record',{collection:'projects',record:'p-balkan'});
    document.querySelector('[data-act="mode"][data-mode="design"]')?.click();
@@ -218,7 +218,7 @@ try{
    const restored=!!document.querySelector('#workbody img[src="/assets/placeholder/house.svg"]');
    const current=app.getData().collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-balkan').composition.children.at(-1).source.where[1].value;
    return {query:!!query,baselineImage,filterControls,edited,empty,restored,current};
- })()\`);
+ })()`);
  if(assetQueryEditing.error||!assetQueryEditing.query||!assetQueryEditing.baselineImage||
     !assetQueryEditing.filterControls||assetQueryEditing.edited!=='Systems'||
     !assetQueryEditing.empty||!assetQueryEditing.restored||assetQueryEditing.current!=='Architecture')
