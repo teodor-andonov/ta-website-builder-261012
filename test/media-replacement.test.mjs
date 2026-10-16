@@ -49,7 +49,7 @@ test('M9 replacing placeholder media is atomic and preserves asset identity, cov
   assert.equal(result.asset.credit,'');
   assert.equal(result.asset.caption,'');
   assert.ok(!result.asset.tags.includes('Placeholder'));
-  assert.equal(result.asset.properties.projectCode,'');
+  assert.equal(result.asset.properties.projectCode,house.properties.projectCode,'replacement preserves contextual gallery association');
   const stored=validate(JSON.parse(await readFile(path.join(rootData,'content/site.json'),'utf8')));
   assert.equal(stored.assets.length,before.assets.length);
   assert.equal(stored.assets.find(a=>a.id==='house').src,result.asset.src);

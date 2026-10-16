@@ -1,6 +1,6 @@
 // Host-independent, no-dependency static site ZIP packager.
 // A package is always a *local* deliverable, never a deployment.
-// By default it is noindex preview; production requires the existing gated build.
+// Includes the selected publishing mode; both indexable and noindex sites are valid exports.
 import {spawnSync} from 'node:child_process';
 import {readFile,writeFile,mkdir,readdir,lstat,realpath,stat} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
@@ -62,12 +62,11 @@ export async function packageSite({dist=join(root,'dist'),destination,build=true
  if(!destination)throw Error('An explicit ZIP output filename is required');
  destination=resolve(destination);
  if(destination===dist||destination.startsWith(dist+sep))throw Error('ZIP must be outside the public folder');
- const production=env.TA_ENABLE_INDEXING==='1';
  if(build){
   // Root-relative archive works with an independent static host, not a repo subpath.
   const result=spawnSync(process.execPath,['src/build.mjs'],{
    cwd:root,encoding:'utf8',timeout:120000,
-   env:{...env,TA_BASE_PATH:'/',TA_OUTPUT_DIR:dist,TA_ENABLE_INDEXING:production?'1':'0'}
+   env:{...env,TA_BASE_PATH:'/',TA_OUTPUT_DIR:dist}
   });
   if(result.status!==0)throw Error('Static build rejected: '+(result.stderr||result.stdout||'unknown error').slice(0,1000));
  }
@@ -77,10 +76,9 @@ export async function packageSite({dist=join(root,'dist'),destination,build=true
  if(files.some(f=>/(^|\/)(?:studio|content|src|backups|logs)(\/|$)/.test(f.name)||/\.(?:mjs|map)$/.test(f.name)))
   throw Error('Private editor or source file is present in static output');
  const html=await readFile(join(dist,'index.html'),'utf8');
- if(production){
-  if(!html.includes('<meta name="robots" content="index, follow">'))throw Error('Production ZIP requires an indexable approved build');
- }else if(!html.includes('<meta name="robots" content="noindex, nofollow">'))
-  throw Error('Preview ZIP must remain noindex');
+ const indexable=html.includes('<meta name="robots" content="index, follow">');
+ if(!indexable&&!html.includes('<meta name="robots" content="noindex, nofollow">'))
+  throw Error('ZIP requires a valid site-wide robots indexing mode');
  let size=0;
  const entries=[],manifestFiles=[];
  for(const file of files){
@@ -90,17 +88,17 @@ export async function packageSite({dist=join(root,'dist'),destination,build=true
   entries.push({name:file.name,bytes});
   manifestFiles.push({path:file.name,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
  }
- const manifest={format:1,kind:'TA static site',indexable:production,files:manifestFiles};
+ const manifest={format:1,kind:'TA static site',indexable,files:manifestFiles};
  entries.push({name:'release-manifest.json',bytes:Buffer.from(JSON.stringify(manifest,null,2)+'\n')});
  const zip=zipEntries(entries);
  await mkdir(dirname(destination),{recursive:true});
  // Explicit package paths can be replaced (unlike a live content restore).
  await writeFile(destination,zip);
- return {destination,files:manifestFiles.length,bytes:size,zipBytes:zip.length,indexable:production};
+ return {destination,files:manifestFiles.length,bytes:size,zipBytes:zip.length,indexable};
 }
 const invoked=process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url);
 if(invoked){
- const destination=resolve(process.argv[2]||join(root,'release','ta-website-preview.zip'));
+ const destination=resolve(process.argv[2]||join(root,'release','website.zip'));
  try{console.log('STATIC PACKAGE OK '+JSON.stringify(await packageSite({destination})))}
  catch(error){console.error(error.message);process.exitCode=1}
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,writeFile,rm,mkdir} from 'node:fs/promises';
+import {mkdtemp,readFile,writeFile,rm,mkdir,cp} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {inflateRawSync} from 'node:zlib';
@@ -31,11 +31,11 @@ function unpack(zip){
  assert.equal(files.size,count);
  return files;
 }
-test('M11 packages the actual preview site as a standalone noindex ZIP with SHA-256 manifest',{timeout:40000},async()=>{
+test('M11 packages the actual preview site as a standalone public ZIP with SHA-256 manifest',{timeout:40000},async()=>{
  const tmp=await mkdtemp(join(tmpdir(),'ta-site-package-'));
  try{
   const dist=join(tmp,'dist'),destination=join(tmp,'handoff','ta-site-preview.zip');
-  const result=await packageSite({dist,destination,env:{...process.env,TA_ENABLE_INDEXING:'0',TA_PUBLIC_ORIGIN:'https://example.com'}});
+  const result=await packageSite({dist,destination,env:{...process.env,TA_PUBLIC_ORIGIN:''}});
   assert.equal(result.indexable,false);
   assert.ok(result.files>14);
   const archiveBytes=await readFile(destination);
@@ -63,12 +63,31 @@ test('M11 packages the actual preview site as a standalone noindex ZIP with SHA-
    assert.equal(createHash('sha256').update(archive.get(file.path)).digest('hex'),file.sha256,file.path);
    assert.equal(archive.get(file.path).length,file.bytes,file.path);
   }
-  assert.equal(archive.get('robots.txt').toString(),'User-agent: *\nDisallow: /\n');
-  // A failed production gate may not turn an example portfolio into a live release.
+  assert.equal(archive.get('robots.txt').toString(),'User-agent: *\nAllow: /\n');
+  // An invalid custom-domain setting cannot produce a misleading canonical URL.
   await assert.rejects(packageSite({
-   dist:join(tmp,'production-dist'),destination:join(tmp,'handoff','ta-production.zip'),
-   env:{...process.env,TA_ENABLE_INDEXING:'1',TA_PUBLIC_ORIGIN:'https://ta-studio.com'}
-  }),/Static build rejected:[\s\S]*Public indexing blocked/);
+   dist:join(tmp,'bad-origin-dist'),destination:join(tmp,'handoff','bad-origin.zip'),
+   env:{...process.env,TA_PUBLIC_ORIGIN:'https://example.com'}
+  }),/Static build rejected:[\s\S]*TA_PUBLIC_ORIGIN/);
+ }finally{await rm(tmp,{recursive:true,force:true})}
+});
+test('ZIP switch On emits indexable HTML, sitemap and matching verified manifest',{timeout:40000},async()=>{
+ const tmp=await mkdtemp(join(tmpdir(),'ta-indexed-package-'));
+ try{
+  const dataRoot=join(tmp,'source'),destination=join(tmp,'public.zip');
+  await mkdir(join(dataRoot,'content'),{recursive:true});
+  await cp(new URL('../assets/',import.meta.url),join(dataRoot,'assets'),{recursive:true});
+  const data=JSON.parse(await readFile(new URL('../content/site.json',import.meta.url),'utf8'));
+  data.site.publishing.indexing=true;
+  await writeFile(join(dataRoot,'content','site.json'),JSON.stringify(data));
+  const result=await packageSite({dist:join(tmp,'dist'),destination,env:{...process.env,TA_DATA_ROOT:dataRoot,TA_PUBLIC_ORIGIN:'https://ta-studio.com'}});
+  assert.equal(result.indexable,true);
+  const verified=await verifySitePackage(destination);
+  assert.equal(verified.indexable,true);
+  const archive=unpack(await readFile(destination));
+  assert.match(archive.get('index.html').toString(),/name="robots" content="index, follow"/);
+  assert.match(archive.get('sitemap.xml').toString(),/https:\/\/ta-studio.com\/work\//);
+  assert.match(archive.get('robots.txt').toString(),/Sitemap: https:\/\/ta-studio.com\/sitemap.xml/);
  }finally{await rm(tmp,{recursive:true,force:true})}
 });
 test('M11 packager refuses a private editor/source artifact in static output',{timeout:10000},async()=>{
@@ -76,7 +95,7 @@ test('M11 packager refuses a private editor/source artifact in static output',{t
  try{
   await mkdir(join(tmp,'dist','studio'),{recursive:true});
   for(const name of ['index.html','404.html','site.css'])
-   await writeFile(join(tmp,'dist',name),'<meta name="robots" content="noindex, nofollow">');
+   await writeFile(join(tmp,'dist',name),'<meta name="robots" content="index, follow">');
   await writeFile(join(tmp,'dist','studio','index.html'),'private editor');
   await assert.rejects(packageSite({dist:join(tmp,'dist'),destination:join(tmp,'site.zip'),build:false}),/Private editor or source/);
  }finally{await rm(tmp,{recursive:true,force:true})}

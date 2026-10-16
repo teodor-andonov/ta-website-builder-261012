@@ -1,8 +1,8 @@
 # Post-V1 Content Studio — agreed architecture specification
 
 **Decision date:** 2026-10-15  
-**Status:** Approved product direction, **not implemented**.  
-**Priority:** Complete the *unchanged* M8–M11 V1 roadmap first; post-V1 work begins at M12.  
+**Status:** V2 architecture is being implemented (M12 active).  
+**Priority:** M12–M17 on the single V2 branch; publishing/tooling cleanup precedes further M12 work.  
 **Living status/roadmap:** [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
 This document captures the *how* of the next-generation design. It is not an alternative living roadmap. Preserve current V1 behaviour until its current milestone has been accepted; use migration and visual regression tests instead of silently changing existing site composition.

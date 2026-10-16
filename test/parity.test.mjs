@@ -20,7 +20,7 @@ test('browser editor imports the same renderer module used by build',async()=>{
 test('record previews match generated public page DOM shell exactly',()=>{
   for(const [collection,record] of [[project,publishedProject],[post,publishedPost]]){
     const template=templateFor(data,collection,record);
-    const preview=renderPagePreview(data,template.blocks,record);
+    const preview=renderPagePreview(data,template.blocks,record,{route:collection.base+'/'+record.slug+'/'});
     const actual=collectPages(data).find(p=>p.route===`${collection.base}/${record.slug}/`).html;
     assert.equal(extractFrame(actual),preview,`DOM parity for ${record.slug}`);
   }
@@ -30,12 +30,12 @@ test('custom page previews match their published HTML',()=>{
   const draft=structuredClone(data);
   const page=draft.pages.find(p=>p.id==='home');
   page.status='Published';
-  const generated=renderDocument(draft,{title:page.title,blocks:page.blocks});
-  assert.equal(extractFrame(generated),renderPagePreview(draft,page.blocks));
+  const generated=renderDocument(draft,{title:page.title,blocks:page.blocks,pageId:page.id,route:page.slug});
+  assert.equal(extractFrame(generated),renderPagePreview(draft,page.blocks,null,{pageId:page.id,route:page.slug}));
 });
 
 test('design overlays preserve the identical content, adding only selection hooks',()=>{
-  const blocks=templateFor(data,project,publishedProject).blocks;
+  const blocks=[publishedProject.composition];
   const first=blocks[0].id;
   const plain=renderBlocks(blocks,publishedProject,data);
   const edit=renderBlocks(blocks,publishedProject,data,{design:true,selectedId:first});
@@ -46,14 +46,14 @@ test('design overlays preserve the identical content, adding only selection hook
 
 test('shared template changes propagate to studio previews and all public records',()=>{
   const draft=structuredClone(data);
-  const template=draft.templates.find(t=>t.id==='project-detail');
-  template.blocks.push({id:'parity-case',type:'text',text:'ONE SOURCE FOR EVERYTHING',style:'caption'});
+  const template=draft.templates.find(t=>t.id==='record-project-layout');
+  template.blocks[0].background='grey-100';
   const pages=collectPages(draft).filter(p=>p.route.startsWith('/work/'));
   assert.ok(pages.length>=2);
   for(const record of project.records.filter(x=>x.status!=='Draft')){
     const generated=pages.find(p=>p.route.endsWith('/'+record.slug+'/'));
-    const preview=renderPagePreview(draft,template.blocks,record);
-    assert.ok(generated?.html.includes('ONE SOURCE FOR EVERYTHING'));
+    const preview=renderPagePreview(draft,template.blocks,record,{route:project.base+'/'+record.slug+'/'});
+    assert.ok(generated?.html.includes('bg-grey-100'));
     assert.equal(extractFrame(generated.html),preview);
   }
 });
@@ -61,7 +61,7 @@ test('shared template changes propagate to studio previews and all public record
 test('query blocks never link draft records in either preview or website',()=>{
   const draft=structuredClone(data);
   const home=draft.pages.find(p=>p.id==='home');
-  const rendered=renderPagePreview(draft,home.blocks);
+  const rendered=renderPagePreview(draft,home.blocks,null,{pageId:home.id,route:home.slug});
   assert.ok(!rendered.includes('href="/posts/soft-modules/"'));
   assert.ok(!rendered.includes('href="/studio/"'));
 });
@@ -75,7 +75,7 @@ test('text payloads, links and image asset paths are escaped or constrained',()=
     {id:'b',type:'button',href:'javascript:alert(1)',text:'Test'},
     {id:'i',type:'image',source:draft.assets[0].id}
   ];
-  const output=renderPagePreview(draft,template.blocks,rec);
+  const output=renderBlocks(template.blocks,rec,draft);
   assert.ok(output.includes('&lt;script&gt;'));
   assert.ok(!output.includes('<script>'));
   assert.ok(!output.includes('href="javascript:'));

@@ -39,7 +39,7 @@ test('M8 stale tabs and uploads cannot overwrite or bypass an atomic file revisi
   // Invalid authored trees must return actionable HTTP 400 and preserve both
   // the saved file and its revision (not silently render, nor report HTTP 500).
   const hidden=structuredClone(alpha);
-  hidden.pages[0].blocks[0].children[0].id=hidden.pages[0].blocks[0].id;
+  hidden.pages[0].composition.children[0].id=hidden.pages[0].composition.id;
   const invalidNode=await put(hidden,secondTagValue);
   assert.equal(invalidNode.status,400);
   assert.match((await invalidNode.json()).error,/Duplicate node ID/);

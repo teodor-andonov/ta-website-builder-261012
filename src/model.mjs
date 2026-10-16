@@ -1,3 +1,6 @@
+import {assertSlotTemplate,slotsIn} from './page-assembly.mjs';
+import {validateStyleDefinitions,validateNodeStyle} from './style-system.mjs';
+import {validateAssetSource} from './asset-query.mjs';
 // Shared data contract for the local editor API and static build.
 export function validate(data) {
   // Expose validation failures as HTTP 400, rather than a misleading server error.
@@ -7,6 +10,11 @@ export function validate(data) {
     if (!Array.isArray(data[name])) fail(`${name} must be an array`);
   if (!data.site || typeof data.site.name !== 'string') fail('site.name must be a string');
   if (data.version !== 2) fail('Unsupported data version (expected 2)');
+  if(data.site.publishing!==undefined && (
+    !data.site.publishing || typeof data.site.publishing!=='object' ||
+    Array.isArray(data.site.publishing) || typeof data.site.publishing.indexing!=='boolean' ||
+    Object.keys(data.site.publishing).some(key=>key!=='indexing')))
+    fail('site.publishing.indexing must be a boolean');
   // Public contact details are intentionally optional until the user verifies them.
   // A missing booking destination must never become a live placeholder link.
   if(data.site.contact!==undefined){
@@ -31,6 +39,17 @@ export function validate(data) {
       navPaths.add(route);
     }
   }
+  // Site chrome is selected by reference; the navigation data remains in site.navigation.
+  if(data.site.chrome!==undefined){
+    const chrome=data.site.chrome;
+    if(!chrome||typeof chrome!=='object'||Array.isArray(chrome)||Object.keys(chrome).some(k=>!['navigation','footer'].includes(k))||
+       typeof chrome.navigation!=='string'||typeof chrome.footer!=='string')
+      fail('site.chrome must select navigation and footer components');
+    for(const role of ['navigation','footer']){
+      const component=data.components.find(c=>c.id===chrome[role]);
+      if(!component||component.frameRole!==role)fail('Invalid site.chrome '+role+' component');
+    }
+  }
   const seenRoutes = new Set();
   const claimRoute = (route) => {
     if (seenRoutes.has(route)) fail(`Duplicate route: ${route}`);
@@ -53,12 +72,14 @@ export function validate(data) {
     claimRoute(route !== '/' ? route.replace(/\/$/,'') : route);
   }
   for (const collection of data.collections) {
+    if(collection.detailPages!==undefined&&typeof collection.detailPages!=='boolean')fail('Invalid collection detailPages: '+collection.id);
     if (typeof collection.base !== 'string' || !/^\/[a-z0-9-]+(?:\/[a-z0-9-]+)*$/.test(collection.base))
       fail(`Invalid collection base: ${collection.base}`);
     if (!Array.isArray(collection.records) || !Array.isArray(collection.fields)) fail(`Invalid collection: ${collection.id}`);
     distinctIds(collection.records, `${collection.id} records`);
     const localSlugs = new Set();
     for (const record of collection.records) {
+      if(record.detailPage!==undefined&&typeof record.detailPage!=='boolean')fail('Invalid record detailPage: '+record.id);
       if (!safeSlug(record.slug)) fail(`Invalid ${collection.id} slug: ${record.slug}`);
       if (localSlugs.has(record.slug)) fail(`Duplicate ${collection.id} slug: ${record.slug}`);
       localSlugs.add(record.slug);
@@ -110,6 +131,16 @@ export function validate(data) {
       if(x.slice(0,2)!==x.slice(2,4)||x.slice(2,4)!==x.slice(4,6))fail('Palette must be grayscale only');
     }
   }
+  validateStyleDefinitions(data,fail);
+  const tokens=data.site.design?.tokens;
+  if(tokens!==undefined){
+    if(!tokens||typeof tokens!=='object'||Array.isArray(tokens)||
+       Object.keys(tokens).some(key=>!['fontFamily','radius','outlineOpacity'].includes(key))||
+       (tokens.fontFamily!==undefined&&!['mono','system'].includes(tokens.fontFamily))||
+       (tokens.radius!==undefined&&(!Number.isFinite(tokens.radius)||tokens.radius<.1||tokens.radius>5))||
+       (tokens.outlineOpacity!==undefined&&(!Number.isFinite(tokens.outlineOpacity)||tokens.outlineOpacity<0||tokens.outlineOpacity>1)))
+      fail('Invalid site design tokens');
+  }
   // The editor selects nodes by ID within an authoring scope (Page, Template, Component).
   // Reuse across independent scopes is fine; aliases within one scope are ambiguous.
   const checkBlocks=(blocks,where,seen=new Set(),depth=0)=>{
@@ -119,6 +150,7 @@ export function validate(data) {
       if(!b||typeof b!=='object'||!safeId(b.id))fail(`Invalid block in ${where}`);
       if(seen.has(b.id))fail(`Duplicate node ID in ${where}: ${b.id}`);
       seen.add(b.id);
+      validateNodeStyle(b,data,fail);
       if(b.overflow!==undefined&&!['clip','scroll'].includes(b.overflow))fail(`Invalid item overflow: ${b.id}`);
       if(b.type==='query'||b.type==='component')fail(`Legacy directive must be a source/reference Card: ${b.id}`);
       if(b.type!=='card'){
@@ -134,7 +166,8 @@ export function validate(data) {
       }
       if(!Number.isInteger(b.columns)||b.columns<1||b.columns>64||!Number.isInteger(b.rows)||b.rows<1||b.rows>64)
         fail(`Invalid grid divisions on ${b.id}`);
-      if(b.source!==undefined){
+      if(b.source!==undefined&&b.source?.kind==='assets')validateAssetSource(b.source,fail);
+      else if(b.source!==undefined){
         const src=b.source;
         if(!src||typeof src!=='object'||!safeId(src.collection)||!safeId(src.template)||
           !data.collections.some(c=>c.id===src.collection)||!data.components.some(c=>c.id===src.template)||
@@ -158,6 +191,22 @@ export function validate(data) {
     }
   };
   for(const p of [...data.pages,...data.templates,...data.components])checkBlocks(p.blocks,p.id);
+  for(const component of data.components){
+    if(component.frameRole===undefined)continue;
+    if(!['navigation','footer'].includes(component.frameRole)||
+       component.blocks.length!==1||component.blocks[0]?.type!=='card'||
+       component.blocks[0].area!==undefined||component.blocks[0].slot!==undefined||
+       component.blocks[0].source||component.blocks[0].reference||
+       component.blocks[0].columns!==12||component.blocks[0].rows!==1)
+      fail('Invalid semantic site frame component: '+component.id);
+    if(component.frameRole==='navigation'){
+      const logos=component.blocks[0].children.filter(node=>node.type==='button'&&node.variant==='site-logo');
+      if(logos.length!==1||logos[0].href!=='/'||logos[0].area?.x2>7)
+        fail('Navigation component requires one Home logo Item: '+component.id);
+      if(component.blocks[0].children.some(node=>node.area?.x2>7&&node.variant!=='site-logo'))
+        fail('Navigation reserves the right half for generated links: '+component.id);
+    }
+  }
   // Reusable component references (including query tile sources) must form an acyclic graph.
   // The renderer cannot expand cycles safely; reject them before storing canonical JSON.
   const edges=new Map(data.components.map(component=>[component.id,new Set()]));
@@ -190,9 +239,74 @@ export function validate(data) {
   for (const component of data.components) if (!Array.isArray(component.blocks)) fail(`Invalid component ${component.id}`);
   const templateIds = new Set(data.templates.map(t=>t.id));
   for (const collection of data.collections) {
-    if (collection.defaultTemplate && !templateIds.has(collection.defaultTemplate)) fail(`Missing default template ${collection.defaultTemplate}`);
-    for (const id of Object.values(collection.formatTemplates ?? {}))
-      if (!templateIds.has(id)) fail(`Missing format template ${id}`);
+    if(collection.defaultTemplate){
+      const t=data.templates.find(t=>t.id===collection.defaultTemplate);
+      if(!t||t.collection!==collection.id||t.layoutMode==='slot')
+        fail('Collection defaultTemplate must be a legacy detail template: '+collection.id);
+    }
+    for(const id of Object.values(collection.formatTemplates??{})){
+      const t=data.templates.find(t=>t.id===id);
+      if(!t||t.collection!==collection.id||t.layoutMode==='slot')
+        fail('Format detail template must be a legacy collection template: '+collection.id);
+    }
+    if(collection.compositionTemplate!==undefined){
+      const t=data.templates.find(t=>t.id===collection.compositionTemplate);
+      if(!t||t.layoutMode!=='slot'||t.collection!==collection.id)
+        fail('Invalid collection compositionTemplate: '+collection.id);
+    }
+  }
+  // M12 is opt-in: V1 pages and record-detail templates remain untouched.
+  for(const template of data.templates){
+    if(template.chrome!==undefined){
+      const refs=template.chrome;
+      if(!refs||typeof refs!=='object'||Array.isArray(refs)||
+         Object.keys(refs).some(key=>!['navigation','footer'].includes(key)))
+        fail('Invalid template chrome references: '+template.id);
+      for(const [role,id] of Object.entries(refs)){
+        const component=data.components.find(c=>c.id===id);
+        if(!component||component.frameRole!==role)
+          fail('Unknown '+role+' frame Component in template: '+template.id);
+      }
+    }
+    if(template.layoutMode===undefined){
+      if(slotsIn(template.blocks).length)fail('Legacy template cannot contain a main slot: '+template.id);
+    }else if(template.layoutMode==='slot'){
+      try{assertSlotTemplate(template)}catch(e){fail(e.message)}
+    }else fail('Unsupported template layout mode: '+template.id);
+  }
+  for(const component of data.components)
+    if(slotsIn(component.blocks).length)fail('Component cannot own a page slot: '+component.id);
+  for(const collection of data.collections)for(const record of collection.records){
+    if(record.template===undefined&&record.composition===undefined)continue;
+    const choice=record.template || collection.formatTemplates?.[record[collection.formatField]] || collection.defaultTemplate;
+    const template=data.templates.find(t=>t.id===choice);
+    if(!template||template.collection!==collection.id)
+      fail('Invalid record detail template: '+record.id);
+    if(record.composition===undefined){
+      if(template.layoutMode==='slot')fail('Record slot template needs a composition: '+record.id);
+      continue;
+    }
+    if(template.layoutMode!=='slot'||!record.template)
+      fail('Record composition requires an explicit slot template: '+record.id);
+    const root=record.composition;
+    if(!root||root.type!=='card'||root.area!==undefined||root.slot!==undefined||
+       slotsIn([root]).length||root.source||root.reference)
+      fail('Record requires exactly one root Card without area or slot: '+record.id);
+    checkBlocks([root],collection.id+'/'+record.id+' composition');
+  }
+  for(const page of data.pages){
+    if(slotsIn(page.blocks).length)fail('Page authoring cannot contain a template slot: '+page.id);
+    if(page.template!==undefined || page.composition!==undefined){
+      if(typeof page.template!=='string'||!templateIds.has(page.template))
+        fail('Page requires a known slot template: '+page.id);
+      const template=data.templates.find(t=>t.id===page.template);
+      if(template.layoutMode!=='slot')fail('Page template is not slot based: '+page.id);
+      if(page.blocks.length)fail('Page must not duplicate blocks when using a composition: '+page.id);
+      if(!page.composition||page.composition.type!=='card'||page.composition.area!==undefined||
+         slotsIn([page.composition]).length)
+        fail('Page requires exactly one root Card without area or slot: '+page.id);
+      checkBlocks([page.composition],page.id+' composition');
+    }
   }
   return data;
 }

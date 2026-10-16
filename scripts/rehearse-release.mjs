@@ -1,7 +1,7 @@
 /**
  * M11 dry run: snapshot -> package -> edit -> package -> failure -> restore ->
  * package -> verify rollback. Never touches the live JSON, media, or repo dist.
- * Staging/noindex only: any inherited production env is explicitly disabled.
+ * Uses the ordinary local public build; never contacts a publishing host.
  */
 import {mkdtemp,mkdir,cp,readFile,writeFile,rm,stat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -27,14 +27,14 @@ export async function rehearseRelease(){
   // A verified backup is the durable rollback source, not an old dist folder.
   const snapshot=await createSnapshot(working,join(temporary,'snapshots'));
   await verifySnapshot(snapshot.path);
-  const env={...process.env,TA_ENABLE_INDEXING:'0',TA_PUBLIC_ORIGIN:''};
+  const env={...process.env,TA_PUBLIC_ORIGIN:''};
   const bundle=async(dataRoot,out,name)=>packageSite({
     dist:join(temporary,out),destination:name,env:{...env,TA_DATA_ROOT:dataRoot}
   });
   const baseline=await bundle(working,'site-original',baselineZip);
   const baselineHash=hash(await read(baselineZip));
   const originalHTML=await read(join(temporary,'site-original','index.html'));
-  if(!originalHTML.includes('noindex, nofollow'))throw Error('Rollback baseline was not an unindexed preview');
+  if(!originalHTML.includes(baseline.indexable?'index, follow':'noindex, nofollow'))throw Error('Rollback baseline has an unexpected indexing mode');
   // Simulate a real authoring update on the disposable data copy.
   const document=validate(JSON.parse((await read(join(working,'content','site.json'))).toString()));
   document.site.name='TA rehearsal updated content';
@@ -75,7 +75,7 @@ export async function rehearseRelease(){
    snapshotFiles:snapshot.fileCount,publicFiles:baseline.files,
    zipBytes:baseline.zipBytes,recoveredZipMatches:true,
    failedBuildRetainedLastGood:true,existingWorkingFolderUntouched:true,
-   noindex:true
+   indexable:baseline.indexable
   };
  }finally{await rm(temporary,{recursive:true,force:true})}
 }

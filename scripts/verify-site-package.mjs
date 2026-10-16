@@ -1,8 +1,7 @@
 /**
  * M11 third-party/static-host handoff verifier.
  * Reads actual ZIP bytes and validates every entry against release-manifest.json,
- * checks archive boundaries/CRC/size/path safety, and checks the preview
- * noindex / production indexable release mode.
+ * checks archive boundaries/CRC/size/path safety, and checks the document's indexing mode and optional sitemap consistency.
  * Read-only; does not extract anything or deploy to a host.
  */
 import {readFile} from 'node:fs/promises';
@@ -107,24 +106,24 @@ export function verifySiteArchive(bytes){
  for(const [name,htmlBytes] of htmlFiles){
   const html=htmlBytes.toString('utf8');
   if(manifest.indexable){
-   if(name!=='404.html'&&(!html.includes('name="robots" content="index, follow"')||
-       !html.includes('<link rel="canonical" href="https://')))
-    throw Error('Indexable page lacks production metadata: '+name);
+   if(name!=='404.html'&&!html.includes('name="robots" content="index, follow"'))
+    throw Error('Public page lacks indexable metadata: '+name);
   }else if(!html.includes('name="robots" content="noindex'))
     throw Error('Unindexed package contains indexable HTML: '+name);
  }
  if(manifest.indexable){
-  if(!found.has('sitemap.xml')||!robots.includes('Allow: /')||!robots.includes('Sitemap: https://'))
-   throw Error('Production package missing SEO configuration');
- }else if(found.has('sitemap.xml')||!robots.includes('Disallow: /'))
-  throw Error('Preview package must have no sitemap and disallow crawlers');
+  if(!robots.includes('Allow: /'))throw Error('Public package must allow crawlers');
+  if(found.has('sitemap.xml')!==robots.includes('Sitemap: https://'))
+   throw Error('Sitemap and robots.txt disagree');
+ }else if(found.has('sitemap.xml')||!robots.includes('Allow: /')||robots.includes('Sitemap:'))
+  throw Error('Unindexed package must remain crawlable for noindex discovery, without a sitemap');
  return {files:manifest.files.length,bytes:total,indexable:manifest.indexable,valid:true};
 }
 export async function verifySitePackage(path){return verifySiteArchive(await readFile(resolve(path)))}
 const invoked=process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url);
 if(invoked){
  try{
-  const path=process.argv[2]||join(root,'release','ta-website-preview.zip');
+  const path=process.argv[2]||join(root,'release','website.zip');
   console.log('M11_PACKAGE_VERIFIED '+JSON.stringify(await verifySitePackage(path)));
  }catch(error){console.error('M11_PACKAGE_INVALID '+error.message);process.exitCode=1}
 }

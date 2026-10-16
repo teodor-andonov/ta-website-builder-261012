@@ -107,15 +107,18 @@
 <button class="structure-move" data-act="tree-move" data-move="indent" title="Nest into preceding Card (Alt+→)" aria-label="Nest selection into previous Card" disabled>↳</button>
 <button class="structure-move" data-act="tree-move" data-move="outdent" title="Move out of parent Card (Alt+←)" aria-label="Move selection out of parent Card" disabled>↰</button>
 <span class="structure-move-hint">ALT + ARROWS</span></div><div class="structure-scroll" id="structureTree" role="tree" aria-label="Cards and Items"></div><div class="structure-footer"><button class="btn sm" data-act="show-blocks" data-inside="no">+ Section</button><button class="btn sm" data-act="show-blocks" data-inside="yes" id="treeAddChild" title="Add Item or Card into selected Card" disabled>+ Child</button><button class="btn ghost sm" data-act="undo-structure" id="treeUndo" title="Undo (Ctrl+Z)" disabled>↶ Undo</button><button class="btn ghost sm" data-act="redo-structure" id="treeRedo" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button></div></aside>
- <main class="workspace"><div class="worktop"><div class="breadcrumbs" id="breadcrumbs"></div><div class="workactions"><button class="btn sm structure-toggle" id="structureToggle" data-act="toggle-structure" aria-pressed="true" title="Show or hide document structure">☷ Structure</button><button class="btn sm inspect-toggle" id="inspectToggle">Properties</button><div class="seg" id="modeTabs"></div></div></div><div class="workbody" id="workbody"></div></main>
+ <main class="workspace"><div class="worktop"><div class="breadcrumbs" id="breadcrumbs"></div><div class="workactions"><button class="btn sm" id="quickAdd" data-act="show-blocks" data-inside="no" title="Add inside selected Card or beside selected Item">+ Add object</button><button class="btn sm structure-toggle" id="structureToggle" data-act="toggle-structure" aria-pressed="true" title="Show or hide document structure">☷ Structure</button><button class="btn sm inspect-toggle" id="inspectToggle">Properties</button><div class="seg" id="modeTabs"></div></div></div><div class="workbody" id="workbody"></div></main>
  <aside class="inspector" id="inspector"><div class="inspect-head"><span id="inspectorTitle">Properties</span><button class="btn ghost sm" id="inspectClose">✕</button></div><div class="inspect-body" id="inspectBody"></div></aside>
 </div>
 <div id="modalHost"></div>
 <script type="module">
-import { renderBlocks as renderSharedBlocks, renderSiteFrame, assetSrc } from "/src/render.mjs";
+import { renderBlocks as renderSharedBlocks, renderSiteFrame, renderPagePreview, renderChromeComponent, collectPages, assetSrc } from "/src/render.mjs";
 import {moveTreeNode,moveTreeByIntent,findFreeArea,findAreaConflicts} from "/src/tree-editor.mjs";
 import {createEditorHistory} from "/src/editor-history.mjs";
 import {validate as validateSiteData} from "/src/model.mjs";
+import {resolveAppearance,CARD_PROPERTIES,ITEM_PROPERTIES,STYLE_OPTIONS} from "/src/style-system.mjs";
+import {ASSET_FILTERS} from "/src/asset-query.mjs";
+import {findAssetUses} from "/src/asset-usage.mjs";
 (async ()=>{'use strict';
 const SVG_ART={
 field:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 680"><defs><radialGradient id="a"><stop stop-color="#797a74"/><stop offset=".6" stop-color="#d2d3cb"/><stop offset="1" stop-color="#f2f2ec"/></radialGradient><filter id="b"><feGaussianBlur stdDeviation="16"/></filter><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency=".45" numOctaves="2" seed="7" result="n"/><feColorMatrix in="n" type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".07"/></feComponentTransfer></filter></defs><rect width="800" height="680" fill="#e7e8e1"/><g fill="#454640" opacity=".75"><rect x="110" y="102" width="160" height="160" rx="48"/><rect x="294" y="102" width="160" height="160" rx="38"/><rect x="478" y="102" width="160" height="160" rx="62"/><rect x="110" y="286" width="160" height="160" rx="55"/><rect x="294" y="286" width="160" height="160" rx="58"/><rect x="478" y="286" width="160" height="160" rx="47"/><rect x="294" y="470" width="160" height="160" rx="60"/></g><ellipse cx="422" cy="327" rx="260" ry="200" fill="url(#a)" filter="url(#b)" opacity=".85"/><rect width="800" height="680" filter="url(#noise)" opacity=".9"/></svg>`,
@@ -280,10 +283,30 @@ function persist(){
 window.addEventListener('beforeunload',event=>{
  if(saveBlocked){event.preventDefault();event.returnValue='';}
 });
-function choose(section,id){ui.section=section;ui.node=null;ui.structureCollapsed.clear();ui.areaDraft=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'};$('#sidebar').classList.remove('show');renderAll()}
-function visibleModes(){if(ui.section==='collection')return ['table','settings','json'];if(ui.section==='record')return ['preview','fields','json'];if(['page','template','component'].includes(ui.section))return ['design','preview','json'];if(ui.section==='assets')return ['grid','table','json'];return []}
-function currentScope(){if(ui.section==='page')return page();if(ui.section==='template')return tpl();if(ui.section==='component')return component();return null}
-function currentBlocks(){return currentScope()?.blocks||[]}
+function choose(section,id){ui.section=section;ui.node=null;ui.structureCollapsed.clear();ui.areaDraft=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'}else if(section==='styles'){ui.mode='library';ui.styleId=id||ui.styleId||db.site.design.styles?.[0]?.id};$('#sidebar').classList.remove('show');renderAll()}
+function visibleModes(){if(ui.section==='collection')return ['table','settings','json'];if(ui.section==='record')return rec()?.composition?['design','preview','fields','json']:['preview','fields','json'];if(['page','template','component'].includes(ui.section))return ['design','preview','json'];if(ui.section==='assets')return ['grid','table','json'];return []}
+function compositionRecord(){return ui.section==='record'&&Boolean(rec()?.composition)}
+function currentScope(){if(compositionRecord())return rec();if(ui.section==='page')return page();if(ui.section==='template')return tpl();if(ui.section==='component')return component();return null}
+// A templated Page owns exactly one editable composition root, not the template tree.
+function compositionPage(){return ui.section==='page'&&Boolean(page()?.template)}
+function currentBlocks(){const scope=currentScope();return compositionPage()||compositionRecord()?[scope.composition]:scope?.blocks||[]}
+function assignScopeBlocks(blocks){
+ const scope=currentScope();if(!scope)return false;
+ if(compositionPage()||compositionRecord()){
+   if(blocks.length!==1||blocks[0]?.type!=='card'||blocks[0].area!==undefined||blocks[0].slot!==undefined)return false;
+   scope.composition=blocks[0];
+ }else scope.blocks=blocks;
+ return true;
+}
+function compositionRoot(){return compositionPage()?page().composition:compositionRecord()?rec().composition:null}
+function frameComponent(){return ui.section==='component'&&Boolean(component()?.frameRole)}
+function protectedNode(id){
+ const frame=frameComponent(),found=id?findNode(id):null;
+ return Boolean((compositionPage()||compositionRecord())&&id===compositionRoot()?.id)||
+   Boolean(ui.section==='template'&&tpl()?.layoutMode==='slot'&&(currentBlocks()[0]?.id===id||found?.node?.slot==='main'))||
+   Boolean(frame&&(currentBlocks()[0]?.id===id||found?.node?.variant==='site-logo'));
+}
+
 // M8 authoring history records only completed Card/Item mutations, never hover
 // state, selection changes, invalid numeric drafts or pending drag gestures.
 const editorHistory=createEditorHistory({limit:40,scopes:16});
@@ -291,6 +314,14 @@ function historyScope(){const scope=currentScope();return scope?ui.section+':'+s
 function snapshotScope(){return clone(currentBlocks())}
 function saveScopeEdit(before,selectedBefore){
  const key=historyScope();
+ // Reject invalid structural edits while preserving the last valid authoring tree.
+ if(frameComponent()||compositionPage()||compositionRecord()||(ui.section==='template'&&tpl()?.layoutMode==='slot')){
+   try{validateSiteData(db)}
+   catch(error){
+     assignScopeBlocks(before);ui.node=selectedBefore;ui.areaDraft=null;
+     alert(error.message);renderAll();return false;
+   }
+ }
  if(!key||!editorHistory.record(key,before,currentBlocks(),selectedBefore,ui.node))return false;
  persist();renderAll();return true;
 }
@@ -299,7 +330,7 @@ function restoreScopeEdit(direction){
  if(!scope||!key)return false;
  const restored=direction==='redo'?editorHistory.redo(key):editorHistory.undo(key);
  if(!restored)return false;
- scope.blocks=restored.blocks;
+ if(!assignScopeBlocks(restored.blocks))return false;
  ui.node=restored.selected&&findNode(restored.selected)?restored.selected:null;
  ui.areaDraft=null;ui.areaDrag=null;
  // Reveal previously hidden parents if undo restored a nested selection.
@@ -311,31 +342,137 @@ function restoreScopeEdit(direction){
 function findNode(id,arr=currentBlocks(),parent=null){for(let i=0;i<arr.length;i++){let n=arr[i];if(n.id===id)return {node:n,arr,index:i,parent};if(n.children){let f=findNode(id,n.children,n);if(f)return f}}return null}
 function setAndRender(fn,all=true){fn();persist();all?renderAll():renderWork()}
 function renderAll(){renderSide();renderTop();renderWork();renderInspector()}
-function renderSide(){let nav=(name,icon,section,id='',meta='')=>`<button class="nav-item ${ui.section===section&&(id===''||id===(section==='page'?ui.page:section==='template'?ui.template:section==='component'?ui.component:ui.collection))?'active':''}" data-act="navigate" data-section="${section}" data-id="${e(id)}">${ic(icon)}<span class="label">${e(name)}</span>${meta?`<span class="count">${e(meta)}</span>`:''}</button>`;$('#sidebarContent').innerHTML=`<div class="side-head"><div class="upper">WORKSPACE / LOCAL</div><strong>${e(db.site.name)}</strong></div><div class="nav-group"><div class="nav-label">Workspace</div>${nav('Overview','home','dashboard')}</div><div class="nav-group"><div class="nav-label">Pages <button class="nav-add" data-act="new-page" title="Add page">${ic('add')}</button></div>${db.pages.map(p=>nav(p.title,'page','page',p.id)).join('')}</div><div class="nav-group"><div class="nav-label">Collections <button class="nav-add" data-act="new-collection" title="Add collection">${ic('add')}</button></div>${db.collections.map(c=>nav(c.name,'table','collection',c.id,String(c.records.length))).join('')}</div><div class="nav-group"><div class="nav-label">Structure</div>${nav('Templates','template','template','',String(db.templates.length))}${nav('Components','blocks','component','',String(db.components.length))}${nav('Image library','image','assets','',String(db.assets.length))}</div><div class="nav-group"><div class="nav-label">Data</div>${nav('All JSON','code','data')}</div>`}
-function renderTop(){const names={dashboard:'Overview',page:page()?.title||'Page',collection:coll()?.name||'Collection',record:rec()?.title||'Record',template:tpl()?.name||'Templates',component:component()?.name||'Components',assets:'Assets',data:'All site data'};let section=ui.section==='record'?'Collection / '+(coll()?.name||''):ui.section==='template'?'Templates':ui.section==='component'?'Components':ui.section==='assets'?'Library':'Workspace';$('#breadcrumbs').innerHTML=`<span>TA</span><span class="sep">/</span><span>${e(section)}</span><span class="sep">/</span><strong>${e(names[ui.section])}</strong>`;$('#modeTabs').innerHTML=visibleModes().map(mode=>`<button class="${ui.mode===mode?'active':''}" data-act="mode" data-mode="${mode}">${mode[0].toUpperCase()+mode.slice(1)}</button>`).join('')}
+function renderSide(){let nav=(name,icon,section,id='',meta='')=>`<button class="nav-item ${ui.section===section&&(id===''||id===(section==='page'?ui.page:section==='template'?ui.template:section==='component'?ui.component:ui.collection))?'active':''}" data-act="navigate" data-section="${section}" data-id="${e(id)}">${ic(icon)}<span class="label">${e(name)}</span>${meta?`<span class="count">${e(meta)}</span>`:''}</button>`;$('#sidebarContent').innerHTML=`<div class="side-head"><div class="upper">WORKSPACE / LOCAL</div><strong>${e(db.site.name)}</strong></div><div class="nav-group"><div class="nav-label">Workspace</div>${nav('Overview','home','dashboard')}</div><div class="nav-group"><div class="nav-label">Pages <button class="nav-add" data-act="new-page" title="Add page">${ic('add')}</button></div>${db.pages.map(p=>nav(p.title,'page','page',p.id)).join('')}</div><div class="nav-group"><div class="nav-label">Collections <button class="nav-add" data-act="new-collection" title="Add collection">${ic('add')}</button></div>${db.collections.map(c=>nav(c.name,'table','collection',c.id,String(c.records.length))).join('')}</div><div class="nav-group"><div class="nav-label">Structure</div>${nav('Templates','template','template','',String(db.templates.length))}${nav('Components','blocks','component','',String(db.components.length))}${nav('Styles','settings','styles','',String(db.site.design.styles?.length||0))}${nav('Image library','image','assets','',String(db.assets.length))}</div><div class="nav-group"><div class="nav-label">Data</div>${nav('All JSON','code','data')}</div>`}
+function renderTop(){const names={dashboard:'Overview',page:page()?.title||'Page',collection:coll()?.name||'Collection',record:rec()?.title||'Record',template:tpl()?.name||'Templates',component:component()?.name||'Components',assets:'Assets',styles:'Design styles',data:'All site data'};let section=ui.section==='record'?'Collection / '+(coll()?.name||''):ui.section==='template'?'Templates':ui.section==='component'?'Components':ui.section==='assets'?'Library':'Workspace';$('#breadcrumbs').innerHTML=`<span>TA</span><span class="sep">/</span><span>${e(section)}</span><span class="sep">/</span><strong>${e(names[ui.section])}</strong>`;$('#quickAdd').style.display=isStructureEditing()?'':'none';$('#modeTabs').innerHTML=visibleModes().map(mode=>`<button class="${ui.mode===mode?'active':''}" data-act="mode" data-mode="${mode}">${mode[0].toUpperCase()+mode.slice(1)}</button>`).join('')}
 function titleBar(eyebrow,title,description,buttons=''){return `<div class="page-heading"><div><div class="upper" style="margin-bottom:8px">${eyebrow}</div><h1 class="section-title">${e(title)}</h1><p class="section-lead">${e(description)}</p></div><div class="heading-buttons">${buttons}</div></div>`}
-function renderWork(){let body='';if(ui.section==='dashboard')body=dashboard();else if(ui.section==='collection')body=collectionView();else if(ui.section==='record')body=recordView();else if(ui.section==='page'||ui.section==='template'||ui.section==='component')body=designView();else if(ui.section==='assets')body=assetView();else if(ui.section==='data')body=jsonView(db,'all');const host=$('#workbody'),top=host.scrollTop;host.innerHTML=body;host.scrollTop=top;renderStructure();}
-function dashboard(){let count=db.collections.reduce((a,c)=>a+c.records.length,0);return `<div class="content-wrap">${titleBar('STUDIO / OVERVIEW','Your content, structured.','Pages, records and metadata live in JSON; images are stored as files.',`<button class="btn" data-act="navigate" data-section="page" data-id="home">Open website ${ic('arrow')}</button>`)}<div class="stats"><div class="stat"><span class="upper">Records</span><b>${count}</b><span class="muted">across ${db.collections.length} collections</span></div><div class="stat"><span class="upper">Generated pages</span><b>${count}</b><span class="muted">one route per record</span></div><div class="stat"><span class="upper">Design system</span><b>${db.templates.length+db.components.length}</b><span class="muted">templates + components</span></div></div><div class="dashboard-grid"><div class="panel"><div class="panel-head">Collections <button class="btn sm" data-act="new-collection">${ic('add')} New</button></div>${db.collections.map(c=>`<button class="panel-row" data-act="navigate" data-section="collection" data-id="${e(c.id)}">${ic('table')} ${e(c.name)} <span class="summary">${c.records.length} records ↗</span></button>`).join('')}</div><div class="panel"><div class="panel-head">Authoring <span class="upper">FILE FIRST</span></div><button class="panel-row" data-act="navigate" data-section="page" data-id="home">${ic('page')} Design landing page <span class="summary">Canvas ↗</span></button><button class="panel-row" data-act="navigate" data-section="template" data-id="project-detail">${ic('template')} Edit a shared template <span class="summary">Visual ↗</span></button><button class="panel-row" data-act="navigate" data-section="collection" data-id="posts">${ic('table')} Write a post <span class="summary">Table ↗</span></button><button class="panel-row" data-act="navigate" data-section="assets">${ic('image')} Manage image metadata <span class="summary">Library ↗</span></button></div></div><p class="help" style="margin-top:20px">JSON stores content and asset metadata; uploaded images live under assets/uploads/ · Back up both files and JSON.</p></div>`}
+function renderWork(){let body='';if(ui.section==='dashboard')body=dashboard();else if(ui.section==='collection')body=collectionView();else if(ui.section==='record')body=recordView();else if(ui.section==='page'||ui.section==='template'||ui.section==='component')body=designView();else if(ui.section==='assets')body=assetView();else if(ui.section==='styles')body=designSystemView();else if(ui.section==='data')body=jsonView(db,'all');const host=$('#workbody'),top=host.scrollTop;host.innerHTML=body;host.scrollTop=top;renderStructure();}
+function dashboard(){let count=db.collections.reduce((a,c)=>a+c.records.length,0),live=collectPages(db).length;return `<div class="content-wrap">${titleBar('STUDIO / OVERVIEW','Your content, structured.','Pages, records and metadata live in JSON; images are stored as files.',`<button class="btn" data-act="navigate" data-section="page" data-id="home">Open website ${ic('arrow')}</button>`)}<div class="stats"><div class="stat"><span class="upper">Records</span><b>${count}</b><span class="muted">across ${db.collections.length} collections</span></div><div class="stat"><span class="upper">Generated pages</span><b>${live}</b><span class="muted">current public routes</span></div><div class="stat"><span class="upper">Design system</span><b>${db.templates.length+db.components.length}</b><span class="muted">templates + components</span></div></div><div class="dashboard-grid"><div class="panel"><div class="panel-head">Collections <button class="btn sm" data-act="new-collection">${ic('add')} New</button></div>${db.collections.map(c=>`<button class="panel-row" data-act="navigate" data-section="collection" data-id="${e(c.id)}">${ic('table')} ${e(c.name)} <span class="summary">${c.records.length} records ↗</span></button>`).join('')}</div><div class="panel"><div class="panel-head">Authoring <span class="upper">FILE FIRST</span></div><button class="panel-row" data-act="navigate" data-section="page" data-id="home">${ic('page')} Design landing page <span class="summary">Canvas ↗</span></button><button class="panel-row" data-act="navigate" data-section="template" data-id="project-detail">${ic('template')} Edit a shared template <span class="summary">Visual ↗</span></button><button class="panel-row" data-act="navigate" data-section="collection" data-id="posts">${ic('table')} Write a post <span class="summary">Table ↗</span></button><button class="panel-row" data-act="navigate" data-section="assets">${ic('image')} Manage image metadata <span class="summary">Library ↗</span></button></div></div><p class="help" style="margin-top:20px">JSON stores content and asset metadata; uploaded images live under assets/uploads/ · Back up both files and JSON.</p></div>`}
+function styleUsageCount(id){
+ let count=0;
+ const walk=nodes=>{for(const n of nodes||[]){if(n.styleRef===id)count++;walk(n.children)}};
+ for(const scope of [...db.pages,...db.templates,...db.components]){walk(scope.blocks);if(scope.composition)walk([scope.composition])}
+ for(const collection of db.collections)for(const record of collection.records)if(record.composition)walk([record.composition])
+ return count;
+}
+function designSystemView(){
+ const design=db.site.design,styles=design.styles||[],current=styles.find(s=>s.id===ui.styleId)||styles[0];
+ const tokens=design.tokens||{},palette=design.palette||{};
+ const field=(label,key,value)=>'<div class="field"><label>'+e(label)+'</label><select class="control" data-style-prop="'+e(key)+'">'+
+   (STYLE_OPTIONS[key]||[]).map(x=>'<option value="'+e(String(x))+'"'+(String(x)===String(value)?' selected':'')+'>'+e(String(x))+'</option>').join('')+
+   '</select></div>';
+ const rows=styles.map(st=>'<button class="panel-row" data-act="select-style" data-id="'+e(st.id)+'"'+(st.id===current?.id?' style="background:var(--m8-blue-soft)"':'')+'>'+
+   ic(st.target==='card'?'template':'text')+' '+e(st.name)+'<span class="summary">'+e(st.target.toUpperCase())+' · '+styleUsageCount(st.id)+' uses ↗</span></button>').join('');
+ let definition=current?'<div class="detail-card"><div class="upper" style="margin-bottom:12px">'+e(current.target)+' STYLE / '+e(current.id)+'</div>'+
+   '<div class="field"><label>Style name</label><input class="control" data-style-name="1" value="'+e(current.name)+'"></div>'+
+   Object.entries(current.properties).map(([key,value])=>field(key,key,value)).join('')+
+   '<p class="help">Editing a named style updates every Card or Item using it, unless that property has an explicit local override.</p>'+
+   '<button class="btn sm" data-act="delete-style"'+(styleUsageCount(current.id)?' disabled title="Style in use"':'')+'>Delete unused style</button></div>':
+   '<div class="detail-card"><p class="help">Create a style to start a reusable appearance definition.</p></div>';
+ const tokenField=(label,key,value,type='text')=>'<div class="field"><label>'+e(label)+'</label><input class="control" data-design-token="'+e(key)+'" type="'+type+'" value="'+e(value)+'"></div>';
+ const colors=[['paper','Paper'],['ink','Ink'],['grey100','Grey 100'],['grey200','Grey 200'],['grey300','Grey 300'],['grey600','Grey 600'],['black','Black']];
+ const paletteFields=colors.map(([key,label])=>'<div class="field"><label>'+label+'</label><div style="display:flex;align-items:center;gap:9px">'+
+   '<span style="width:24px;height:24px;border:1px solid var(--line);border-radius:5px;background:'+e(palette[key]||'#ffffff')+'"></span>'+
+   '<input class="control mono" style="flex:1" data-design-palette="'+key+'" value="'+e(palette[key]||'')+'"></div></div>').join('');
+ const fonts='<div class="field"><label>Font family</label><select class="control" data-design-token="fontFamily">'+
+  '<option value="mono"'+(tokens.fontFamily==='system'?'':' selected')+'>Monospaced · TA default</option>'+
+  '<option value="system"'+(tokens.fontFamily==='system'?' selected':'')+'>System sans</option></select></div>';
+ return '<div class="content-wrap">'+titleBar('DESIGN SYSTEM / M13','Named styles & tokens',
+   'Site tokens → named styles → explicit local overrides. No extra graphic nodes.',
+   '<button class="btn sm" data-act="new-style" data-target="card">+ Card style</button><button class="btn sm" data-act="new-style" data-target="item">+ Item style</button>')+
+   '<div class="detail-grid"><div class="detail-card"><h3>Reusable styles · '+styles.length+'</h3>'+
+   '<p class="help">Assign styles to Cards and Items through their Properties inspector.</p>'+rows+'</div>'+definition+'</div>'+
+   '<div class="rule" style="margin:25px 0"></div><div class="upper" style="margin-bottom:12px">SITE TOKENS · SHARED ACROSS ALL PAGES</div>'+
+   '<div class="detail-grid"><div class="detail-card"><h3>Geometry & typography</h3>'+fonts+
+   tokenField('Corner radius · page units','radius',tokens.radius??1.15,'number')+
+   tokenField('Outline opacity · 0 to 1','outlineOpacity',tokens.outlineOpacity??.2,'number')+
+   '<p class="help">The site keeps its fixed page-relative grid. No automatic responsive reflow.</p></div>'+
+   '<div class="detail-card"><h3>Greyscale palette</h3>'+paletteFields+'</div></div></div>';
+}
 function valText(v){return Array.isArray(v)?v.join(', '):typeof v==='boolean'?String(v):String(v??'')}
 function fieldCell(c,r,f){let v=r[f.key],id=e(r.id),k=e(f.key);if(f.type==='boolean')return `<input type="checkbox" data-cell="1" data-id="${id}" data-key="${k}" ${v?'checked':''} aria-label="${e(f.label)}">`;if(f.type==='select')return `<select class="cell" data-cell="1" data-id="${id}" data-key="${k}">${(f.options||'').split(',').map(x=>x.trim()).concat(!((f.options||'').split(',').map(x=>x.trim()).includes(String(v||'')))?[String(v||'')]:[]).filter(Boolean).map(x=>`<option value="${e(x)}" ${x===v?'selected':''}>${e(x)}</option>`).join('')}</select>`;if(f.type==='asset')return `<select class="cell" data-cell="1" data-id="${id}" data-key="${k}"><option value="">— none —</option>${db.assets.map(a=>`<option value="${e(a.id)}" ${v===a.id?'selected':''}>${e(a.name)}</option>`).join('')}</select>`;return `<input class="cell ${f.key==='title'?'long':''} ${['date','year'].includes(f.key)?'short':''}" data-cell="1" data-id="${id}" data-key="${k}" type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" value="${e(valText(v))}" title="${e(f.label)}" placeholder="—">`}
 function collectionView(){let c=coll();if(!c)return '<div class="empty">No collection selected</div>';if(ui.mode==='json')return jsonView(c,'collection');if(ui.mode==='settings')return collectionSettings(c);let filt=c.records.filter(r=>(ui.format==='all'||String(r.format||r.status)===ui.format)&&(!ui.search||Object.values(r).some(x=>valText(x).toLowerCase().includes(ui.search.toLowerCase()))));let fmt=c.formatField?[...new Set(c.records.map(r=>r[c.formatField]).filter(Boolean))]:[];let top=titleBar('COLLECTION / '+c.base,c.name,'Edit records like a spreadsheet. Each row becomes a generated page.',`<button class="btn" data-act="new-field">${ic('add')} Property</button><button class="btn dark" data-act="new-record">${ic('add')} New record</button>`);return `<div class="content-wrap">${top}<div class="table-toolbar"><div class="toolbar-left"><input class="search" id="recordSearch" placeholder="Search records…" value="${e(ui.search)}"><select class="control" id="formatFilter" style="width:auto;min-height:32px;font-size:11px"><option value="all">All ${e(c.name.toLowerCase())}</option>${fmt.map(f=>`<option value="${e(f)}" ${ui.format===f?'selected':''}>${e(f)}s</option>`).join('')}</select></div><div class="toolbar-right"><span class="upper">${filt.length} RECORDS</span></div></div><div class="table-wrap"><table><thead><tr><th style="min-width:190px">NAME / OPEN</th>${c.fields.filter(f=>f.key!=='title'&&f.key!=='body').map(f=>`<th>${e(f.label)}${f.key==='slug'?' ↗':''}</th>`).join('')}<th></th></tr></thead><tbody>${filt.map(r=>`<tr class="${ui.record===r.id?'selected':''}"><td><div class="record-name">${getAsset(r.cover)?`<img class="small-thumb" src="${e(src(getAsset(r.cover)))}" alt="">`:`<span class="record-icon">${ic('page')}</span>`}<input class="cell long" style="font-weight:590;min-width:155px;padding:6px 2px" data-cell="1" data-id="${e(r.id)}" data-key="title" value="${e(r.title||'Untitled')}" aria-label="Title"><button class="btn ghost sm" data-act="open-record" data-id="${e(r.id)}" title="Open page">${ic('external')}</button></div></td>${c.fields.filter(f=>f.key!=='title'&&f.key!=='body').map(f=>`<td>${fieldCell(c,r,f)}</td>`).join('')}<td><button class="btn ghost sm" data-act="open-record" data-id="${e(r.id)}" title="Open generated page">${ic('external')}</button></td></tr>`).join('')}</tbody></table></div><div class="table-foot"><span>${filt.length} rows · changes saved locally</span><button class="btn sm" data-act="new-record">${ic('add')} Add row</button></div></div>`}
-function collectionSettings(c){return `<div class="content-wrap">${titleBar('SCHEMA / CONFIGURATION',c.name+' · Settings','Define reusable properties and automatic page routes.',`<button class="btn" data-act="navigate" data-section="collection" data-id="${e(c.id)}">← Table</button>`)}<div class="detail-grid"><div class="detail-card"><h3>Collection settings</h3>${inputField('Collection name',c.name,'collection','name')}${inputField('URL prefix',c.base,'collection','base')}<div class="field"><label>Default template</label><select class="control" data-edit="collection" data-key="defaultTemplate">${db.templates.map(t=>`<option value="${e(t.id)}" ${t.id===c.defaultTemplate?'selected':''}>${e(t.name)}</option>`).join('')}</select></div><div class="field"><label>Format discriminator (optional)</label><select class="control" data-edit="collection" data-key="formatField"><option value="">None</option>${c.fields.map(f=>`<option value="${e(f.key)}" ${f.key===c.formatField?'selected':''}>${e(f.label)}</option>`).join('')}</select></div>${c.formatField?`<div class="upper" style="margin:20px 0 10px">Format → template</div>${(c.fields.find(f=>f.key===c.formatField)?.options||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>`<div class="field"><label>${e(x)}</label><select class="control" data-format-template="${e(x)}"><option value="">Default</option>${db.templates.map(t=>`<option value="${e(t.id)}" ${t.id===c.formatTemplates?.[x]?'selected':''}>${e(t.name)}</option>`).join('')}</select></div>`).join('')}`:''}</div><div class="detail-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="margin:0">Properties · ${c.fields.length}</h3><button class="btn sm" data-act="new-field">${ic('add')} Property</button></div>${c.fields.map(f=>`<div style="display:flex;align-items:center;gap:7px;padding:9px 0;border-bottom:1px solid var(--line)"><span style="flex:1"><strong style="font-size:11px;font-weight:570">${e(f.label)}</strong><br><span class="upper">${e(f.key)} · ${e(f.type)}</span></span>${!['title','slug'].includes(f.key)?`<button class="btn ghost sm" data-act="remove-field" data-key="${e(f.key)}">${ic('trash')}</button>`:''}</div>`).join('')}</div></div><div style="margin-top:17px"><button class="btn" data-act="new-template" data-collection="${e(c.id)}">${ic('add')} New template for this collection</button></div></div>`}
-function recordView(){let c=coll(),r=rec();if(!r)return `<div class="content-wrap"><div class="empty">Record not found.</div></div>`;if(ui.mode==='json')return jsonView(r,'record');if(ui.mode==='fields')return `<div class="content-wrap">${titleBar('RECORD / PROPERTIES',r.title,'Edit every field without opening the template.',`<button class="btn" data-act="mode" data-mode="preview">Preview page →</button>`)}<div class="detail-grid"><div class="detail-card">${c.fields.filter(f=>f.key!=='body').map(f=>recordFieldHtml(f,r)).join('')}</div><div class="detail-card"><h3>Body / content</h3>${recordFieldHtml(c.fields.find(f=>f.key==='body')||F('body','Body','textarea'),r)}<p class="help">Markdown headings, paragraphs and lists are supported in the preview. The template controls where the body appears.</p></div></div></div>`;let t=templateFor(c,r);return `<div class="editor-shell"><div class="editor-meta"><div><h1>${e(r.title)}</h1><small>${e(c.base+'/'+r.slug)} · ${e(t?.name||'No template')}</small></div><div class="editor-tools"><button class="btn sm" data-act="mode" data-mode="fields">Edit record</button><button class="btn sm" data-act="edit-template" data-id="${e(t?.id||'')}">Edit template ↗</button></div></div>${siteFrame(renderBlocks(t?.blocks||[],r,false))}<div class="add-area"><button class="btn" data-act="mode" data-mode="fields">${ic('settings')} Edit content and properties</button></div></div>`}
-function templateFor(c,r){let id=c?.formatTemplates?.[r?.[c.formatField]]||c?.defaultTemplate;return db.templates.find(t=>t.id===id)||db.templates[0]}
+function collectionSettings(c){return `<div class="content-wrap">${titleBar('SCHEMA / CONFIGURATION',c.name+' · Settings','Define reusable properties and automatic page routes.',`<button class="btn" data-act="navigate" data-section="collection" data-id="${e(c.id)}">← Table</button>`)}<div class="detail-grid"><div class="detail-card"><h3>Collection settings</h3>${inputField('Collection name',c.name,'collection','name')}${inputField('URL prefix',c.base,'collection','base')}<div class="field"><label>Default template</label><select class="control" data-edit="collection" data-key="defaultTemplate">${db.templates.filter(t=>t.collection===c.id&&t.layoutMode!=='slot').map(t=>`<option value="${e(t.id)}" ${t.id===c.defaultTemplate?'selected':''}>${e(t.name)}</option>`).join('')}</select></div><div class="field"><label>Generate public detail pages</label><select class="control" data-collection-detail-pages="1"><option value="true"${c.detailPages===false?'':' selected'}>On · individual pages</option><option value="false"${c.detailPages===false?' selected':''}>Off · collection index only</option></select></div><div class="field"><label>Default composition template for new records</label><select class="control" data-collection-composition-template="1"><option value="">Legacy records only</option>${db.templates.filter(t=>t.collection===c.id&&t.layoutMode==='slot').map(t=>`<option value="${e(t.id)}" ${t.id===c.compositionTemplate?'selected':''}>${e(t.name)}</option>`).join('')}</select></div><button class="btn sm" data-act="new-record-template" data-collection="${e(c.id)}">+ New record slot template</button><div class="field"><label>Format discriminator (optional)</label><select class="control" data-edit="collection" data-key="formatField"><option value="">None</option>${c.fields.map(f=>`<option value="${e(f.key)}" ${f.key===c.formatField?'selected':''}>${e(f.label)}</option>`).join('')}</select></div>${c.formatField?`<div class="upper" style="margin:20px 0 10px">Format → template</div>${(c.fields.find(f=>f.key===c.formatField)?.options||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>`<div class="field"><label>${e(x)}</label><select class="control" data-format-template="${e(x)}"><option value="">Default</option>${db.templates.filter(t=>t.collection===c.id&&t.layoutMode!=='slot').map(t=>`<option value="${e(t.id)}" ${t.id===c.formatTemplates?.[x]?'selected':''}>${e(t.name)}</option>`).join('')}</select></div>`).join('')}`:''}</div><div class="detail-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="margin:0">Properties · ${c.fields.length}</h3><button class="btn sm" data-act="new-field">${ic('add')} Property</button></div>${c.fields.map(f=>`<div style="display:flex;align-items:center;gap:7px;padding:9px 0;border-bottom:1px solid var(--line)"><span style="flex:1"><strong style="font-size:11px;font-weight:570">${e(f.label)}</strong><br><span class="upper">${e(f.key)} · ${e(f.type)}</span></span>${!['title','slug'].includes(f.key)?`<button class="btn ghost sm" data-act="remove-field" data-key="${e(f.key)}">${ic('trash')}</button>`:''}</div>`).join('')}</div></div><div style="margin-top:17px"><button class="btn" data-act="new-template" data-collection="${e(c.id)}">${ic('add')} New template for this collection</button></div></div>`}
+function recordView(){
+ const c=coll(),r=rec();if(!r)return '<div class="content-wrap"><div class="empty">Record not found.</div></div>';
+ if(ui.mode==='json')return jsonView(r,'record');
+ const t=templateFor(c,r),route=c.base+'/'+r.slug+'/';
+ if(ui.mode==='fields')return `<div class="content-wrap">${titleBar('RECORD / PROPERTIES',r.title,'Edit every field independently of its Card composition.',`<button class="btn" data-act="mode" data-mode="preview">Preview page →</button>`)}<div class="detail-grid"><div class="detail-card">${c.fields.filter(f=>f.key!=='body').map(f=>recordFieldHtml(f,r)).join('')}</div><div class="detail-card"><h3>Body / content</h3>${recordFieldHtml(c.fields.find(f=>f.key==='body')||F('body','Body','textarea'),r)}<p class="help">Bound text, media and long-form copy remain record fields; the composition controls their visual placement.</p></div></div></div>`;
+ const design=ui.mode==='design'&&!!r.composition;
+ const canvas=design
+   ?renderSiteFrame(renderBlocks([r.composition],r,true),db,{design:true,isolated:true,route})
+   :renderPagePreview(db,t?.blocks||[],r,{route});
+ const note=r.composition?'Unique root composition · '+e(t?.name||'Missing layout'):'Legacy generated detail page · '+e(t?.name||'Missing template');
+ return `<div class="editor-shell"><div class="editor-meta"><div><div class="upper" style="margin-bottom:6px">RECORD / ${design?'ISOLATED DESIGN':'ASSEMBLED PREVIEW'}</div><h1>${e(r.title)}</h1><small>${e(route)} · ${note}</small></div><div class="editor-tools"><button class="btn sm" data-act="mode" data-mode="fields">Edit fields</button><button class="btn sm" data-act="edit-template" data-id="${e(t?.id||'')}">Edit template ↗</button>${r.composition?'<button class="btn sm" data-act="mode" data-mode="'+(design?'preview':'design')+'">'+(design?'Full preview':'Design composition')+'</button>':''}</div></div>${canvas}${design?'<div class="add-area"><button class="btn" data-act="show-blocks" data-inside="no">+ Add composition object</button></div>':''}<p class="help" style="margin:17px 3px">${r.composition?'Design edits only this record’s unique root Card. Preview assembles the slot template, current record field bindings and site chrome.':'Legacy record template is shared. You can opt in to a unique Card composition from the Properties inspector.'}</p></div>`;
+}
+function templateFor(c,r){let id=r?.template||c?.formatTemplates?.[r?.[c.formatField]]||c?.defaultTemplate;return db.templates.find(t=>t.id===id)||db.templates[0]}
 // Shared rendering contract: the preview and the published build import the same module.
 function renderBlocks(blocks,ctx=null,design=false){return renderSharedBlocks(blocks,ctx,db,{design,selectedId:ui.node,topLevel:true})}
-function siteFrame(content,design=false){let route='/';if(ui.section==='record'){const c=coll(),r=rec();if(c&&r)route=c.base+'/'+r.slug+'/'}else if(ui.section==='page')route=page()?.slug||'/';else if(ui.section==='template'){const c=db.collections.find(c=>c.id===tpl()?.collection),r=c?.records.find(r=>r.id===ui.sample);if(c&&r)route=c.base+'/'+r.slug+'/'}return renderSiteFrame(content,db,{design,route})}
-function designView(){let isT=ui.section==='template',isC=ui.section==='component',s=currentScope();if(!s)return `<div class="content-wrap"><div class="empty">Nothing selected.</div></div>`;if(ui.mode==='json')return jsonView(s,ui.section);let context=null;if(isT){let c=db.collections.find(c=>c.id===s.collection);context=c?.records.find(r=>r.id===ui.sample)||c?.records[0];}let design=ui.mode==='design';let pick=isT?db.templates:isC?db.components:db.pages;let modeText=isT?'TEMPLATE':isC?'COMPONENT':'CUSTOM PAGE';return `<div class="editor-shell"><div class="editor-meta"><div><div class="upper" style="margin-bottom:6px">${modeText} / ${isT?'AUTO GENERATED':isC?'REUSABLE':'UNIQUE'}</div><h1>${e(s.name||s.title)}</h1><small>${e(isT?db.collections.find(c=>c.id===s.collection)?.base+'/{slug}':isC?'Any page / template':s.slug)} · ${s.blocks.length} root objects</small></div><div class="editor-tools">${isT?`<select class="control" id="samplePicker" style="max-width:160px;font-size:11px" title="Preview with record">${(db.collections.find(c=>c.id===s.collection)?.records||[]).map(r=>`<option value="${e(r.id)}" ${context?.id===r.id?'selected':''}>${e(r.title)}</option>`).join('')}</select>`:''}${isT||isC?`<select class="control" id="scopePicker" style="max-width:160px;font-size:11px">${pick.map(x=>`<option value="${e(x.id)}" ${x.id===s.id?'selected':''}>${e(x.name||x.title)}</option>`).join('')}</select><button class="btn sm" data-act="new-${isT?'template':'component'}">${ic('add')}</button>`:''}</div></div>${siteFrame(renderBlocks(s.blocks,context,design),design)}${design?`<div class="add-area"><button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section / object</button></div>`:''}${!isC?`<div class="help" style="margin:17px 3px">${isT?'Bound values like {{title}} resolve against the selected sample record. Editing the template changes every generated page using it.':'All repeatable content comes from Collections. Query blocks display matching records using a shared component.'}</div>`:''}</div>`}
+function siteFrame(content,design=false){let route='/';if(ui.section==='record'){const c=coll(),r=rec();if(c&&r)route=c.base+'/'+r.slug+'/'}else if(ui.section==='page')route=page()?.slug||'/';else if(ui.section==='template'){const c=db.collections.find(c=>c.id===tpl()?.collection),r=c?.records.find(r=>r.id===ui.sample);if(c&&r)route=c.base+'/'+r.slug+'/'}const chrome=ui.section==='record'?templateFor(coll(),rec())?.chrome:ui.section==='template'?tpl()?.chrome:null;return renderSiteFrame(content,db,{design,route,chrome})}
+function designView(){
+ const isT=ui.section==='template',isC=ui.section==='component',s=currentScope();
+ if(!s)return '<div class="content-wrap"><div class="empty">Nothing selected.</div></div>';
+ if(ui.mode==='json')return jsonView(s,ui.section);
+ const isPageLayout=isT&&s.layoutMode==='slot';
+ const isUniqueComposition=!isT&&!isC&&Boolean(s.template);
+ let context=null;
+ if(isT&&!isPageLayout){
+   const c=db.collections.find(c=>c.id===s.collection);
+   context=c?.records.find(r=>r.id===ui.sample)||c?.records[0];
+ }
+ const design=ui.mode==='design',pick=isT?db.templates:isC?db.components:db.pages;
+ const modeText=isPageLayout?(s.collection?'RECORD SLOT TEMPLATE':'PAGE TEMPLATE'):isT?'RECORD TEMPLATE':isC&&s.frameRole?'SITE '+s.frameRole.toUpperCase():isC?'COMPONENT':'PAGE';
+ let canvas;
+ if(isUniqueComposition){
+   canvas=design
+     ?renderSiteFrame(renderBlocks(currentBlocks(),null,true),db,{design:true,isolated:true,route:s.slug})
+     :renderPagePreview(db,s.blocks,null,{pageId:s.id,route:s.slug});
+ }else if(isPageLayout){
+   const example=db.pages.find(p=>p.template===s.id);
+   const collection=db.collections.find(c=>c.id===s.collection);
+   const matching=collection?.records.filter(r=>r.composition&&templateFor(collection,r)?.id===s.id)||[];
+   const sample=matching.find(r=>r.id===ui.sample)||matching[0];
+   const sampleRoute=sample?collection.base+'/'+sample.slug+'/':'/';
+   canvas=design
+     ?renderSiteFrame(renderBlocks(s.blocks,sample,true),db,{design:true,isolated:true,route:example?.slug||sampleRoute})
+     :example?renderPagePreview(db,example.blocks,null,{pageId:example.id,route:example.slug})
+       :sample?renderPagePreview(db,s.blocks,sample,{route:sampleRoute})
+         :renderSiteFrame(renderBlocks(s.blocks,null,false),db,{route:'/'});
+ }else if(isC&&s.frameRole){
+   const chrome=renderChromeComponent(db,s.frameRole,{design,selectedId:ui.node,route:'/',componentId:s.id});
+   canvas=renderSiteFrame(chrome,db,{design,isolated:true,route:'/'});
+ }else canvas=siteFrame(renderBlocks(s.blocks,context,design),design);
+ const label=isPageLayout?(s.collection?'Record main slot · '+db.collections.find(c=>c.id===s.collection)?.records.filter(r=>r.template===s.id).length+' records':'One main content slot · used by '+db.pages.filter(p=>p.template===s.id).length+' pages')
+   :isUniqueComposition?'Unique composition · shared template: '+(db.templates.find(t=>t.id===s.template)?.name||s.template)
+   :isT?(db.collections.find(c=>c.id===s.collection)?.base||'Records')+'/{slug}'
+   :isC?'Reusable on any page / template':s.slug;
+ const count=isUniqueComposition?1:s.blocks.length;
+ const tools=isT&&(!isPageLayout||Boolean(s.collection))
+   ?`<select class="control" id="samplePicker" style="max-width:160px;font-size:11px" title="Preview with record">${(db.collections.find(c=>c.id===s.collection)?.records||[]).filter(r=>!isPageLayout||r.composition&&templateFor(db.collections.find(c=>c.id===s.collection),r)?.id===s.id).map(r=>`<option value="${e(r.id)}" ${context?.id===r.id?'selected':''}>${e(r.title)}</option>`).join('')}</select>`
+   :'';
+ const scopeChooser=(isT||isC)?`<select class="control" id="scopePicker" style="max-width:160px;font-size:11px">${pick.map(x=>`<option value="${e(x.id)}" ${x.id===s.id?'selected':''}>${e(x.name||x.title)}</option>`).join('')}</select><button class="btn sm" data-act="${isT?'new-page-template':'new-component'}">${ic('add')}</button>`:'';
+ const secondary=isUniqueComposition?`<button class="btn sm" data-act="edit-template" data-id="${e(s.template)}">Edit shared template ↗</button>`:'';
+ const editMessage=isUniqueComposition
+   ?'Design edits only this Page’s root composition. Preview assembles it inside the selected template, including shared site chrome.'
+   :isPageLayout?'Design edits only this reusable slot template. Preview assembles a chosen Page or Record composition into its main slot.'
+   :isT?'Bound values such as {{title}} resolve against the selected record. Edits affect every generated page using this template.'
+   :isC&&s.frameRole?'This semantic Card is used across every published page. Navigation links come only from Site settings; this component owns their layout, logo and appearance.'
+   :isC?'This Component is reusable by reference; edits propagate to every instance.'
+   :'Repeatable content comes from Collections; query Cards render matching records.';
+ return `<div class="editor-shell"><div class="editor-meta"><div><div class="upper" style="margin-bottom:6px">${modeText} / ${design?'ISOLATED DESIGN':'ASSEMBLED PREVIEW'}</div><h1>${e(s.name||s.title)}</h1><small>${e(label)} · ${count} root Card${count===1?'':'s'}</small></div><div class="editor-tools">${tools}${scopeChooser}${secondary}</div></div>${canvas}${design?`<div class="add-area"><button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section / object</button></div>`:''}<p class="help" style="margin:17px 3px">${e(editMessage)}</p></div>`;
+}
 function recordFieldHtml(f,r){let v=r[f.key],k=e(f.key);if(f.type==='boolean')return `<div class="field" style="display:flex;align-items:center;gap:8px"><input type="checkbox" data-record-field="${k}" ${v?'checked':''} id="fld_${k}"><label for="fld_${k}" style="margin:0">${e(f.label)}</label></div>`;if(f.type==='select')return `<div class="field"><label>${e(f.label)}</label><select class="control" data-record-field="${k}">${(f.options||'').split(',').map(x=>x.trim()).map(x=>`<option value="${e(x)}" ${v===x?'selected':''}>${e(x)}</option>`).join('')}</select></div>`;if(f.type==='asset')return `<div class="field"><label>${e(f.label)}</label><select class="control" data-record-field="${k}"><option value="">— no image —</option>${db.assets.map(a=>`<option value="${e(a.id)}" ${v===a.id?'selected':''}>${e(a.name)}</option>`).join('')}</select></div>`;if(f.type==='textarea')return `<div class="field"><label>${e(f.label)}</label><textarea class="control tall" data-record-field="${k}" rows="${f.key==='body'?'13':'4'}">${e(valText(v))}</textarea></div>`;return `<div class="field"><label>${e(f.label)}</label><input class="control" data-record-field="${k}" type="${f.type==='date'?'date':f.type==='number'?'number':'text'}" value="${e(valText(v))}"></div>`}
 function inputField(label,val,scope,key,type='text'){return `<div class="field"><label>${e(label)}</label><input class="control" data-edit="${e(scope)}" data-key="${e(key)}" type="${type}" value="${e(valText(val))}"></div>`}
 function assetView(){if(ui.mode==='json')return jsonView(db.assets,'assets');let assets=db.assets.filter(a=>!ui.search||(a.name+' '+a.tags.join(' ')+' '+(a.properties?.projectCode||'')).toLowerCase().includes(ui.search.toLowerCase()));if(ui.mode==='table')return `<div class="content-wrap">${titleBar('LIBRARY / ASSETS','Image properties','Files are stored separately from editable image metadata.',`<button class="btn dark" data-act="upload">${ic('add')} Upload</button>`)}<div class="table-wrap"><table><thead><tr><th>IMAGE</th><th>NAME</th><th>ALT TEXT</th><th>CAPTION</th><th>CREDIT</th><th>TAGS</th><th>PROJECT CODE</th></tr></thead><tbody>${assets.map(a=>`<tr><td><button data-act="asset-select" data-id="${e(a.id)}"><img class="small-thumb" src="${e(src(a))}" alt=""></button></td>${['name','alt','caption','credit','tags'].map(k=>`<td><input class="cell long" data-asset-cell="${k}" data-id="${e(a.id)}" value="${e(valText(a[k]))}"></td>`).join('')}<td><input class="cell" data-asset-project-code="${e(a.id)}" value="${e(a.properties?.projectCode||'')}"></td></tr>`).join('')}</tbody></table></div></div>`;return `<div class="content-wrap">${titleBar('LIBRARY / ASSETS','Image library','Uploaded image files, descriptions, captions, tags and custom properties.',`<button class="btn" data-act="new-asset">${ic('add')} Reference</button><button class="btn dark" data-act="upload">${ic('add')} Upload image</button>`)}<div class="table-toolbar"><input class="search" id="assetSearch" placeholder="Search images and tags…" value="${e(ui.search)}"><span class="upper">${assets.length} ASSETS · PNG / JPEG / WEBP / GIF · MAX 12 MB</span></div><div class="asset-grid">${assets.map(a=>`<button class="asset-card ${ui.asset===a.id?'selected':''}" data-act="asset-select" data-id="${e(a.id)}"><img src="${e(src(a))}" alt="${e(a.alt||'')}"><div class="asset-info"><strong>${e(a.name)}</strong><small>${e(a.tags.join(' / '))}</small></div></button>`).join('')}</div></div>`}
 function jsonView(data,scope){return `<div class="content-wrap">${titleBar('SOURCE / STRUCTURED DATA',scope==='all'?'Site JSON':'JSON · '+scope,'Direct source editing. Apply validated JSON to update the visual views.',`<button class="btn" data-act="export">${ic('external')} Export all</button>`)}<textarea class="file-json" spellcheck="false" id="jsonEditor">${e(JSON.stringify(data,null,2))}</textarea><div class="json-controls"><button class="btn dark" data-act="apply-json" data-scope="${e(scope)}">Apply JSON</button><button class="btn" data-act="copy-json">Copy</button><span class="notice ${ui.jsonMessage.startsWith('Error')?'error':'ok'}" id="jsonNotice">${e(ui.jsonMessage)}</span></div></div>`}
 function treeRows(blocks=currentBlocks(),depth=0){return (blocks||[]).map(n=>`<button class="tree-row ${ui.node===n.id?'active':''}" data-act="select-node" data-id="${e(n.id)}" style="padding-left:${7+depth*13}px">${ic(n.type==='card'?(n.source?'table':n.reference?'blocks':'template'):'text')}<span>${e(n.type==='text'?n.text.slice(0,34):n.type==='card'&&n.source?'Collection: '+n.source.collection:n.type==='card'&&n.reference?'Component: '+n.reference:n.type)}</span></button>${n.children?treeRows(n.children,depth+1):''}`).join('')}
 
-const structureMode=()=>['page','template','component'].includes(ui.section)&&ui.mode==='design';
+const structureMode=()=>['page','template','component'].includes(ui.section)||false;
+const recordStructureMode=()=>ui.section==='record'&&compositionRecord();
+function isStructureEditing(){return (structureMode()||recordStructureMode())&&ui.mode==='design'}
 function structureLabel(n){
+ if(n.source?.kind==='assets')return 'Asset gallery · '+n.source.where.length+' filters';
  if(n.label)return String(n.label).slice(0,70);
- if(n.type==='card')return n.source?'Collection · '+n.source.collection:n.reference?'Component · '+n.reference:n.variant?'Card · '+n.variant:'Card';
+ if(n.type==='card')return n.source?(n.source.kind==='assets'?'Asset gallery':'Collection · '+n.source.collection):n.reference?'Component · '+n.reference:n.variant?'Card · '+n.variant:'Card';
  if(n.type==='text')return (n.text||'Text').replace(/\s+/g,' ').slice(0,42)||'Text';
  if(n.type==='image')return 'Image · '+(n.source||'no source');
  if(n.type==='button')return 'Link · '+(n.text||'');
@@ -351,7 +488,7 @@ function structureRows(nodes=currentBlocks(),depth=0){
  }).join('');
 }
 function renderStructure(){
- const active=structureMode(),visible=active&&ui.structureVisible;
+ const active=isStructureEditing(),visible=active&&ui.structureVisible;
  $('#studioApp').classList.toggle('structure-open',visible);
  $('#structurePane').setAttribute('aria-hidden',String(!visible));
  const scope=currentScope();
@@ -376,11 +513,11 @@ function findNodePath(id,nodes=currentBlocks(),trail=[]){
  return null;
 }
 function applyTreeMove(intent){
- if(!structureMode()||!ui.node)return false;
+ if(!isStructureEditing()||!ui.node||protectedNode(ui.node))return false;
  const result=moveTreeByIntent(currentBlocks(),ui.node,intent);
  if(!result.ok)return false;
  const scope=currentScope(),before=snapshotScope(),selectedBefore=ui.node;
- scope.blocks=result.blocks;
+ if(!assignScopeBlocks(result.blocks))return false;
  if(result.parentId)ui.structureCollapsed.delete(result.parentId);
  const path=findNodePath(ui.node);
  for(const n of path?.slice(0,-1)||[])ui.structureCollapsed.delete(n.id);
@@ -406,6 +543,37 @@ function selectionPath(id){
 
 function optionsHtml(options,value){return options.map(([v,label])=>`<option value="${e(v)}" ${String(v)===String(value)?'selected':''}>${e(label)}</option>`).join('')}
 function nodeField(label,key,value,choices=null,multiline=false){if(choices)return `<div class="field"><label>${label}</label><select class="control" data-node-prop="${e(key)}">${optionsHtml(choices,value)}</select></div>`;return `<div class="field"><label>${label}</label>${multiline?`<textarea rows="5" class="control tall ${key==='source'?'mono':''}" data-node-prop="${e(key)}">${e(value)}</textarea>`:`<input class="control" data-node-prop="${e(key)}" value="${e(valText(value))}">`}</div>`}
+function nodeStyleControls(n){
+ const target=n.type==='card'?'card':'item';
+ const styles=(db.site.design.styles||[]).filter(x=>x.target===target);
+ const selected=styles.find(x=>x.id===n.styleRef);
+ const field=(key,value)=>{
+   const inherited=selected?.properties?.[key],actual=resolveAppearance(n,db)[key];
+   const choices=(STYLE_OPTIONS[key]||[]).map(v=>'<option value="'+e(String(v))+'"'+(String(v)===String(value)?' selected':'')+'>'+e(String(v))+'</option>').join('');
+   return '<div class="field"><label>'+e(key)+' · '+(value===undefined?'inherited':'overridden')+'</label>'+
+     '<select class="control" data-node-appearance="'+e(key)+'">'+
+     '<option value="__inherit__"'+(value===undefined?' selected':'')+'>Inherit'+(inherited!==undefined?' · '+e(String(inherited)):'')+'</option>'+choices+
+     '</select><small class="help">Effective: '+e(String(actual))+'</small></div>';
+ };
+ let markup='<div class="rule"></div><div class="upper">NAMED APPEARANCE</div>'+
+   '<div class="field"><label>Style reference</label><select class="control" data-node-style-ref="1">'+
+   '<option value=""'+(selected?'':' selected')+'>None · direct appearance</option>'+
+   styles.map(st=>'<option value="'+e(st.id)+'"'+(n.styleRef===st.id?' selected':'')+'>'+e(st.name)+'</option>').join('')+
+   '</select></div>';
+ if(selected){
+   markup+='<p class="help">Resolved as legacy/site defaults → '+e(selected.name)+' → explicit local override. Choose Inherit to reset one property.</p>'+
+     (target==='card'?CARD_PROPERTIES:ITEM_PROPERTIES).map(k=>field(k,n.appearance?.[k])).join('')+
+     '<button class="btn sm" data-act="navigate" data-section="styles">Edit named styles ↗</button>';
+ }else markup+='<p class="help">Choose a named style to inherit reusable appearance. Existing direct settings remain unchanged until then.</p>'+
+  '<button class="btn sm" data-act="navigate" data-section="styles">Open style library ↗</button>';
+ return markup;
+}
+function legacyCardAppearance(n){
+ return nodeField('Background','background',n.background||'transparent',[['transparent','Transparent'],['white','White'],['grey-100','Grey 100'],['grey-200','Grey 200'],['grey-300','Grey 300'],['grey-600','Grey 600'],['black','Black']])+
+ nodeField('Gap','gap',n.gap||'x1',[['x1','1 × gap'],['x2','2 × gap'],['x4','4 × gap']])+
+ nodeField('Padding','padding',n.padding||'x1',[['x1','1 × pad'],['x2','2 × pad'],['x4','4 × pad']])+
+ nodeField('Outline','border',String(Boolean(n.border)),[['false','None'],['true','20% currentColor outline']]);
+}
 function inspectorEmpty(title,desc){return `<h2 class="info-title">${e(title)}</h2><p class="info-sub">${e(desc)}</p>`}
 function frameConstraintField(region,label){
  const settings=db.site.design?.frame?.[region]||{constrainHeight:false,heightFactor:0.05};
@@ -423,31 +591,111 @@ function placeholderSelect(kind,enabled){
 }
 function renderInspector(){let h='';if(ui.section==='dashboard'||ui.section==='data'){
  const contact=db.site.contact||{email:'',bookingUrl:''};
- h=inspectorEmpty('Website settings','Site-wide contact details and content files.')+
+ h=inspectorEmpty('Website settings','Publishing, public contact and content files.')+
+ '<div class="rule"></div><div class="upper">SEARCH INDEXING</div>'+
+ '<div class="field"><label>Allow search engines to index the published website</label><select class="control" data-site-indexing="1"><option value="false"'+(db.site.publishing?.indexing!==true?' selected':'')+'>Off · request no indexing</option><option value="true"'+(db.site.publishing?.indexing===true?' selected':'')+'>On · allow indexing</option></select></div>'+
+ '<p class="help">Applies to GitHub Pages, local dist/ and website.zip after rebuilding and publishing. Off adds noindex metadata but does not make the site private.</p>'+
  '<div class="rule"></div><div class="upper">PUBLIC CONTACT</div>'+
  '<p class="help">Only add verified destinations. Until a booking URL is configured, the 15-minute call CTA is not clickable.</p>'+
  '<div class="field"><label>Contact email</label><input class="control" type="email" data-site-contact="email" value="'+e(contact.email||'')+'" placeholder="Verified address"></div>'+
  '<div class="field"><label>15-minute call booking URL</label><input class="control" type="url" data-site-contact="bookingUrl" value="'+e(contact.bookingUrl||'')+'" placeholder="https://..."></div>'+
  '<div class="rule"></div><p class="help">Changes save to content/site.json. Export JSON remains an optional backup. All pages and records need individual review before release.</p>';
+ h+='<div class="rule"></div><div class="upper">SHARED SITE COMPONENTS</div>';
+ for(const [role,label] of [['navigation','Navbar'],['footer','Footer']]){
+   const chosen=db.components.find(c=>c.id===db.site.chrome?.[role]);
+   h+='<div class="field"><label>'+label+'</label><select class="control" data-site-chrome="'+role+'">'+
+     db.components.filter(c=>c.frameRole===role).map(c=>'<option value="'+e(c.id)+'"'+(chosen?.id===c.id?' selected':'')+'>'+e(c.name)+'</option>').join('')+
+     '</select></div><button class="btn sm" data-act="edit-component" data-id="'+e(chosen?.id||'')+'"'+(chosen?'':' disabled')+'>'+ic('blocks')+' Edit '+e(chosen?.name||label)+'</button>';
+ }
+ h+='<div class="rule"></div><div class="upper">NAVIGATION LINKS</div><p class="help">One canonical route list, used by every Navbar. Draft Pages are hidden on the public site.</p>';
+ for(const [i,link] of (db.site.navigation||[]).entries()){
+   h+='<div class="field"><label>Link '+(i+1)+'</label>'+
+   '<input aria-label="Link '+(i+1)+' label" class="control" style="margin-bottom:5px" data-site-nav-index="'+i+'" data-site-nav-field="label" value="'+e(link.label)+'">'+
+   '<input aria-label="Link '+(i+1)+' route" class="control mono" data-site-nav-index="'+i+'" data-site-nav-field="href" value="'+e(link.href)+'">'+
+   '<div style="margin-top:5px;display:flex;gap:5px"><button class="btn sm" data-act="move-nav" data-id="'+i+'" data-delta="-1"'+(i===0?' disabled':'')+'>↑</button>'+
+   '<button class="btn sm" data-act="move-nav" data-id="'+i+'" data-delta="1"'+(i===db.site.navigation.length-1?' disabled':'')+'>↓</button>'+
+   '<button class="btn sm" data-act="remove-nav" data-id="'+i+'">Remove</button></div></div>';
+ }
+ h+='<button class="btn sm" data-act="add-nav">+ Add published Page link</button>';
 }
 else if(ui.section==='collection'){let c=coll();h=inspectorEmpty('Collection · '+c.name,'Each record is an auto-generated page under '+c.base+'/')+`<div class="rule"></div><div class="upper">SCHEMA</div><div style="margin:14px 0">${c.fields.map(f=>`<div class="panel-row" style="padding:7px 0;border:0"><span>${e(f.label)}</span><span class="summary">${e(f.type)}</span></div>`).join('')}</div><button class="btn" data-act="mode" data-mode="settings">${ic('settings')} Configure fields</button><div class="rule"></div><div class="upper">GENERATED ROUTES</div><div style="margin-top:12px">${c.records.slice(0,8).map(r=>`<button class="tree-row" data-act="open-record" data-id="${e(r.id)}">${ic('page')}<span>${e(c.base+'/'+r.slug)}</span></button>`).join('')}</div>`}
-else if(ui.section==='record'){let r=rec(),c=coll();if(r){h=inspectorEmpty(r.title,`${c.base}/${r.slug}`)+`<div class="upper">GENERATED PAGE</div><div style="margin:10px 0 19px"><span class="badge purple">${e(r.format||r.category||'Record')}</span> <span class="badge">${e(r.status||'Draft')}</span></div><div class="field"><label>Template applied</label><div class="control">${e(templateFor(c,r)?.name||'Missing template')}</div></div>${placeholderSelect('record',r.placeholder===true)}${publicationApprovalSelect('record',r.approvedForPublication===true)}<div class="rule"></div>${c.fields.filter(f=>!['body','summary'].includes(f.key)).map(f=>recordFieldHtml(f,r)).join('')}<button class="btn" data-act="duplicate-record">${ic('duplicate')} Duplicate</button><div class="rule"></div><button class="btn" data-act="delete-record">${ic('trash')} Delete record</button>`}}
-else if(ui.section==='assets'){let a=asset();h=a?inspectorEmpty(a.name,'Asset / '+a.id)+`<img class="asset-large" src="${e(src(a))}" alt="${e(a.alt||'')}">${placeholderSelect('asset',a.placeholder===true)}<div class="field"><label>Project code · optional match key</label><input class="control" data-asset-project-code="${e(a.id)}" value="${e(a.properties?.projectCode||'')}" placeholder="e.g. 4424"></div>${['name','src','alt','caption','credit','tags'].map(k=>{let html=nodeField(k==='src'?'Image file / URL':k[0].toUpperCase()+k.slice(1),k,a[k],null,k==='alt'||k==='caption');if(k==='src'&&String(a.src).startsWith('/assets/uploads/'))html=html.replace('data-node-prop="src"','data-node-prop="src" readonly title="Stored file path (read-only)"');return html.replaceAll('data-node-prop','data-asset-prop')}).join('')}<div class="rule"></div><div class="upper" style="margin-bottom:9px">CUSTOM PROPERTIES</div>${Object.entries(a.properties||{}).filter(([k])=>k!=='projectCode').map(([k,v])=>`<div class="custom-row"><input value="${e(k)}" data-custom-key="${e(k)}"><input value="${e(valText(v))}" data-custom-val="${e(k)}"><button class="btn ghost sm" data-act="remove-custom" data-key="${e(k)}">×</button></div>`).join('')}<button class="btn sm" data-act="add-custom">${ic('add')} Property</button><div class="rule"></div><button class="btn" data-act="replace-asset-image">Replace image · keep asset ID</button><p class="help">Upload a new raster image to replace this asset’s source without changing existing project covers. Fill in the new alt text and credit after replacement.</p><button class="btn sm" data-act="delete-asset">${ic('trash')} Delete asset</button>`:inspectorEmpty('Asset properties','Select an image to inspect its metadata.')}
-else if(['page','template','component'].includes(ui.section)){let scope=currentScope(),found=ui.node?findNode(ui.node):null;if(!found){h=inspectorEmpty(scope?.name||scope?.title||'Page','Select an object on the canvas or from the structure below to edit it.');if(ui.section==='page'){h+=inputField('Page title',scope.title,'page','title')+inputField('URL route',scope.slug,'page','slug')+placeholderSelect('page',scope.placeholder===true)+publicationApprovalSelect('page',scope.approvedForPublication===true)+`<div class="rule"></div><div class="upper">MASTER SPACING · U = PAGE WIDTH / 100</div>`+nodeField('pad · units','site-pad',db.site.design?.pad??1)+nodeField('gap · units','site-gap',db.site.design?.gap??1)+`<div class="rule"></div><div class="upper">GLOBAL CARD DISPLAY</div><div class="field"><label>Card outlines</label><select class="control" data-site-design="cardBorders"><option value="false" ${db.site.design?.cardBorders?'':'selected'}>Off (individual outlines still work)</option><option value="true" ${db.site.design?.cardBorders?'selected':''}>On · outline all Cards at 20%</option></select></div>`+frameConstraintField('header','Navigation')+frameConstraintField('footer','Footer')}else if(ui.section==='template'){h+=inputField('Template name',scope.name,'template','name')+'<div class="field"><label>Collection</label><select class="control" data-edit="template" data-key="collection">'+optionsHtml(db.collections.map(c=>[c.id,c.name]),scope.collection)+'</select></div>'}else h+=inputField('Component name',scope.name,'component','name');h+=`<div class="rule"></div><button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section</button>`;if(ui.section!=='page')h+=`<div class="rule"></div><button class="btn sm" data-act="delete-scope">${ic('trash')} Delete ${ui.section}</button>`}
-else {let n=found.node;h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+nodeField('Structure label','label',n.label||'')+`<div style="display:flex;gap:5px;margin:0 0 22px"><button class="btn sm" data-act="move-node" data-delta="-1" title="Move up">${ic('up')}</button><button class="btn sm" data-act="move-node" data-delta="1" title="Move down">${ic('down')}</button><button class="btn sm" data-act="duplicate-node" title="Duplicate">${ic('duplicate')}</button><button class="btn sm" data-act="delete-node" title="Delete">${ic('trash')}</button></div>`;
- if(n.type==='text')h+=nodeField('Text · supports {{property}}','text',n.text,null,true)+nodeField('Typography','style',n.style,[['display','Display'],['heading','Heading'],['body','Body'],['eyebrow','Eyebrow'],['caption','Caption']]);
+else if(ui.section==='record'&&!(compositionRecord()&&ui.mode==='design')){
+ let r=rec(),c=coll();
+ if(r){
+  const template=templateFor(c,r),slotTemplates=db.templates.filter(t=>t.layoutMode==='slot'&&t.collection===c.id);
+  h=inspectorEmpty(r.title,c.base+'/'+r.slug)+
+   '<div class="upper">RECORD DETAIL PAGE</div><div style="margin:10px 0 19px"><span class="badge purple">'+e(r.format||r.category||'Record')+'</span> <span class="badge">'+e(r.status||'Draft')+'</span></div>'+
+   '<div class="field"><label>Effective template</label><div class="control">'+e(template?.name||'Missing template')+'</div></div>'+
+   (r.composition?'':'<div class="field"><label>Legacy template override</label><select class="control" data-record-legacy-template="1">'+
+       '<option value=""'+(r.template?'':' selected')+'>Collection / format default</option>'+
+       db.templates.filter(t=>t.collection===c.id&&t.layoutMode!=='slot').map(t=>'<option value="'+e(t.id)+'"'+(r.template===t.id?' selected':'')+'>'+e(t.name)+'</option>').join('')+
+       '</select></div>')+
+   (r.composition?'<button class="btn sm" data-act="mode" data-mode="design">Edit unique composition ↗</button>':'<p class="help">This record currently uses its shared legacy detail template.</p>'+
+      (slotTemplates.length?'<button class="btn sm" data-act="enable-record-composition">Create unique composition</button>':''))+
+   (r.composition?'<p class="help">Its unique Card root is separate from record fields, and is assembled into its selected template.</p>':'')+
+   '<div class="field"><label>Generate this record detail page</label><select class="control" data-record-detail-page="1"><option value="true"'+(r.detailPage===false?'':' selected')+'>On · allow individual page</option><option value="false"'+(r.detailPage===false?' selected':'')+'>Off · index card without link</option></select></div>'+
+   (c.detailPages===false?'<p class="help">This collection has detail pages disabled globally. Change Collection settings to allow individual pages.</p>':'')+
+   placeholderSelect('record',r.placeholder===true)+publicationApprovalSelect('record',r.approvedForPublication===true)+
+   '<div class="rule"></div>'+c.fields.filter(f=>!['body','summary'].includes(f.key)).map(f=>recordFieldHtml(f,r)).join('')+
+   '<button class="btn" data-act="duplicate-record">'+ic('duplicate')+' Duplicate</button><div class="rule"></div>'+
+   '<button class="btn" data-act="delete-record">'+ic('trash')+' Delete record</button>';
+ }
+}
+else if(ui.section==='assets'){let a=asset();const uses=a?findAssetUses(db,a.id):[];h=a?inspectorEmpty(a.name,'Asset / '+a.id)+
+ '<div class="field"><label>Used by '+uses.length+' authoring location'+(uses.length===1?'':'s')+'</label>'+ (uses.length?'<p class="help">'+uses.slice(0,6).map(e).join(' · ')+(uses.length>6?' · …':'')+'</p>':'<p class="help">No current references; safe to remove metadata.</p>')+'</div>'+ `<img class="asset-large" src="${e(src(a))}" alt="${e(a.alt||'')}">${placeholderSelect('asset',a.placeholder===true)}<div class="field"><label>Project code · optional match key</label><input class="control" data-asset-project-code="${e(a.id)}" value="${e(a.properties?.projectCode||'')}" placeholder="e.g. 4424"></div>${['name','src','alt','caption','credit','tags'].map(k=>{let html=nodeField(k==='src'?'Image file / URL':k[0].toUpperCase()+k.slice(1),k,a[k],null,k==='alt'||k==='caption');if(k==='src'&&String(a.src).startsWith('/assets/uploads/'))html=html.replace('data-node-prop="src"','data-node-prop="src" readonly title="Stored file path (read-only)"');return html.replaceAll('data-node-prop','data-asset-prop')}).join('')}<div class="rule"></div><div class="upper" style="margin-bottom:9px">CUSTOM PROPERTIES</div>${Object.entries(a.properties||{}).filter(([k])=>k!=='projectCode').map(([k,v])=>`<div class="custom-row"><input value="${e(k)}" data-custom-key="${e(k)}"><input value="${e(valText(v))}" data-custom-val="${e(k)}"><button class="btn ghost sm" data-act="remove-custom" data-key="${e(k)}">×</button></div>`).join('')}<button class="btn sm" data-act="add-custom">${ic('add')} Property</button><div class="rule"></div><button class="btn" data-act="replace-asset-image">Replace image · keep asset ID</button><p class="help">Upload a new raster image to replace this asset’s source without changing existing project covers. Fill in the new alt text and credit after replacement.</p><button class="btn sm" data-act="delete-asset"${uses.length?' disabled title="Remove references before deleting"':''}>${ic('trash')} Delete asset metadata</button>`: inspectorEmpty('Asset properties','Select an image to inspect its metadata.')}
+else if(ui.section==='styles')h=inspectorEmpty('Style inheritance','Site defaults → named style → local Card/Item overrides. Use the Style library to edit reusable definitions.');
+else if(['page','template','component'].includes(ui.section)||compositionRecord()){let scope=currentScope(),found=ui.node?findNode(ui.node):null;if(!found){h=inspectorEmpty(scope?.name||scope?.title||'Page','Select an object on the canvas or from the structure below to edit it.');if(ui.section==='page'){
+  const pageTemplates=db.templates.filter(t=>t.layoutMode==='slot');
+  h+=inputField('Page title',scope.title,'page','title')+inputField('URL route',scope.slug,'page','slug');
+  h+='<div class="rule"></div><div class="upper">PAGE COMPOSITION</div>';
+  if(scope.template){
+    h+='<div class="field"><label>Shared page template</label><select class="control" data-page-template="1">'+
+      pageTemplates.map(t=>'<option value="'+e(t.id)+'"'+(t.id===scope.template?' selected':'')+'>'+e(t.name)+'</option>').join('')+
+      '</select></div><button class="btn sm" data-act="edit-template" data-id="'+e(scope.template)+'">Edit template ↗</button>'+
+      '<p class="help">Design edits the unique Page root Card; Preview assembles it into the shared template slot.</p>';
+  }else h+='<p class="help">Legacy Page · existing sections remain unchanged. Convert when ready to use shared templates.</p>'+
+    (pageTemplates.length?'<button class="btn sm" data-act="migrate-page">Convert to composition</button>':'');
+  h+='<button class="btn sm" data-act="new-page-template" style="margin-left:5px">New page template</button>';
+  h+='<button class="btn sm" data-act="duplicate-page" style="margin-left:5px">Duplicate as draft</button>';
+  h+=placeholderSelect('page',scope.placeholder===true)+publicationApprovalSelect('page',scope.approvedForPublication===true)+`<div class="rule"></div><div class="upper">MASTER SPACING · U = PAGE WIDTH / 100</div>`+nodeField('pad · units','site-pad',db.site.design?.pad??1)+nodeField('gap · units','site-gap',db.site.design?.gap??1)+`<div class="rule"></div><div class="upper">GLOBAL CARD DISPLAY</div><div class="field"><label>Card outlines</label><select class="control" data-site-design="cardBorders"><option value="false" ${db.site.design?.cardBorders?'':'selected'}>Off (individual outlines still work)</option><option value="true" ${db.site.design?.cardBorders?'selected':''}>On · outline all Cards at 20%</option></select></div>`+(db.site.chrome?'<p class="help">Header and Footer height/geometry now belong to their editable semantic Card components. Open them from Overview → Website settings.</p>':frameConstraintField('header','Navigation')+frameConstraintField('footer','Footer'))}else if(ui.section==='template'){
+  h+=inputField('Template name',scope.name,'template','name');
+  h+='<div class="rule"></div><div class="upper">SHARED SITE FRAME</div><p class="help">Templates can use site-wide defaults or override the Navbar/Footer independently.</p>';
+  for(const [role,label] of [['navigation','Navbar'],['footer','Footer']]){
+    const chosen=scope.chrome?.[role]||'',effective=chosen||db.site.chrome?.[role]||'';
+    const frames=db.components.filter(c=>c.frameRole===role);
+    h+='<div class="field"><label>'+label+'</label><select class="control" data-template-chrome="'+role+'">'+
+      '<option value=""'+(chosen?'':' selected')+'>Inherit site default</option>'+
+      frames.map(c=>'<option value="'+e(c.id)+'"'+(chosen===c.id?' selected':'')+'>'+e(c.name)+'</option>').join('')+
+      '</select></div><button class="btn sm" data-act="edit-component" data-id="'+e(effective)+'"'+(effective?'':' disabled')+'>Edit '+label+' ↗</button>';
+  }
+  if(scope.layoutMode==='slot')h+='<div class="rule"></div><div class="upper">PAGE TEMPLATE</div><p class="help">One required main Card slot. All other Cards can reference reusable Components. Used by '+db.pages.filter(p=>p.template===scope.id).length+' Pages.</p><button class="btn sm" data-act="new-page-template">New page template</button>';
+  else h+='<div class="field"><label>Collection</label><select class="control" data-edit="template" data-key="collection">'+optionsHtml(db.collections.map(c=>[c.id,c.name]),scope.collection)+'</select></div>';
+}else if(ui.section==='record'){
+  const options=db.templates.filter(t=>t.layoutMode==='slot'&&t.collection===coll()?.id);
+  h+='<div class="rule"></div><div class="upper">RECORD COMPOSITION</div>'+
+    '<p class="help">This root is unique to '+e(scope.title)+'. Text bindings resolve from this record’s fields. Preview shows the shared detail template and site chrome.</p>'+
+    '<div class="field"><label>Detail template</label><select class="control" data-record-template="1">'+
+    options.map(t=>'<option value="'+e(t.id)+'"'+(scope.template===t.id?' selected':'')+'>'+e(t.name)+'</option>').join('')+
+    '</select></div><button class="btn sm" data-act="edit-template" data-id="'+e(scope.template)+'">Edit shared template ↗</button>'+
+    '<button class="btn sm" data-act="mode" data-mode="fields">Edit bound fields</button>';
+ }else {
+  h+=inputField('Component name',scope.name,'component','name');
+  if(scope.frameRole)h+='<div class="rule"></div><div class="upper">SEMANTIC SITE COMPONENT</div><p class="help">This root Card is the actual '+e(scope.frameRole==='navigation'?'nav':'footer')+' landmark. You can edit its Items and Card appearance; navigation links are sourced only from Website settings.</p><button class="btn sm" data-act="duplicate-frame">Duplicate to create an alternate '+e(scope.frameRole)+' ↗</button>';
+ }
+ h+='<div class="rule"></div>'+(frameComponent()?'<p class="help">The semantic root Card is required. Select it to edit its grid, padding, colour and height.</p>':`<button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section</button>`);if(ui.section==='template'||ui.section==='component')h+=`<div class="rule"></div><button class="btn sm" data-act="delete-scope">${ic('trash')} Delete ${ui.section}</button>`}
+else {let n=found.node;const lock=protectedNode(n.id)?' disabled':'';h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+nodeField('Structure label','label',n.label||'')+`<div style="display:flex;gap:5px;margin:0 0 22px"><button class="btn sm" data-act="move-node" data-delta="-1" ${lock} title="Move up">${ic('up')}</button><button class="btn sm" data-act="move-node" data-delta="1" ${lock} title="Move down">${ic('down')}</button><button class="btn sm" data-act="duplicate-node" ${lock} title="Duplicate">${ic('duplicate')}</button><button class="btn sm" data-act="delete-node" ${lock} title="Delete">${ic('trash')}</button></div>`;
+ h+=nodeStyleControls(n);
+ if(n.type==='text')h+=nodeField('Text · supports {{property}}','text',n.text,null,true)+(n.styleRef?'':nodeField('Typography','style',n.style,[['display','Display'],['heading','Heading'],['body','Body'],['eyebrow','Eyebrow'],['caption','Caption']]));
  if(n.type==='image')h+=nodeField('Image source or {{cover}}','source',n.source)+nodeField('Fit','fit',n.fit,[['cover','Cover'],['contain','Contain']])+nodeField('Show caption','caption',!!n.caption,[['true','Yes'],['false','No']]);
  if(n.type!=='card')h+=nodeField('Overflow','overflow',n.overflow||'clip',[['clip','Clip to grid cell (default)'],['scroll','Scroll inside item']]);
  if(found.parent?.type==='card'){
  const a=n.area||{x1:1,y1:1,x2:2,y2:2};
  h+=areaInputMarkup(n,found.parent);
  }
- if(n.type==='card')h+=`<div class="rule"></div><div class="upper">EQUAL GRID DIVISIONS</div>`+
- nodeField('Columns','columns',n.columns||1)+nodeField('Rows','rows',n.rows||1)+
- nodeField('Background','background',n.background||'transparent',[['transparent','Transparent'],['white','White'],['grey-100','Grey 100'],['grey-200','Grey 200'],['grey-300','Grey 300'],['grey-600','Grey 600'],['black','Black']])+
- nodeField('Gap','gap',n.gap||'x1',[['x1','1 × gap'],['x2','2 × gap'],['x4','4 × gap']])+
- nodeField('Padding','padding',n.padding||'x1',[['x1','1 × pad'],['x2','2 × pad'],['x4','4 × pad']])+
- nodeField('Outline','border',String(Boolean(n.border)),[['false','None'],['true','20% currentColor outline']])+
+ if(n.type==='card'&&n.slot==='main')h+='<div class="rule"></div><p class="help">Required main content slot. The selected Page inserts its unique composition Card here. This slot must stay empty and 1 × 1.</p>';
+ if(n.type==='card'&&n.slot!=='main')h+=`<div class="rule"></div><div class="upper">EQUAL GRID DIVISIONS</div>`+
+ (frameComponent()&&n.id===currentBlocks()[0]?.id?'<p class="help">Semantic site chrome uses a fixed 12-column / 1-row grid.</p>':nodeField('Columns','columns',n.columns||1)+nodeField('Rows','rows',n.rows||1))+
+ (n.styleRef?'<p class="help">Appearance is inherited from the named style unless overridden above.</p>':legacyCardAppearance(n))+
  `<div class="rule"></div><div class="upper">HEIGHT · SECTION CARD</div>`+
  nodeField('Constrain height','constrainHeight',String(Boolean(n.constrainHeight)),[['false','No · content height'],['true','Yes · width × factor']])+
  (n.constrainHeight?nodeField('Height factor (e.g. 0.5)','heightFactor',n.heightFactor||.5):'')+
@@ -456,7 +704,25 @@ else {let n=found.node;h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+n
   ?'<p class="help">Generated or referenced Card: edit the source or component definition; direct children are not allowed.</p>'
   :`<button class="btn" data-act="show-blocks" data-inside="yes">${ic('add')} Add child object</button>`);
  if(n.type==='card'&&n.reference)h+=nodeField('Reusable component','reference',n.reference,db.components.map(c=>[c.id,c.name]))+`<button class="btn" data-act="edit-component" data-id="${e(n.reference)}">Edit definition ↗</button>`;
- if(n.type==='card'&&n.source){let src=n.source,cc=db.collections.find(c=>c.id===src.collection);h+=`<div class="rule"></div><div class="upper">DATA SOURCE · GENERATES RECORD CARDS</div>`+
+ if(n.type==='card'&&n.source?.kind==='assets'){
+  const src=n.source;
+  h+='<div class="rule"></div><div class="upper">ASSET SOURCE · TYPED AND QUERY</div>'+
+    '<p class="help">Match asset metadata against fixed values or this record’s {{projectCode}}, {{title}}, {{category}} or {{status}}. Every predicate must match. Empty context returns no assets.</p>'+
+    nodeField('Arrangement','source.layout',src.layout,[['grid','2 columns'],['three','3 columns'],['list','1 column']])+
+    nodeField('Sort','source.sort',src.sort,[['original','Asset library order'],['name','Name A–Z']])+
+    nodeField('Maximum images','source.count',src.count)+
+    nodeField('Show captions','source.caption',String(src.caption===true),[['true','Yes'],['false','No']]);
+  for(const [i,predicate] of src.where.entries()){
+    h+='<div class="field"><label>AND filter '+(i+1)+'</label>'+
+      '<select class="control" data-asset-filter-index="'+i+'" data-asset-filter-key="field">'+
+      Object.keys(ASSET_FILTERS).map(k=>'<option value="'+e(k)+'"'+(predicate.field===k?' selected':'')+'>'+e(k)+'</option>').join('')+
+      '</select><select class="control" style="margin-top:5px" data-asset-filter-index="'+i+'" data-asset-filter-key="op">'+
+      ASSET_FILTERS[predicate.field].map(op=>'<option value="'+e(op)+'"'+(predicate.op===op?' selected':'')+'>'+e(op==='eq'?'Equals':'Contains')+'</option>').join('')+
+      '</select><input class="control mono" style="margin-top:5px" data-asset-filter-index="'+i+'" data-asset-filter-key="value" value="'+e(predicate.value)+'" placeholder="{{projectCode}} or Architecture">'+
+      '<button class="btn sm" style="margin-top:5px" data-act="remove-asset-filter" data-id="'+i+'"'+(src.where.length===1?' disabled':'')+'>Remove filter</button></div>';
+  }
+  h+='<button class="btn sm" data-act="add-asset-filter"'+(src.where.length>=8?' disabled':'')+'>'+ic('add')+' Add AND filter</button>';
+ }else if(n.type==='card'&&n.source){let src=n.source,cc=db.collections.find(c=>c.id===src.collection);h+=`<div class="rule"></div><div class="upper">DATA SOURCE · GENERATES RECORD CARDS</div>`+
  nodeField('Collection','source.collection',src.collection,db.collections.map(c=>[c.id,c.name]))+
  nodeField('Record Card template','source.template',src.template,db.components.map(c=>[c.id,c.name]))+
  nodeField('Arrangement','source.layout',src.layout,[['grid','2 columns'],['three','3 columns'],['list','1 column']])+
@@ -466,28 +732,63 @@ else {let n=found.node;h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+n
  `<button class="btn" data-act="edit-component" data-id="${e(src.template)}">Edit record Card ↗</button>`;
  }
  if(n.type==='rich')h+=nodeField('Markdown body source','source',n.source)+`<p class="help">Use {{body}} for a record’s long-form content.</p>`;
- if(n.type==='button')h+=nodeField('Label','text',n.text)+nodeField('Destination','href',n.href);
+ if(n.type==='button')h+=nodeField('Label','text',n.text)+(n.variant==='site-logo'?'<p class="help">The Navbar logo links to Home. Its destination is fixed; change its label or grid placement here.</p>':nodeField('Destination','href',n.href));
  h+=selectionPath(ui.node);
  }}$('#inspectBody').innerHTML=h;$('#inspectorTitle').textContent=ui.section==='record'?'Record properties':ui.section==='assets'?'Asset properties':ui.section==='collection'?'Collection schema':'Properties'}
 function modal(title,desc,body,buttons){$('#modalHost').innerHTML=`<div class="modal-back" id="modalBack"><div class="modal" role="dialog" aria-modal="true"><h2>${e(title)}</h2><p>${e(desc)}</p>${body}<div class="modal-foot"><button class="btn" data-act="modal-close">Cancel</button>${buttons}</div></div></div>`;$('#modalHost input')?.focus()}
 function closeModal(){$('#modalHost').innerHTML=''}
 function createModal(kind){if(kind==='page')modal('New custom page','Create a unique page composed from reusable objects.',`<div class="field"><label>Page name</label><input id="modalName" class="control" placeholder="About" value="About"></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="page">Create page</button>`);
+ if(kind==='record-template')modal('New record template','Build one shared detail layout with a main-content slot for unique record compositions.',`<div class="field"><label>Template name</label><input id="modalName" class="control" value="Record layout"></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="record-template">Create record template</button>`);
+ if(kind==='page-template')modal('New page template','Build one shared Card layout with exactly one main content slot.',`<div class="field"><label>Template name</label><input id="modalName" class="control" value="Page layout"></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="page-template">Create page template</button>`);
  if(kind==='collection')modal('New content collection','Every collection can generate pages from a template.',`<div class="field"><label>Collection name</label><input id="modalName" class="control" placeholder="Publications" value="Publications"></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="collection">Create collection</button>`);
  if(kind==='component')modal('New component','Build a reusable design composition from primitives.',`<div class="field"><label>Component name</label><input id="modalName" class="control" value="New component"></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="component">Create component</button>`);
  if(kind==='template')modal('New template','Define a layout once and bind fields from a collection.',`<div class="field"><label>Template name</label><input id="modalName" class="control" value="New template"></div><div class="field"><label>Collection</label><select id="modalCollection" class="control">${db.collections.map(c=>`<option ${c.id===(ui.draftSection||coll()?.id)?'selected':''} value="${e(c.id)}">${e(c.name)}</option>`).join('')}</select></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="template">Create template</button>`);
  if(kind==='field')modal('New property','Add a typed field to this collection. It will appear in the table and record editor.',`<div class="field"><label>Property label</label><input id="modalName" class="control" value="Location" placeholder="Location"></div><div class="field"><label>Type</label><select id="modalType" class="control">${['text','number','boolean','date','select','asset','tags','textarea'].map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div><div class="field"><label>Options (only for select · comma-separated)</label><input id="modalOptions" class="control" placeholder="Idea, Active, Complete"></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="field">Add property</button>`)}
-function makeBlock(type){if(type==='text')return tb('A new text object.','body');if(type==='heading')return tb('A new heading.','heading');if(type==='image')return im(db.assets[0]?.id||'');if(type==='card')return card([tb('A new card.','body')],'split','soft');if(type==='rich')return {id:uid('b'),type:'rich',source:'{{body}}'};if(type==='query')return query(db.collections[0]?.id,'grid',4,db.components.find(c=>c.id==='project-tile')?.id||db.components[0]?.id,'all');if(type==='component')return comp(db.components[0]?.id);if(type==='divider')return {id:uid('b'),type:'divider'};if(type==='button')return {id:uid('b'),type:'button',text:'Read more ↗',href:'/posts'};return tb('New object')}
-function addBlockModal(inside){if(!currentScope())return;if(inside){const parent=ui.node?findNode(ui.node)?.node:null;if(!parent||parent.type!=='card'||parent.source||parent.reference)return;}ui.draftSection=inside;let items=[['text','Text','Paragraph or label'],['heading','Heading','Large editorial title'],['image','Image','Asset or record binding'],['card','Card / layout','Stack, split or grid'],['query','Collection feed','Filtered, repeatable records'],['component','Component','Reusable design fragment'],['rich','Markdown body','Long-form content'],['button','Button','Link or action'],['divider','Divider','Visual separator']];modal(inside?'Add child object':'Add object','Choose a block. Use the inspector to customise or bind its properties.',`<div class="choices">${items.map(([id,name,desc])=>`<button class="choice" data-act="insert-block" data-type="${id}">${ic(id==='query'?'table':id==='component'?'blocks':id==='image'?'image':'text')}<span><strong>${name}</strong><small>${desc}</small></span></button>`).join('')}</div>`,'' )}
+function makePageTemplate(name){const slot=card([],'stack','clear','small');slot.slot='main';slot.label='Main content slot';const root=card([slot],'stack','clear','small');root.label=name+' layout';return {id:uid('tpl'),name,description:'Reusable page frame with one main composition slot',layoutMode:'slot',blocks:[root]}}
+function makeAssetQueryCard(){const node=card([],'grid','clear','small');node.label='Asset gallery · contextual query';node.source={kind:'assets',where:[{field:'projectCode',op:'eq',value:'{{projectCode}}'}],layout:'grid',sort:'original',count:12,caption:true};return node}
+function makeBlock(type){if(type==='asset-query')return makeAssetQueryCard();if(type==='text')return tb('A new text object.','body');if(type==='heading')return tb('A new heading.','heading');if(type==='image')return im(db.assets[0]?.id||'');if(type==='card')return card([tb('A new card.','body')],'split','soft');if(type==='rich')return {id:uid('b'),type:'rich',source:'{{body}}'};if(type==='query')return query(db.collections[0]?.id,'grid',4,db.components.find(c=>c.id==='project-tile')?.id||db.components[0]?.id,'all');if(type==='component')return comp(db.components[0]?.id);if(type==='divider')return {id:uid('b'),type:'divider'};if(type==='button')return {id:uid('b'),type:'button',text:'Read more ↗',href:'/posts'};return tb('New object')}
+function selectedInsertParent(inside=false){
+ const selected=ui.node?findNode(ui.node):null;
+ const editable=node=>node?.type==='card'&&!node.source&&!node.reference&&node.slot!=='main';
+ if(inside)return editable(selected?.node)?selected.node:null;
+ if(editable(selected?.node))return selected.node;
+ if(editable(selected?.parent))return selected.parent;
+ const root=compositionRoot()||(frameComponent()?currentBlocks()[0]:ui.section==='template'&&tpl()?.layoutMode==='slot'?currentBlocks()[0]:null);
+ return editable(root)?root:null;
+}
+function addBlockModal(inside){
+ if(!currentScope())return;
+ const parent=selectedInsertParent(inside);
+ if(inside&&!parent)return;
+ ui.draftSection=parent?.id||null;
+ const target=parent?'Inside '+(parent.label||parent.id):'At the top level';
+ let items=[['text','Text','Paragraph or label'],['asset-query','Asset gallery · dynamic','Match asset project codes / tags using typed AND filters'],['heading','Heading','Large editorial title'],['image','Image','Asset or record binding'],['card','Card / layout','Stack, split or grid'],['query','Collection feed','Filtered, repeatable records'],['component','Component','Reusable design fragment'],['rich','Markdown body','Long-form content'],['button','Button','Link or action'],['divider','Divider','Visual separator']];modal('Add object',target+' · choose a Card or Item, then adjust it in Properties.',`<div class="choices">${items.map(([id,name,desc])=>`<button class="choice" data-act="insert-block" data-type="${id}">${ic(id==='query'?'table':id==='component'?'blocks':id==='image'?'image':'text')}<span><strong>${name}</strong><small>${desc}</small></span></button>`).join('')}</div>`,'' )}
 function regenIds(node){node.id=uid('b');(node.children||[]).forEach(regenIds);return node}
+function recordRootFromTemplate(template,title){
+ const original=clone(template?.blocks||[]);
+ original.forEach(regenIds);
+ const root=card(original,'stack','clear','small');
+ root.label=(title||'Record')+' composition';
+ return root;
+}
 function insertNode(type){
  const before=snapshotScope(),selectedBefore=ui.node;
- let n=makeBlock(type),parent=ui.draftSection&&findNode(ui.node)?.node;
+ let n=makeBlock(type),parent=ui.draftSection?findNode(ui.draftSection)?.node:null;
+ if(!parent&&frameComponent())parent=currentBlocks()[0];
+ if(!parent&&(compositionPage()||compositionRecord()))parent=compositionRoot();
+ if(!parent&&ui.section==='template'&&tpl()?.layoutMode==='slot')parent=currentBlocks()[0];
+ if(parent?.slot==='main')return;
  if(parent?.type==='card'){
    const arr=parent.children||(parent.children=[]);let taken=new Set();
    for(const child of arr){const a=child.area;if(a)for(let y=a.y1;y<a.y2;y++)for(let x=a.x1;x<a.x2;x++)taken.add(x+':'+y);}
    let x=1,y=1;
-   outer:for(let row=1;row<=parent.rows;row++)for(let col=1;col<=parent.columns;col++)if(!taken.has(col+':'+row)){x=col;y=row;break outer;}
-   if(taken.has(x+':'+y)){parent.rows+=1;x=1;y=parent.rows;}
+   const frameRoot=frameComponent()&&parent===currentBlocks()[0];
+   const allowedColumns=frameRoot&&component().frameRole==='navigation'?Math.min(6,parent.columns):parent.columns;
+   outer:for(let row=1;row<=parent.rows;row++)for(let col=1;col<=allowedColumns;col++)if(!taken.has(col+':'+row)){x=col;y=row;break outer;}
+   if(taken.has(x+':'+y)){
+     if(frameRoot){alert('No available space in this semantic frame Card. Adjust the existing Items first.');return}
+     parent.rows+=1;x=1;y=parent.rows;
+   }
    n.area={x1:x,y1:y,x2:x+1,y2:y+1};arr.push(n);
  } else {
    // Page/template root sections are always Cards.
@@ -497,16 +798,21 @@ function insertNode(type){
  ui.node=n.id;closeModal();saveScopeEdit(before,selectedBefore);
  document.querySelector('.card.chosen, .item.chosen')?.scrollIntoView({block:'center',behavior:'smooth'});showInspector();
 }
-function moveNode(delta){let f=findNode(ui.node);if(!f)return;let j=f.index+delta;if(j<0||j>=f.arr.length)return;const before=snapshotScope(),selectedBefore=ui.node;[f.arr[f.index],f.arr[j]]=[f.arr[j],f.arr[f.index]];saveScopeEdit(before,selectedBefore)}
+function moveNode(delta){let f=findNode(ui.node);if(!f||protectedNode(ui.node))return;let j=f.index+delta;if(j<0||j>=f.arr.length)return;const before=snapshotScope(),selectedBefore=ui.node;[f.arr[f.index],f.arr[j]]=[f.arr[j],f.arr[f.index]];saveScopeEdit(before,selectedBefore)}
 function setNodeField(key,value){
  let f=findNode(ui.node);if(!f)return;
  const before=snapshotScope(),selectedBefore=ui.node;
  const n=f.node;
+ if(n.slot==='main'&&['columns','rows','reference','source.collection','source.template'].includes(key))return;
+ if(frameComponent()&&n.id===currentBlocks()[0]?.id&&['columns','rows'].includes(key))return;
+ if(frameComponent()&&n.variant==='site-logo'&&key==='href')return;
  if(key.startsWith('source.')){
    if(n.type!=='card'||!n.source)return;
    const field=key.slice(7);
    if(field==='count'){const count=Number(value);if(!Number.isInteger(count)||count<1||count>200){alert('Choose 1–200 records.');return;}n.source.count=count;}
    else if(field==='layout'){n.source.layout=value;n.columns=value==='three'?3:value==='list'?1:2;}
+   else if(field==='caption'&&n.source.kind==='assets')n.source.caption=value==='true';
+   else if(n.source.kind==='assets'&&['collection','template','filter'].includes(field))return;
    else n.source[field]=value;
  }else if(key==='overflow'){
    if(!['clip','scroll'].includes(value))return;
@@ -528,6 +834,22 @@ function setNodeField(key,value){
  else if(key==='count')n[key]=Math.max(1,Number(value)||1);
  else n[key]=value;
  saveScopeEdit(before,selectedBefore);
+}
+function validatedDesignEdit(mutator){
+ const candidate=clone(db);
+ try{mutator(candidate);validateSiteData(candidate)}
+ catch(error){alert(error.message);renderAll();return false}
+ db=candidate;persist();renderAll();return true;
+}
+function editSelectedAppearance(mutator){
+ const found=ui.node?findNode(ui.node):null;if(!found)return false;
+ const before=snapshotScope(),selectedBefore=ui.node;
+ mutator(found.node);
+ try{validateSiteData(db)}
+ catch(error){
+   assignScopeBlocks(before);ui.node=selectedBefore;alert(error.message);renderAll();return false;
+ }
+ saveScopeEdit(before,selectedBefore);return true;
 }
 function openRecord(recordId,collectionId){if(collectionId)ui.collection=collectionId;ui.record=recordId;choose('record',{collection:ui.collection,record:recordId})}
 function download(name,text,type='application/json'){let blob=new Blob([text],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
@@ -584,24 +906,151 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  }
  case'undo-structure':restoreScopeEdit('undo');break;
  case'redo-structure':restoreScopeEdit('redo');break;
+ case'add-nav':{
+   const candidate=clone(db),links=candidate.site.navigation||(candidate.site.navigation=[]);
+   const next=candidate.pages.find(p=>p.status==='Published'&&!links.some(n=>(n.href.endsWith('/')?n.href.slice(0,-1):n.href)===(p.slug.endsWith('/')?p.slug.slice(0,-1):p.slug)));
+   if(!next){alert('Every published Page is already in navigation.');break}
+   links.push({label:next.title,href:next.slug});
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;persist();renderAll();break;
+ }
+ case'remove-nav':{
+   const candidate=clone(db),index=Number(id);
+   if(!Number.isInteger(index)||index<0||index>=candidate.site.navigation.length)break;
+   candidate.site.navigation.splice(index,1);
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;persist();renderAll();break;
+ }
+ case'move-nav':{
+   const candidate=clone(db),index=Number(id),other=index+Number(btn.dataset.delta);
+   if(!Number.isInteger(index)||other<0||other>=candidate.site.navigation.length)break;
+   [candidate.site.navigation[index],candidate.site.navigation[other]]=[candidate.site.navigation[other],candidate.site.navigation[index]];
+   db=candidate;persist();renderAll();break;
+ }
+ case'select-style':ui.styleId=id;renderWork();renderInspector();break;
+ case'new-style':{
+   const target=btn.dataset.target;if(!['card','item'].includes(target))break;
+   const id=uid('style'),name=target==='card'?'New Card style':'New Item style';
+   const properties=target==='card'?{background:'transparent',padding:'x1',gap:'x1',border:false}:{role:'body',tone:'inherit',weight:'inherit'};
+   validatedDesignEdit(d=>(d.site.design.styles||=([])).push({id,name,target,properties}));
+   ui.styleId=id;renderWork();break;
+ }
+ case'delete-style':{
+   if(styleUsageCount(ui.styleId)>0){alert('Style is still referenced by authored Cards or Items.');break}
+   if(!confirm('Delete this unused style?'))break;
+   validatedDesignEdit(d=>{d.site.design.styles=d.site.design.styles.filter(x=>x.id!==ui.styleId)});
+   ui.styleId=db.site.design.styles[0]?.id||'';renderWork();break;
+ }
+ case'add-asset-filter':{
+   const n=ui.node&&findNode(ui.node)?.node;
+   if(n?.source?.kind!=='assets'||n.source.where.length>=8)break;
+   editSelectedAppearance(node=>node.source.where.push({field:'tags',op:'contains',value:'Architecture'}));break;
+ }
+ case'remove-asset-filter':{
+   const n=ui.node&&findNode(ui.node)?.node,index=Number(id);
+   if(n?.source?.kind!=='assets'||n.source.where.length<=1||!Number.isInteger(index)||index<0||index>=n.source.where.length)break;
+   editSelectedAppearance(node=>node.source.where.splice(index,1));break;
+ }
  case'new-page':createModal('page');break;
  case'new-collection':createModal('collection');break;
  case'new-template':ui.draftSection=btn.dataset.collection||coll()?.id||db.collections[0]?.id;createModal('template');break;
+ case'new-page-template':createModal('page-template');break;
+ case'new-record-template':ui.draftSection=btn.dataset.collection||ui.collection;createModal('record-template');break;
+ case'enable-record-composition':{
+   const c=coll(),r=rec(),slot=db.templates.find(x=>x.id===c.compositionTemplate);
+   if(!r||r.composition||!slot){alert('No record composition template configured for this collection.');break}
+   if(!confirm('Create an independent root Card using this record’s existing detail template as a starting point? This is an opt-in structural conversion, and the layout may change visually.'))break;
+   const candidate=clone(db),collection=candidate.collections.find(x=>x.id===c.id),target=collection.records.find(x=>x.id===r.id);
+   target.composition=recordRootFromTemplate(templateFor(c,r),r.title);
+   target.template=slot.id;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;editorHistory.clear();ui.node=null;ui.mode='design';persist();renderAll();break;
+ }
+ case'migrate-page':{
+   const p=page(),t=db.templates.find(t=>t.layoutMode==='slot');
+   if(!p||p.template||!t)return;
+   if(!confirm('Convert this Page into a single root composition using '+t.name+'? Its existing Cards are preserved as children, but the nested layout may change visually.'))break;
+   const candidate=clone(db),target=candidate.pages.find(x=>x.id===p.id);
+   const root=card([],'stack','clear','small');
+   root.label=target.title+' composition';root.rows=Math.max(1,target.blocks.length);
+   root.children=target.blocks.map((node,i)=>({...node,area:{x1:1,y1:i+1,x2:2,y2:i+2}}));
+   target.template=t.id;target.composition=root;target.blocks=[];
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;editorHistory.clear();ui.node=null;persist();renderAll();break;
+ }
+ case'duplicate-frame':{
+   const source=component();if(!source?.frameRole)break;
+   const candidate=clone(db),copy=clone(source);
+   copy.id=uid('cmp');copy.name=source.name+' · Variant';
+   copy.blocks.forEach(regenIds);candidate.components.push(copy);
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;persist();choose('component',copy.id);break;
+ }
  case'new-component':createModal('component');break;
  case'new-field':createModal('field');break;
- case'new-record':{let c=coll();let n=c.records.length+1,r={id:uid('r'),placeholder:true,approvedForPublication:false};for(let f of c.fields){r[f.key]=f.type==='boolean'?false:f.type==='tags'?[]:'';}r.title=`Untitled ${n}`;r.slug='untitled-'+n;r.status='Draft';if(c.id==='posts'){r.format='Note';r.status='Draft';r.date=new Date().toISOString().slice(0,10)}c.records.unshift(r);persist();openRecord(r.id,c.id);ui.mode='fields';renderAll();break}
- case'confirm-create':{let kind=btn.dataset.kind,name=String($('#modalName')?.value||'').trim();if(!name){$('#modalName')?.focus();return}if(kind==='page'){let p={id:uid('p'),title:name,slug:'/'+slug(name),status:'Draft',blocks:[card([tb(name,'display')],'stack','clear','none')]};db.pages.push(p);closeModal();persist();choose('page',p.id)}else if(kind==='collection'){let id=slug(name);if(db.collections.some(c=>c.id===id)){alert('Collection name already exists');return}let t={id:uid('tpl'),name:name.replace(/s$/,'')+' detail',collection:id,description:'Generated content page',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};db.templates.push(t);db.collections.push({id,name,base:'/'+id,defaultTemplate:t.id,fields:[F('title','Title'),F('slug','Slug'),F('status','Status','select','Draft,Published'),F('summary','Summary','textarea'),F('body','Body','textarea')],records:[]});closeModal();persist();choose('collection',id)}else if(kind==='component'){let x={id:uid('cmp'),name,description:'Reusable content component',blocks:[card([tb('New component','heading')],'stack','clear','none')]};db.components.push(x);closeModal();persist();choose('component',x.id)}else if(kind==='template'){let x={id:uid('tpl'),name,collection:$('#modalCollection').value,description:'Custom generated page template',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};db.templates.push(x);closeModal();persist();choose('template',x.id)}else if(kind==='field'){let c=coll(),key=slug(name).replaceAll('-','_');if(c.fields.some(f=>f.key===key)){alert('A property with this key already exists');return}c.fields.push(F(key,name,$('#modalType').value,$('#modalOptions').value));c.records.forEach(r=>r[key]=$('#modalType').value==='boolean'?false:$('#modalType').value==='tags'?[]:'');closeModal();persist();renderAll()}break}
+ case'new-record':{
+   const c=coll(),n=c.records.length+1,r={id:uid('r'),placeholder:true,approvedForPublication:false};
+   for(const f of c.fields)r[f.key]=f.type==='boolean'?false:f.type==='tags'?[]:'';
+   r.title=`Untitled ${n}`;r.slug='untitled-'+n;r.status='Draft';
+   if(c.id==='posts'){r.format='Note';r.date=new Date().toISOString().slice(0,10)}
+   const t=db.templates.find(x=>x.id===c.compositionTemplate),legacy=templateFor(c,r);
+   if(t?.layoutMode==='slot'){r.template=t.id;r.composition=recordRootFromTemplate(legacy,r.title)}
+   const candidate=clone(db);candidate.collections.find(x=>x.id===c.id).records.unshift(r);
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;persist();openRecord(r.id,c.id);ui.mode='fields';renderAll();break;
+ }
+ case'confirm-create':{let kind=btn.dataset.kind,name=String($('#modalName')?.value||'').trim();if(!name){$('#modalName')?.focus();return}if(kind==='page'){let t=db.templates.find(t=>t.layoutMode==='slot');let p={id:uid('p'),title:name,slug:'/'+slug(name),status:'Draft',blocks:[],...(t?{template:t.id,composition:card([tb(name,'display')],'stack','clear','none')}:{blocks:[card([tb(name,'display')],'stack','clear','none')]})};db.pages.push(p);closeModal();persist();choose('page',p.id)}else if(kind==='page-template'){let t=makePageTemplate(name);db.templates.push(t);closeModal();persist();choose('template',t.id)}else if(kind==='record-template'){
+ const c=coll();if(!c){alert('Select a collection first');break}
+ const candidate=clone(db),t=makePageTemplate(name);t.collection=c.id;
+ t.description='Record detail slot template for '+c.name;
+ candidate.templates.push(t);
+ try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+ db=candidate;closeModal();persist();choose('template',t.id);
+ }else if(kind==='collection'){let id=slug(name);if(db.collections.some(c=>c.id===id)){alert('Collection name already exists');return}let t={id:uid('tpl'),name:name.replace(/s$/,'')+' detail',collection:id,description:'Generated content page',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};let slot=makePageTemplate(name+' composition');slot.collection=id;db.templates.push(t,slot);db.collections.push({id,name,base:'/'+id,defaultTemplate:t.id,compositionTemplate:slot.id,fields:[F('title','Title'),F('slug','Slug'),F('status','Status','select','Draft,Published'),F('summary','Summary','textarea'),F('body','Body','textarea')],records:[]});closeModal();persist();choose('collection',id)}else if(kind==='component'){let x={id:uid('cmp'),name,description:'Reusable content component',blocks:[card([tb('New component','heading')],'stack','clear','none')]};db.components.push(x);closeModal();persist();choose('component',x.id)}else if(kind==='template'){let x={id:uid('tpl'),name,collection:$('#modalCollection').value,description:'Custom generated page template',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};db.templates.push(x);closeModal();persist();choose('template',x.id)}else if(kind==='field'){let c=coll(),key=slug(name).replaceAll('-','_');if(c.fields.some(f=>f.key===key)){alert('A property with this key already exists');return}c.fields.push(F(key,name,$('#modalType').value,$('#modalOptions').value));c.records.forEach(r=>r[key]=$('#modalType').value==='boolean'?false:$('#modalType').value==='tags'?[]:'');closeModal();persist();renderAll()}break}
  case'modal-close':closeModal();break;
  case'open-record':openRecord(id,ui.collection);break;
  case'edit-template':if(id)choose('template',id);break;
  case'edit-component':if(id)choose('component',id);break;
- case'duplicate-record':{let c=coll(),r=clone(rec());r.id=uid('r');r.title+=' (copy)';r.slug+='-copy';c.records.unshift(r);persist();openRecord(r.id,c.id);break}
+ case'duplicate-page':{
+   const source=page();if(!source)break;
+   const candidate=clone(db),copyPage=clone(source);
+   copyPage.id=uid('p');copyPage.title+=' (copy)';copyPage.status='Draft';
+   copyPage.placeholder=true;copyPage.approvedForPublication=false;
+   const stem=(source.slug==='/'?'/home':source.slug.replace(/\/$/,''))+'-copy';
+   let path=stem,i=2;while(candidate.pages.some(p=>p.slug===path))path=stem+'-'+i++;
+   copyPage.slug=path;
+   if(copyPage.composition)regenIds(copyPage.composition);
+   for(const block of copyPage.blocks||[])regenIds(block);
+   candidate.pages.push(copyPage);
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;persist();choose('page',copyPage.id);break;
+ }
+ case'duplicate-record':{
+   const c=coll(),r=clone(rec());r.id=uid('r');r.title+=' (copy)';r.status='Draft';r.placeholder=true;r.approvedForPublication=false;
+   if(c.id==='projects')r.projectCode='';
+   let stem=r.slug+'-copy',slug=stem,i=2;
+   while(c.records.some(x=>x.slug===slug))slug=stem+'-'+i++;
+   r.slug=slug;
+   if(r.composition)regenIds(r.composition);
+   const candidate=clone(db);candidate.collections.find(x=>x.id===c.id).records.unshift(r);
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;persist();openRecord(r.id,c.id);break;
+ }
  case'delete-record':if(confirm('Delete this record and its generated page?')){let c=coll();c.records=c.records.filter(r=>r.id!==ui.record);persist();choose('collection',c.id)}break;
  case'new-asset':{let a={id:uid('asset'),name:'New image',src:'',alt:'',caption:'',credit:'',tags:[],properties:{}};db.assets.unshift(a);ui.asset=a.id;persist();choose('assets',a.id);showInspector();break}
  case'asset-select':ui.asset=id;renderWork();renderInspector();showInspector();break;
  case'upload':$('#imageFile').click();break;
  case'replace-asset-image':if(asset())$('#replaceImageFile').click();break;
- case'delete-asset':if(confirm('Delete image metadata? References will remain but image previews may be empty.')){db.assets=db.assets.filter(a=>a.id!==ui.asset);ui.asset=db.assets[0]?.id;persist();renderAll()}break;
+ case'delete-asset':{
+   const chosen=asset();if(!chosen)break;
+   const uses=findAssetUses(db,chosen.id);
+   if(uses.length){alert('This image is still used by '+uses.length+' location(s). Remove those references first.\n'+uses.slice(0,5).join('\n'));break}
+   if(confirm('Delete unused image metadata? The original uploaded file is not automatically deleted.')){
+     const candidate=clone(db);candidate.assets=candidate.assets.filter(a=>a.id!==chosen.id);
+     try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+     db=candidate;ui.asset=db.assets[0]?.id;persist();renderAll();
+   }break;
+ }
  case'add-custom':{let a=asset();if(!a)return;let k='new_property',i=1;while(Object.hasOwn(a.properties,k))k='new_property_'+i++;a.properties[k]='';persist();renderInspector();break}
  case'remove-custom':delete asset().properties[btn.dataset.key];persist();renderInspector();break;
  case'remove-field':{let c=coll(),key=btn.dataset.key;if(confirm('Remove property "'+key+'" from schema and every record?')){c.fields=c.fields.filter(f=>f.key!==key);c.records.forEach(r=>delete r[key]);persist();renderAll()}break}
@@ -610,7 +1059,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'select-node':selectStudioNode(id);break;
  case'move-node':moveNode(Number(btn.dataset.delta));break;
  case'duplicate-node':{
-   const f=findNode(ui.node);if(!f)break;
+   const f=findNode(ui.node);if(!f||protectedNode(ui.node))break;
    const before=snapshotScope(),selectedBefore=ui.node;
    const n=regenIds(clone(f.node));
    if(f.parent){
@@ -622,6 +1071,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    saveScopeEdit(before,selectedBefore);break;
  }
  case'delete-node':{
+   if(protectedNode(ui.node))break;
    const f=findNode(ui.node);
    if(f&&confirm('Delete this object and its children?')){
      const before=snapshotScope(),selectedBefore=ui.node;
@@ -630,7 +1080,11 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    }
    break;
  }
- case'delete-scope':{let s=currentScope();if(!s||!confirm('Delete this '+ui.section+'?'))break;if(ui.section==='template'){if(db.templates.length<=1){alert('Keep at least one template.');break}db.templates=db.templates.filter(x=>x.id!==s.id);choose('template',db.templates[0].id)}else if(ui.section==='component'){db.components=db.components.filter(x=>x.id!==s.id);choose('component',db.components[0]?.id)}persist();break}
+ case'delete-scope':{let s=currentScope();if(!s||!confirm('Delete this '+ui.section+'?'))break;
+  if(ui.section==='component'&&(
+   Object.values(db.site.chrome||{}).includes(s.id)||
+   db.templates.some(t=>Object.values(t.chrome||{}).includes(s.id))
+  )){alert('Component is referenced by a site or page template frame. Reassign it before deleting.');break;}if(ui.section==='template'){if(db.pages.some(p=>p.template===s.id)||db.collections.some(c=>c.defaultTemplate===s.id||c.compositionTemplate===s.id||Object.values(c.formatTemplates||{}).includes(s.id)||c.records.some(r=>r.template===s.id))){alert('Template is in use. Reassign Pages or Collections before deleting it.');break}if(db.templates.length<=1){alert('Keep at least one template.');break}db.templates=db.templates.filter(x=>x.id!==s.id);choose('template',db.templates[0].id)}else if(ui.section==='component'){db.components=db.components.filter(x=>x.id!==s.id);choose('component',db.components[0]?.id)}persist();break}
  case'apply-json':{let scope=btn.dataset.scope;try{let obj=JSON.parse($('#jsonEditor').value);applyValidatedJSON(scope,obj);ui.jsonMessage='JSON applied successfully.';renderAll()}catch(err){ui.jsonMessage='Error: '+err.message;let x=$('#jsonNotice');if(x){x.textContent=ui.jsonMessage;x.className='notice error'}}break}
  case'copy-json':navigator.clipboard?.writeText($('#jsonEditor').value).then(()=>{if($('#jsonNotice'))$('#jsonNotice').textContent='Copied to clipboard.'}).catch(()=>{});break;
  case'export':exportJSON();break;
@@ -802,7 +1256,7 @@ function clearTreeDrag(){
 }
 document.addEventListener('dragstart',event=>{
  const handle=event.target.closest('.structure-handle');
- if(!handle||!structureMode())return;
+ if(!handle||!isStructureEditing()||protectedNode(handle.dataset.dragId))return;
  draggingId=handle.dataset.dragId;
  event.dataTransfer?.setData('text/plain',draggingId);
  if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
@@ -814,7 +1268,7 @@ document.addEventListener('dragover',event=>{
  clearTreeDrag();
  if(!row||!mode)return;
  const trial=moveTreeNode(currentBlocks(),draggingId,row.dataset.rowId,mode);
- if(!trial.ok){if(event.dataTransfer)event.dataTransfer.dropEffect='none';return}
+ if(!trial.ok||(compositionPage()&&(trial.blocks.length!==1||trial.blocks[0]?.id!==compositionRoot().id))||(ui.section==='template'&&tpl()?.layoutMode==='slot'&&trial.blocks.length!==1)){if(event.dataTransfer)event.dataTransfer.dropEffect='none';return}
  event.preventDefault();
  if(event.dataTransfer)event.dataTransfer.dropEffect='move';
  row.classList.add('drop-'+mode);
@@ -827,8 +1281,9 @@ document.addEventListener('drop',event=>{
  event.preventDefault();
  const result=moveTreeNode(currentBlocks(),id,row.dataset.rowId,mode);
  if(!result.ok){alert(result.error);return}
- const scope=currentScope(),before=snapshotScope(),selectedBefore=ui.node;
- scope.blocks=result.blocks;ui.node=id;
+ const before=snapshotScope(),selectedBefore=ui.node;
+ if(!assignScopeBlocks(result.blocks))return;
+ ui.node=id;
  if(result.parentId)ui.structureCollapsed.delete(result.parentId);
  saveScopeEdit(before,selectedBefore);
 });
@@ -836,6 +1291,110 @@ document.addEventListener('dragend',()=>{draggingId=null;clearTreeDrag()});
 
 document.addEventListener('click',event=>{let target=event.target.closest('[data-act]');if(target){handleAction(target);return}let n=event.target.closest('[data-node-id]');if(n&&ui.mode==='design'){event.preventDefault();selectStudioNode(n.dataset.nodeId);return}let g=event.target.closest('[data-open-generated]');if(g&&ui.mode!=='design'){event.preventDefault();openRecord(g.dataset.openGenerated,g.dataset.forCollection);return}let nav=event.target.closest('[data-site-route]');if(nav){event.preventDefault();let p=db.pages.find(p=>p.slug===nav.dataset.siteRoute);if(p)choose('page',p.id);return}if(event.target.id==='modalBack')closeModal()});
 document.addEventListener('change',event=>{let el=event.target;
+ if(el.dataset.collectionCompositionTemplate!==undefined){
+   const candidate=clone(db),c=candidate.collections.find(x=>x.id===ui.collection);
+   if(!c)return;
+   if(el.value)c.compositionTemplate=el.value;else delete c.compositionTemplate;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderAll();return}
+   db=candidate;persist();renderAll();return;
+ }
+ if(el.dataset.recordDetailPage!==undefined){
+   const candidate=clone(db),r=candidate.collections.find(c=>c.id===ui.collection)?.records.find(x=>x.id===ui.record);
+   if(!r)return;
+   r.detailPage=el.value==='true';
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
+   db=candidate;persist();renderAll();return;
+ }
+ if(el.dataset.collectionDetailPages!==undefined){
+   const candidate=clone(db),c=candidate.collections.find(x=>x.id===ui.collection);if(!c)return;
+   c.detailPages=el.value==='true';
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderAll();return}
+   db=candidate;persist();renderAll();return;
+ }
+ if(el.dataset.recordLegacyTemplate!==undefined){
+   const candidate=clone(db),c=candidate.collections.find(x=>x.id===ui.collection),r=c?.records.find(x=>x.id===ui.record);
+   if(!r||r.composition)return;
+   if(el.value)r.template=el.value;else delete r.template;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
+   db=candidate;persist();renderAll();return;
+ }
+ if(el.dataset.recordTemplate){
+   const candidate=clone(db),c=candidate.collections.find(x=>x.id===ui.collection),r=c?.records.find(x=>x.id===ui.record);
+   if(!r?.composition)return;
+   r.template=el.value;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
+   db=candidate;persist();renderAll();return;
+ }
+ if(el.dataset.assetFilterIndex!==undefined){
+   const index=Number(el.dataset.assetFilterIndex),key=el.dataset.assetFilterKey;
+   const n=ui.node&&findNode(ui.node)?.node;
+   if(n?.source?.kind!=='assets'||!Number.isInteger(index)||!n.source.where[index]||
+      !['field','op','value'].includes(key))return;
+   editSelectedAppearance(node=>{
+     const predicate=node.source.where[index];predicate[key]=el.value;
+     if(key==='field'&&!ASSET_FILTERS[predicate.field]?.includes(predicate.op))
+       predicate.op=ASSET_FILTERS[predicate.field]?.[0]||'eq';
+   });return;
+ }
+ if(el.dataset.nodeStyleRef!==undefined){
+   const requested=el.value;
+   editSelectedAppearance(n=>{
+     if(requested)n.styleRef=requested;
+     else{delete n.styleRef;delete n.appearance}
+   });return;
+ }
+ if(el.dataset.nodeAppearance!==undefined){
+   const key=el.dataset.nodeAppearance,raw=el.value;
+   editSelectedAppearance(n=>{
+     n.appearance||={};
+     if(raw==='__inherit__')delete n.appearance[key];
+     else n.appearance[key]=key==='border'?raw==='true':raw;
+     if(!Object.keys(n.appearance).length)delete n.appearance;
+   });return;
+ }
+ if(el.dataset.styleName!==undefined||el.dataset.styleProp!==undefined){
+   const styleId=ui.styleId,key=el.dataset.styleProp,name=el.value;
+   validatedDesignEdit(d=>{
+     const target=d.site.design.styles.find(x=>x.id===styleId);
+     if(!target)throw Error('No style selected');
+     if(key!==undefined)target.properties[key]=key==='border'?name==='true':name;
+     else target.name=name.trim();
+   });return;
+ }
+ if(el.dataset.designToken!==undefined||el.dataset.designPalette!==undefined){
+   const token=el.dataset.designToken,color=el.dataset.designPalette;
+   validatedDesignEdit(d=>{
+     if(color!==undefined){d.site.design.palette||={};d.site.design.palette[color]=el.value.trim()}
+     else{d.site.design.tokens||={};d.site.design.tokens[token]=token==='fontFamily'?el.value:Number(el.value)}
+   });return;
+ }
+ if(el.dataset.siteChrome){
+   const role=el.dataset.siteChrome;
+   if(!['navigation','footer'].includes(role))return;
+   const candidate=clone(db);candidate.site.chrome[role]=el.value;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
+   db=candidate;persist();renderAll();return;
+ }
+ if(el.dataset.templateChrome){
+   const role=el.dataset.templateChrome;
+   if(ui.section!=='template'||!['navigation','footer'].includes(role))return;
+   const candidate=clone(db),target=candidate.templates.find(t=>t.id===ui.template);
+   if(!target)return;
+   target.chrome||={};
+   if(el.value)target.chrome[role]=el.value;
+   else delete target.chrome[role];
+   if(!Object.keys(target.chrome).length)delete target.chrome;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
+   db=candidate;persist();renderAll();return;
+ }
+ if(el.dataset.siteNavIndex!==undefined){
+   const index=Number(el.dataset.siteNavIndex),key=el.dataset.siteNavField;
+   if(!Number.isInteger(index)||!['label','href'].includes(key)||!db.site.navigation?.[index])return;
+   const candidate=clone(db);
+   candidate.site.navigation[index][key]=el.value.trim();
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
+   db=candidate;persist();renderAll();return;
+ }
  if(el.dataset.cell){let r=recById(ui.collection,el.dataset.id),f=coll()?.fields.find(x=>x.key===el.dataset.key);if(r){setRecordValue(r,el.dataset.key,el.type==='checkbox'?el.checked:el.value,f);persist();queueMicrotask(renderAll)}return}
  if(el.dataset.recordField){let r=rec(),f=coll()?.fields.find(x=>x.key===el.dataset.recordField);
   if(r){
@@ -865,6 +1424,20 @@ document.addEventListener('change',event=>{let el=event.target;
  if(el.dataset.assetProp){let a=asset();if(a){if(el.dataset.assetProp==='src'&&String(a.src).startsWith('/assets/uploads/'))return;a[el.dataset.assetProp]=el.dataset.assetProp==='tags'?el.value.split(',').map(x=>x.trim()).filter(Boolean):el.value;persist();renderAll()}return}
  if(el.dataset.customVal){let a=asset();if(a){a.properties[el.dataset.customVal]=el.value;persist()}return}
  if(el.dataset.customKey){let a=asset(),old=el.dataset.customKey,k=el.value.trim();if(a&&k&&!Object.hasOwn(a.properties,k)){a.properties[k]=a.properties[old];delete a.properties[old];persist();renderInspector()}return}
+ if(el.dataset.pageTemplate){
+   const t=db.templates.find(t=>t.id===el.value&&t.layoutMode==='slot');
+   if(!compositionPage()||!t)return;
+   const candidate=clone(db);candidate.pages.find(p=>p.id===ui.page).template=t.id;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
+   db=candidate;persist();renderAll();return;
+ }
+ if(el.dataset.siteIndexing){
+  const candidate=clone(db);
+  candidate.site.publishing={indexing:el.value==='true'};
+  try{validateSiteData(candidate)}
+  catch(error){alert(error.message);renderInspector();return}
+  db=candidate;persist();renderInspector();return
+ }
  if(el.dataset.siteContact){
   const key=el.dataset.siteContact;
   if(key!=='email'&&key!=='bookingUrl')return;
@@ -926,7 +1499,7 @@ document.addEventListener('input',event=>{
 });
 
 document.addEventListener('keydown',event=>{
- if(!structureMode()||!(event.ctrlKey||event.metaKey)||event.altKey)return;
+ if(!isStructureEditing()||!(event.ctrlKey||event.metaKey)||event.altKey)return;
  const target=event.target;
  if(target.closest('input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
  const key=event.key.toLowerCase();
@@ -940,7 +1513,7 @@ document.addEventListener('keydown',event=>{
 });
 document.addEventListener('keydown',event=>{
  const focus=event.target.closest('.structure-select');
- if(!focus||!structureMode())return;
+ if(!focus||!isStructureEditing())return;
  if(event.altKey&&!event.ctrlKey&&!event.metaKey&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)){
    event.preventDefault();
    applyTreeMove(({ArrowUp:'up',ArrowDown:'down',ArrowRight:'indent',ArrowLeft:'outdent'})[event.key]);

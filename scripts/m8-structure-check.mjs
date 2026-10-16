@@ -29,7 +29,12 @@ const stressRoot=makeCard('stress-root',groups,null,8,1);
 let deepest={id:'stress-leaf',type:'text',text:'Deep nested authoring selection',area:{...cell}};
 for(let depth=12;depth>=0;depth--)deepest=makeCard('stress-level-'+depth,[deepest],{...cell});
 delete deepest.area;
-fixture.pages.find(p=>p.id==='studio').blocks.push(stressRoot,deepest);
+const stressPage=fixture.pages.find(p=>p.id==='studio');
+for(const [index,card] of [stressRoot,deepest].entries()){
+ card.area={x1:1,y1:stressPage.composition.rows+index+1,x2:2,y2:stressPage.composition.rows+index+2};
+ stressPage.composition.children.push(card);
+}
+stressPage.composition.rows+=2;
 await writeFile(fixtureFile,JSON.stringify(fixture));
 const port=5274;
 const server=spawn(process.execPath,['src/server.mjs'],{cwd:root,env:{...process.env,PORT:String(port),TA_DATA_ROOT:contentRoot},stdio:'ignore'});
@@ -81,6 +86,186 @@ try{
   await sleep(100);
  }
  if(!loaded)throw Error('Studio did not load');
+ await evaluate("window.__qaAlerts=[];window.alert=value=>window.__qaAlerts.push(String(value));true");
+ // Publishing mode is edited in the same local JSON as all other site settings.
+ const indexing=await evaluate(`(()=>{
+   window.__TA_STUDIO__.navigate('dashboard');
+   const selector=document.querySelector('[data-site-indexing]');
+   if(!selector)return {error:'Site indexing selector missing'};
+   const original=window.__TA_STUDIO__.getData().site.publishing.indexing;
+   selector.value='true';selector.dispatchEvent(new Event('change',{bubbles:true}));
+   const enabled=window.__TA_STUDIO__.getData().site.publishing.indexing;
+   const reset=document.querySelector('[data-site-indexing]');
+   reset.value='false';reset.dispatchEvent(new Event('change',{bubbles:true}));
+   const disabled=window.__TA_STUDIO__.getData().site.publishing.indexing;
+   return {original,enabled,disabled,selected:document.querySelector('[data-site-indexing]').value};
+ })()`);
+ if(indexing.original!==false||indexing.enabled!==true||indexing.disabled!==false||indexing.selected!=='false')
+   throw Error('Studio search indexing switch failed: '+JSON.stringify(indexing));
+ console.log('SITE_INDEXING_OK local Studio supports reversible site-wide publishing mode');
+ // M12: templated pages edit only their unique root, then assemble the shared layout on preview.
+ const pageAssembly=await evaluate(`(()=>{
+   const result={};
+   for(const id of ['work','journal']){
+     window.__TA_STUDIO__.navigate('page',id);
+     const isolated=document.querySelector('#workbody .card-page');
+     const root=window.__TA_STUDIO__.getData().pages.find(p=>p.id===id).composition.id;
+     result[id]={root,isolated:!!isolated,hasNavbar:!!document.querySelector('#workbody nav.card-nav'),
+       selectedRoot:!!document.querySelector('#workbody [data-node-id="'+root+'"]')};
+     document.querySelector('[data-act="mode"][data-mode="preview"]')?.click();
+     result[id].fullNavbar=!!document.querySelector('#workbody nav.card-nav');
+     result[id].fullFooter=!!document.querySelector('#workbody footer.card-footer');
+   }
+   return result;
+ })()`);
+ for(const [id,state] of Object.entries(pageAssembly)){
+   if(!state.isolated||state.hasNavbar||!state.selectedRoot||!state.fullNavbar||!state.fullFooter)
+     throw Error('M12 isolated Page composition/full preview mismatch: '+id+' '+JSON.stringify(state));
+ }
+ console.log('M12_PAGE_PREVIEW_OK two Pages edit composition alone and preview assembled template');
+ const sharedChrome=await evaluate(`(()=>{
+   window.__TA_STUDIO__.navigate('dashboard');
+   const navLabel=document.querySelector('[data-site-nav-index="1"][data-site-nav-field="label"]');
+   if(!navLabel)return {error:'Editable site.navigation label missing'};
+   navLabel.value='Portfolio';
+   navLabel.dispatchEvent(new Event('change',{bubbles:true}));
+   window.__TA_STUDIO__.navigate('page','work');
+   document.querySelector('[data-act="mode"][data-mode="preview"]')?.click();
+   const linkText=document.querySelector('#workbody nav.card-nav a[href="/work/"]')?.textContent;
+   window.__TA_STUDIO__.navigate('component','site-navbar');
+   const logo=!!document.querySelector('#workbody [data-node-id="site-navbar-logo"]');
+   const navbar=!!document.querySelector('#workbody nav.card-nav');
+   window.__TA_STUDIO__.navigate('component','site-footer');
+   const footer=!!document.querySelector('#workbody footer.card-footer [data-node-id="site-footer-name"]');
+   window.__TA_STUDIO__.navigate('template','page-general');
+   const templateControls=!!document.querySelector('[data-template-chrome="navigation"]')&&
+     !!document.querySelector('[data-template-chrome="footer"]');
+   window.__TA_STUDIO__.navigate('dashboard');
+   const reset=document.querySelector('[data-site-nav-index="1"][data-site-nav-field="label"]');
+   reset.value='Work';reset.dispatchEvent(new Event('change',{bubbles:true}));
+   return {linkText,logo,navbar,footer,templateControls,
+     restored:window.__TA_STUDIO__.getData().site.navigation[1].label};
+ })()`);
+ if(sharedChrome.linkText!=='Portfolio'||!sharedChrome.logo||!sharedChrome.navbar||
+    !sharedChrome.footer||!sharedChrome.templateControls||sharedChrome.restored!=='Work')
+   throw Error('M12 shared chrome Studio controls failed: '+JSON.stringify(sharedChrome));
+ console.log('M12_CHROME_OK editable site nav, semantic Navbar/Footer and template selectors');
+ // M13: styles resolve from the shared JSON and local overrides reset to inheritance.
+ const styleEditing=await evaluate(`(()=>{
+   const get=()=>window.__TA_STUDIO__.getData();
+   window.__TA_STUDIO__.navigate('styles','index-root');
+   const prop=document.querySelector('[data-style-prop="background"]');
+   if(!prop)return {error:'M13 Styles editor missing'};
+   prop.value='grey-100';prop.dispatchEvent(new Event('change',{bubbles:true}));
+   const changed=get().site.design.styles.find(s=>s.id==='index-root').properties.background;
+   const reset=document.querySelector('[data-style-prop="background"]');
+   reset.value='transparent';reset.dispatchEvent(new Event('change',{bubbles:true}));
+   window.__TA_STUDIO__.navigate('page','work');
+   document.querySelector('[data-act="select-node"][data-id="work-index-section"]')?.click();
+   const reference=document.querySelector('[data-node-style-ref]')?.value||'';
+   const field=document.querySelector('[data-node-appearance="background"]');
+   if(!field)return {error:'M13 local override selector missing',reference};
+   field.value='black';field.dispatchEvent(new Event('change',{bubbles:true}));
+   const override=get().pages.find(p=>p.id==='work').composition.appearance?.background;
+   const inherit=document.querySelector('[data-node-appearance="background"]');
+   inherit.value='__inherit__';inherit.dispatchEvent(new Event('change',{bubbles:true}));
+   const final=get().pages.find(p=>p.id==='work').composition;
+   window.__TA_STUDIO__.navigate('styles','index-root');
+   return {changed,reference,override,reset:final.appearance?.background,
+     inherited:document.querySelector('[data-style-prop="background"]')?.value};
+ })()`);
+ if(styleEditing.error||styleEditing.changed!=='grey-100'||styleEditing.reference!=='index-root'||
+    styleEditing.override!=='black'||styleEditing.reset!==undefined||styleEditing.inherited!=='transparent')
+   throw Error('M13 Studio inheritance / local override reset failed: '+JSON.stringify(styleEditing));
+ console.log('M13_STYLES_OK shared Card styles, local overrides and inherited reset in Studio');
+ // M14: draft record compositions edit in isolation and new records use collection slot defaults.
+ const recordComposition=await evaluate(`(()=>{
+   const app=window.__TA_STUDIO__;
+   app.navigate('record',{collection:'posts',record:'post-four'});
+   const initial=app.getData().collections.find(c=>c.id==='posts').records.find(r=>r.id==='post-four');
+   const hasDesignMode=!!document.querySelector('[data-act="mode"][data-mode="design"]');
+   document.querySelector('[data-act="mode"][data-mode="design"]')?.click();
+   const isolatedRoot=!!document.querySelector('#workbody [data-node-id="record-post-four-root"]');
+   const hasNavInDesign=!!document.querySelector('#workbody nav.card-nav');
+   document.querySelector('[data-act="mode"][data-mode="preview"]')?.click();
+   const fullNav=!!document.querySelector('#workbody nav.card-nav');
+   const fullFooter=!!document.querySelector('#workbody footer.card-footer');
+   app.navigate('collection','projects');
+   document.querySelector('[data-act="new-record"]')?.click();
+   const created=app.getData().collections.find(c=>c.id==='projects').records[0];
+   const hasNewDesign=!!document.querySelector('[data-act="mode"][data-mode="design"]');
+   return {hasDesignMode,isolatedRoot,hasNavInDesign,fullNav,fullFooter,
+     draft:initial.status,created:created.id,createdTemplate:created.template,
+     createdHasRoot:created.composition?.type==='card',
+     createdStatus:created.status,hasNewDesign};
+ })()`);
+ if(!recordComposition.hasDesignMode||!recordComposition.isolatedRoot||recordComposition.hasNavInDesign||
+    !recordComposition.fullNav||!recordComposition.fullFooter||recordComposition.draft!=='Draft'||
+    recordComposition.createdTemplate!=='record-project-layout'||!recordComposition.createdHasRoot||
+    recordComposition.createdStatus!=='Draft'||!recordComposition.hasNewDesign)
+   throw Error('M14 record composition Studio integration failed: '+JSON.stringify(recordComposition));
+ console.log('M14_RECORDS_OK isolated draft record editor, assembled preview and independent new project root');
+ // M15: the converted Balkan House Record uses a contextual asset gallery.
+ const assetQueryEditing=await evaluate(`(()=>{
+   const app=window.__TA_STUDIO__;
+   app.navigate('record',{collection:'projects',record:'p-balkan'});
+   document.querySelector('[data-act="mode"][data-mode="design"]')?.click();
+   const query=document.querySelector('#workbody [data-node-id="balkan-highlights-query"]');
+   const baselineImage=!!document.querySelector('#workbody img[src="/assets/placeholder/house.svg"]');
+   document.querySelector('[data-act="select-node"][data-id="balkan-highlights-query"]')?.click();
+   const field=document.querySelector('[data-asset-filter-index="1"][data-asset-filter-key="value"]');
+   const filterControls=!!field&&!!document.querySelector('[data-node-prop="source.sort"]');
+   if(!field)return {error:'M15 gallery predicate inspector missing',baselineImage,query:!!query};
+   field.value='Systems';field.dispatchEvent(new Event('change',{bubbles:true}));
+   const edited=app.getData().collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-balkan').composition.children.at(-1).source.where[1].value;
+   const empty=!!document.querySelector('#workbody .item-placeholder');
+   const restore=document.querySelector('[data-asset-filter-index="1"][data-asset-filter-key="value"]');
+   restore.value='Architecture';restore.dispatchEvent(new Event('change',{bubbles:true}));
+   const restored=!!document.querySelector('#workbody img[src="/assets/placeholder/house.svg"]');
+   const current=app.getData().collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-balkan').composition.children.at(-1).source.where[1].value;
+   return {query:!!query,baselineImage,filterControls,edited,empty,restored,current};
+ })()`);
+ if(assetQueryEditing.error||!assetQueryEditing.query||!assetQueryEditing.baselineImage||
+    !assetQueryEditing.filterControls||assetQueryEditing.edited!=='Systems'||
+    !assetQueryEditing.empty||!assetQueryEditing.restored||assetQueryEditing.current!=='Architecture')
+   throw Error('M15 contextual Asset Gallery editor failed: '+JSON.stringify(assetQueryEditing));
+ console.log('M15_ASSET_QUERIES_OK record context, AND predicate editing and gallery refresh');
+
+ // M16: demo-wide compositions, context-aware insertion, safe drafts and media usage.
+ const authoringPolish=await evaluate(`(()=>{
+   const app=window.__TA_STUDIO__;
+   const data=app.getData();
+   const migrated=data.pages.every(p=>p.composition&&p.blocks.length===0)&&
+     data.collections.every(c=>c.records.every(r=>r.composition));
+   app.navigate('page','home');
+   const select=document.querySelector('[data-act="select-node"][data-id="m6-hero-image"]');
+   select?.click();
+   const add=document.querySelector('#quickAdd');
+   const quickAddVisible=!!add&&getComputedStyle(add).display!=='none';
+   add?.click();
+   const contextual=document.querySelector('#modalHost')?.textContent?.includes('Inside m6-hero');
+   document.querySelector('[data-act="modal-close"]')?.click();
+   app.navigate('page','home');
+   document.querySelector('[data-act="duplicate-page"]')?.click();
+   const page=app.getData().pages.at(-1),source=app.getData().pages.find(p=>p.id==='home');
+   const pageSafe=page?.status==='Draft'&&page?.id!==source?.id&&
+      page?.composition?.id!==source?.composition?.id&&page?.slug!==source?.slug;
+   app.navigate('record',{collection:'projects',record:'p-facade'});
+   document.querySelector('[data-act="duplicate-record"]')?.click();
+   const copies=app.getData().collections.find(c=>c.id==='projects').records;
+   const rec=copies[0],origin=copies.find(r=>r.id==='p-facade');
+   const recordSafe=rec?.status==='Draft'&&rec?.id!==origin?.id&&
+      rec?.composition?.id!==origin?.composition?.id&&rec?.slug!==origin?.slug&&rec?.projectCode==='';
+   app.navigate('assets','house');
+   const usedBy=!!document.querySelector('#inspectBody')?.textContent.includes('Balkan House');
+   const deletionBlocked=!!document.querySelector('[data-act="delete-asset"]')?.disabled;
+   app.navigate('dashboard');
+   const built=document.querySelectorAll('#workbody .stat')[1]?.querySelector('b')?.textContent;
+   return {migrated,quickAddVisible,contextual,pageSafe,recordSafe,usedBy,deletionBlocked,built};
+ })()`);
+ if(Object.entries(authoringPolish).some(([key,value])=>key==='built'?value!=='10':!value))
+   throw Error('M16 authoring polish failed: '+JSON.stringify(authoringPolish));
+ console.log('M16_AUTHORING_OK demo compositions, contextual add, safe drafts, asset dependencies and route count');
  // M9: verify the actual site-wide contact editor, typed URL guard, and CTA.
  const configured=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('dashboard');
@@ -139,11 +324,12 @@ try{
    document.querySelector('[data-act="mode"][data-mode="fields"]')?.click();
    window.__M9CodeError='';window.alert=value=>window.__M9CodeError=String(value);
    const code=document.querySelector('[data-record-field="projectCode"]');
+   const original=code.value;
    code.value='4424';code.dispatchEvent(new Event('change',{bubbles:true}));
-   return {message:window.__M9CodeError,
+   return {message:window.__M9CodeError,original,
      value:window.__TA_STUDIO__.getData().collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-facade').projectCode};
  })()`);
- if(!duplicateCode.message?.includes('Duplicate projectCode')||duplicateCode.value!=='')
+ if(!duplicateCode.message?.includes('Duplicate projectCode')||duplicateCode.value!==duplicateCode.original)
    throw Error('Duplicate project code bypassed validation: '+JSON.stringify(duplicateCode));
  console.log('M9_PROJECT_CODE_OK typed asset/record matching and duplicate-code rejection');
  // Upload a REAL PNG as an in-place replacement; covers still reference 'house'.
@@ -212,7 +398,7 @@ try{
  const formChange=await evaluate('(()=>{for(const [key,value] of Object.entries({x1:1,y1:3,x2:2,y2:5}))document.querySelector("[data-area-value="+key+"]").value=String(value);document.querySelector("[data-act=apply-area]").click();return true})()');
  if(!formChange)throw Error('Area numeric form unavailable');
  await sleep(700);
- const titleIn=data=>data.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.find(b=>b.id==='m6-hero-copy').children.find(b=>b.id==='m6-hero-title');
+ const titleIn=data=>data.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero').children.find(b=>b.id==='m6-hero-copy').children.find(b=>b.id==='m6-hero-title');
  const changed=titleIn(JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8')));
  if(changed.area.y1!==3||changed.area.y2!==5)throw Error('Atomic area Apply did not persist full rectangle');
  await evaluate('(()=>{for(const [key,value] of Object.entries({x1:1,y1:2,x2:2,y2:6}))document.querySelector("[data-area-value="+key+"]").value=String(value);document.querySelector("[data-act=apply-area]").click();return true})()');
@@ -235,13 +421,13 @@ try{
  if(!reparented)throw Error('Tree drag-and-drop controls missing');
  await sleep(750);
  const dnd=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- const hero=dnd.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero');
+ const hero=dnd.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero');
  if(!hero.children.find(x=>x.id==='m6-hero-graphic').children.some(x=>x.id==='m6-hero-title'))throw Error('Tree drop did not reparent authored Item');
  const undo=await evaluate('(()=>{const el=document.querySelector("[data-act=undo-structure]");if(!el||el.disabled)return false;el.click();return true})()');
  if(!undo)throw Error('Structure Undo unavailable');
  await sleep(650);
  const restored=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- if(!restored.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.find(x=>x.id==='m6-hero-copy').children.some(x=>x.id==='m6-hero-title'))throw Error('Structure Undo failed to restore source parent');
+ if(!restored.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero').children.find(x=>x.id==='m6-hero-copy').children.some(x=>x.id==='m6-hero-title'))throw Error('Structure Undo failed to restore source parent');
  console.log('M8_TREE_AREA_OK atomic four-value Apply, validation, reparent and Undo');
  // Traverse earlier rectangle edits: reparent undo restored the previous document.
  // Allow an actual atomic file write to finish: fixed sleeps race on large trees.
@@ -273,7 +459,7 @@ try{
  if(!pendingRedo)throw Error('The undone tree move should still be available to Redo');
  await invoke('redo-structure');
  const redoMove=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- if(!redoMove.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ if(!redoMove.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero')
    .children.find(x=>x.id==='m6-hero-graphic').children.some(x=>x.id==='m6-hero-title'))
    throw Error('Redo of the earlier tree move failed');
  await invoke('undo-structure');
@@ -287,13 +473,13 @@ try{
  console.log('M8_HISTORY_OK multi-step area Undo/Redo, tree Redo, new-edit branch invalidation');
  // Duplicate and delete must each be a single undoable transaction, without
  // overlapping the original Card area or creating a different canonical ID.
- const originalCount=restored.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ const originalCount=restored.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero')
    .children.find(b=>b.id==='m6-hero-copy').children.length;
  const duplicated=await evaluate('(()=>{const b=document.querySelector("[data-act=duplicate-node]");if(!b)return false;b.click();return true})()');
  if(!duplicated)throw Error('Duplicate action missing');
  await sleep(500);
  const afterDuplicate=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- const copyChildren=afterDuplicate.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ const copyChildren=afterDuplicate.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero')
    .children.find(b=>b.id==='m6-hero-copy').children;
  if(copyChildren.length!==originalCount+1)throw Error('Duplicate did not create a new child');
  const copies=copyChildren.filter(x=>x.type==='text'&&x.text===copyChildren.find(n=>n.id==='m6-hero-title').text);
@@ -303,7 +489,7 @@ try{
    throw Error('Duplicated child overlaps its source cell area');
  await invoke('undo-structure');
  const afterUndoDuplicate=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- if(afterUndoDuplicate.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ if(afterUndoDuplicate.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero')
  .children.find(b=>b.id==='m6-hero-copy').children.length!==originalCount)throw Error('Duplicate Undo did not remove copied child');
  await invoke('redo-structure');
  await evaluate('window.confirm=()=>true');
@@ -311,7 +497,7 @@ try{
  if(!deleted)throw Error('Delete action missing');
  await sleep(450);
  const afterDelete=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- if(afterDelete.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ if(afterDelete.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero')
  .children.find(b=>b.id==='m6-hero-copy').children.length!==originalCount)throw Error('Delete did not remove copied child');
  await invoke('undo-structure');
  await invoke('undo-structure'); // back to one original Title
@@ -330,24 +516,24 @@ try{
  };
  await keyboardMove('ArrowUp','ArrowUp',38);
  const movedUp=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
-   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.map(b=>b.id);
+   .pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero').children.map(b=>b.id);
  if(movedUp[0]!=='m6-hero-graphic')throw Error('Alt+ArrowUp did not reorder Card');
  const focusAfter=await evaluate('document.activeElement?.dataset.id');
  if(focusAfter!=='m6-hero-graphic')throw Error('Keyboard move lost focus');
  await invoke('undo-structure');
  const previous=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
-   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.map(b=>b.id);
+   .pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero').children.map(b=>b.id);
  if(previous[1]!=='m6-hero-graphic')throw Error('Keyboard reorder Undo failed');
  const toolbar=await evaluate('(()=>{document.querySelector("#structureTree .structure-select[data-id=m6-hero-graphic]")?.click();const n=document.querySelector(\'#structurePane [data-act="tree-move"][data-move="indent"]\');if(!n||n.disabled)return false;n.click();return true})()');
  if(!toolbar)throw Error('Tree Move toolbar cannot indent into preceding Card');
  await sleep(480);
  const afterIndent=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
-   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero');
+   .pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero');
  if(!afterIndent.children.find(b=>b.id==='m6-hero-copy').children.some(b=>b.id==='m6-hero-graphic'))
    throw Error('Toolbar indent did not nest Card into previous sibling');
  await invoke('undo-structure');
  const undoIndent=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
-   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.map(b=>b.id);
+   .pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero').children.map(b=>b.id);
  if(undoIndent[1]!=='m6-hero-graphic')throw Error('Toolbar indent was not undoable');
  console.log('M8_KEYBOARD_MOVE_OK Alt+ArrowUp, retained focus, toolbar indent and history Undo');
  const fold=await evaluate("(()=>{const el=document.querySelector('#structurePane [data-act=\"structure-fold\"][data-id=\"m6-hero\"]');if(!el)return false;el.click();return !document.querySelector('#structurePane [data-id=\"m6-hero-title\"]');})()");
@@ -406,7 +592,7 @@ try{
    const source=window.__TA_STUDIO__.getData();
    const before=JSON.stringify(source);
    const textarea=document.querySelector('#jsonEditor'),editing=JSON.parse(textarea.value);
-   editing.blocks[1].id=editing.blocks[0].id;
+   editing.composition.children[1].id=editing.composition.children[0].id;
    textarea.value=JSON.stringify(editing);
    document.querySelector('[data-act="apply-json"]').click();
    return {message:document.querySelector('#jsonNotice')?.textContent,
@@ -416,7 +602,7 @@ try{
    throw Error('Invalid scoped JSON poisoned editor state: '+JSON.stringify(rejectedJSON));
  await sleep(250);
  const rejectedDisk=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- if(rejectedDisk.pages.find(p=>p.id==='home').blocks[1].id===rejectedDisk.pages.find(p=>p.id==='home').blocks[0].id)
+ if(rejectedDisk.pages.find(p=>p.id==='home').composition.children[1].id===rejectedDisk.pages.find(p=>p.id==='home').composition.children[0].id)
    throw Error('Invalid scoped JSON was written to disk');
  console.log('M8_JSON_TRANSACTION_OK invalid scoped JSON retains editor state and on-disk tree');
  // Full JSON imports must use the same validated transaction boundary as scoped edits.
@@ -532,7 +718,7 @@ try{
  const conflictUi=await evaluate(`(()=>({
   message:document.querySelector('#saved')?.textContent,
   exportAvailable:!!document.querySelector('#exportBtn'),
-  inMemory:window.__TA_STUDIO__.getData().pages.find(p=>p.id==='home').blocks
+  inMemory:window.__TA_STUDIO__.getData().pages.find(p=>p.id==='home').composition.children
     .find(b=>b.id==='m6-hero').children.find(b=>b.id==='m6-hero-copy').children
     .find(b=>b.id==='m6-hero-title').label
  }))()`);
@@ -581,7 +767,7 @@ try{
      error:document.querySelector('#saveDetails')?.textContent,
      visible:!document.querySelector('#saveDetails')?.hidden,
      exported:!!document.querySelector('#exportBtn'),
-     label:window.__TA_STUDIO__.getData().pages.find(p=>p.id==='home').blocks
+     label:window.__TA_STUDIO__.getData().pages.find(p=>p.id==='home').composition.children
        .find(b=>b.id==='m6-hero').children.find(b=>b.id==='m6-hero-copy').children
        .find(b=>b.id==='m6-hero-title').label
    }))()`);

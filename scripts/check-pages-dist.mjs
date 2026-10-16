@@ -3,8 +3,12 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { normalizeBasePath } from '../src/deploy-paths.mjs';
+import {publicationSettings} from '../src/publishing.mjs';
+import {validate} from '../src/model.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','dist');
 const base=normalizeBasePath(process.env.TA_BASE_PATH||'/');
+const data=validate(JSON.parse(await readFile(path.join(root,'..','content','site.json'),'utf8')));
+const robots=publicationSettings(data,process.env).indexing?'index, follow':'noindex, nofollow';
 const failures=[];
 const checked=[];
 async function walk(dir){
@@ -17,7 +21,7 @@ async function walk(dir){
 await walk(root);
 for(const file of checked){
   const content=await readFile(file,'utf8');
-  if(!content.includes('content="noindex'))failures.push(`${file}: missing noindex`);
+  if(!file.endsWith('404.html') && !content.includes(`name="robots" content="${robots}"`))failures.push(`${file}: incorrect public robots metadata`);
   for(const [,attr,href] of content.matchAll(/\b(href|src|poster|action)="([^"]+)"/g)){
     if(!href.startsWith('/') || href.startsWith('//'))continue;
     if(!href.startsWith(base)) {failures.push(`${file}: wrong-base ${attr}=${href}`);continue;}

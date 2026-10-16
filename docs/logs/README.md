@@ -27,5 +27,18 @@ Short, dated records of **completed or active development cycles**. These comple
 | 2026-10-15 | [M10 semantic accessibility and M11 static-host packaging](2026-10-15-m10-accessibility-m11-package.md) |
 | 2026-10-15 | [M11 atomic builds, verified release ZIP and end-to-end rollback rehearsal](2026-10-15-m11-release-rehearsal.md) |
 | 2026-10-15 | [V1 staging release candidate, final acceptance and production blockers](2026-10-15-v1-release-candidate.md) |
+| 2026-10-15 | [V2 local-first publishing and GitHub workflow simplification](2026-10-15-v2-local-first-publishing-cleanup.md) |
+| 2026-10-16 | [V2 site-wide search indexing switch and local-only validation handoff](2026-10-16-site-indexing-switch.md) |
+| 2026-10-16 | [M12 Work/Journal page-template migration and isolated Studio design](2026-10-16-m12-page-compositions.md) |
+| 2026-10-16 | [M12 editable semantic Navbar/Footer and template overrides](2026-10-16-m12-semantic-site-chrome.md) |
+| 2026-10-16 | [M13 named styles, site tokens and Studio override editing](2026-10-16-m13-design-styles.md) |
+| 2026-10-16 | [M14 Record compositions, collection defaults and optional detail routes](2026-10-16-m14-record-compositions.md) |
+| 2026-10-16 | [M15 Contextual asset galleries, typed queries and Balkan House conversion](2026-10-16-m15-asset-query-galleries.md) |
+| 2026-10-16 | [M16 Unified demo authoring, migrated compositions and safe media workflow](2026-10-16-m16-unified-authoring.md) |
+| 2026-10-16 | [M17 Local release acceptance audit, static ZIP and visual review workflow](2026-10-16-m17-release-readiness.md) |
+
+| 2026-10-16 | [M17 Real Windows/Chrome acceptance, release fixes and desktop review](2026-10-16-m17-local-acceptance.md) |
+
+| 2026-10-16 | [Design-system history audit and explicit approval rule](2026-10-16-design-system-audit.md) |
 
 Older `docs/M*_*.md` files are **technical references and milestone snapshots**, not competing plans.

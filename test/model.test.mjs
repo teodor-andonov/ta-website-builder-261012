@@ -7,17 +7,17 @@ const copy = () => structuredClone(fixture);
 test('initial content is valid',()=>assert.equal(validate(copy()).version,2));
 test('M8 rejects duplicate IDs across a Card and its descendant within one page',()=>{
   const d=copy();
-  const parent=d.pages[0].blocks.find(n=>n.type==='card'&&n.children?.length);
+  const parent=d.pages[0].composition.children.find(n=>n.type==='card'&&n.children?.length);
   assert.ok(parent);
   parent.children[0].id=parent.id;
-  assert.throws(()=>validate(d),/Duplicate node ID in home: /);
+  assert.throws(()=>validate(d),/Duplicate node ID in home composition: /);
 });
 test('M8 rejects duplicate sibling IDs in one authoring scope',()=>{
   const d=copy();
-  const parent=d.pages[0].blocks.find(n=>n.type==='card'&&n.children?.length>1);
+  const parent=d.pages[0].composition.children.find(n=>n.type==='card'&&n.children?.length>1);
   assert.ok(parent);
   parent.children[1].id=parent.children[0].id;
-  assert.throws(()=>validate(d),/Duplicate node ID in home: /);
+  assert.throws(()=>validate(d),/Duplicate node ID in home composition: /);
 });
 test('M8 rejects duplicate node IDs in a component independently of pages',()=>{
   const d=copy();
@@ -28,7 +28,7 @@ test('M8 rejects duplicate node IDs in a component independently of pages',()=>{
 });
 test('M8 allows node IDs reused in independent page scopes',()=>{
   const d=copy();
-  d.pages[1].blocks[0].id=d.pages[0].blocks[0].id;
+  d.pages[1].composition.id=d.pages[0].composition.id;
   assert.doesNotThrow(()=>validate(d));
 });
 test('M8 rejects direct self-reference in reusable components',()=>{
@@ -66,17 +66,21 @@ const nestedDocument=depth=>{
  return node;
 };
 test('M8 renders twelve nested Card levels, previously silently truncated at ten',()=>{
-  const d=copy();d.pages[0].blocks.push(nestedDocument(12));
+  const d=copy(),root=d.pages[0].composition,n=nestedDocument(12);
+  root.rows++;n.area={x1:1,y1:root.rows,x2:2,y2:root.rows+1};root.children.push(n);
   assert.doesNotThrow(()=>validate(d));
-  const html=renderBlocks([d.pages[0].blocks.at(-1)],null,d);
+  const html=renderBlocks([n],null,d);
   assert.match(html,/VISIBLE_DEEP_CONTENT/);
 });
 test('M8 rejects nesting beyond the validated renderer limit',()=>{
-  const d=copy();d.pages[0].blocks.push(nestedDocument(34));
+  const d=copy(),root=d.pages[0].composition,n=nestedDocument(34);
+  root.rows++;n.area={x1:1,y1:root.rows,x2:2,y2:root.rows+1};root.children.push(n);
   assert.throws(()=>validate(d),/Composition nesting exceeds 32 levels in home/);
 });
 test('M8 rejects unknown Items and hidden child Items',()=>{
-  const d=copy(),item=d.pages[0].blocks[0].children[0].children[0];
+  const d=copy();
+  const firstText=nodes=>{for(const n of nodes){if(n.type==='text')return n;const hit=firstText(n.children||[]);if(hit)return hit}return null};
+  const item=firstText([d.pages[0].composition]);
   const oldType=item.type;item.type='mystery';
   assert.throws(()=>validate(d),/Invalid Item type/);
   item.type=oldType;
@@ -84,13 +88,13 @@ test('M8 rejects unknown Items and hidden child Items',()=>{
   assert.throws(()=>validate(d),/Items cannot contain children/);
 });
 test('M8 rejects hidden authored children under reference and query Cards',()=>{
-  const d=copy(),ref=d.pages.find(p=>p.id==='studio').blocks;
+  const d=copy(),ref=[d.pages.find(p=>p.id==='studio').composition];
   const find=(nodes,predicate)=>{for(const node of nodes){if(predicate(node))return node;const found=find(node.children||[],predicate);if(found)return found}return null};
   const referenced=find(ref,n=>n.type==='card'&&n.reference);
   assert.ok(referenced);
   referenced.children.push({id:'hidden-under-component',type:'text',text:'Unrendered',area:{...cell}});
   assert.throws(()=>validate(d),/Generated or referenced Card cannot contain hidden authored children/);
-  const e=copy(),query=find(e.pages.find(p=>p.id==='home').blocks,n=>n.type==='card'&&n.source);
+  const e=copy(),query=find([e.pages.find(p=>p.id==='home').composition],n=>n.type==='card'&&n.source);
   assert.ok(query);
   query.children.push({id:'hidden-under-query',type:'text',text:'Unrendered',area:{...cell}});
   assert.throws(()=>validate(e),/Generated or referenced Card cannot contain hidden authored children/);
@@ -109,7 +113,7 @@ test('unsafe paths and slugs rejected',()=>{
 });
 test('broken template links rejected',()=>{
   const d=copy();d.collections[0].defaultTemplate='nonexistent';
-  assert.throws(()=>validate(d),/Missing default template/);
+  assert.throws(()=>validate(d),/Collection defaultTemplate must be a legacy detail template/);
 });
 import { collectPages,renderBlocks } from '../src/render.mjs';
 test('builds real project and post routes but not drafts',()=>{
@@ -120,10 +124,10 @@ test('builds real project and post routes but not drafts',()=>{
 });
 test('shared template edits update all project pages',()=>{
   const d=copy();
-  d.templates.find(t=>t.id==='project-detail').blocks.unshift({id:'test-marker',type:'text',text:'TEST EDIT IN TEMPLATE',style:'caption'});
+  d.templates.find(t=>t.id==='record-project-layout').blocks[0].background='grey-100';
   const pages=collectPages(d).filter(p=>p.route.startsWith('/work/') && p.route!=='/work/');
   assert.ok(pages.length>=2);
-  assert.ok(pages.every(p=>p.html.includes('TEST EDIT IN TEMPLATE')));
+  assert.ok(pages.every(p=>p.html.includes('bg-grey-100')));
 });
 test('HTML injection in records is escaped',()=>{
   const d=copy();

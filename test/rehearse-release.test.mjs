@@ -10,5 +10,5 @@ test('M11 full backup/build/package/restore rollback drill is reproducible and n
  assert.equal(result.recoveredZipMatches,true);
  assert.equal(result.failedBuildRetainedLastGood,true);
  assert.equal(result.existingWorkingFolderUntouched,true);
- assert.equal(result.noindex,true);
+ assert.equal(result.indexable,false);
 });

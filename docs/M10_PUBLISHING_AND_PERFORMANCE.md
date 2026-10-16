@@ -1,4 +1,4 @@
-# M10 — SEO, publication gates and media performance
+# M10 — historical SEO/media implementation (superseded)\n\n> **Superseded on 2026-10-15:** GitHub Pages is the current public publisher and output is indexable by default. The earlier `TA_ENABLE_INDEXING`, `noindex` and blocked-publication procedures below document **V1 history** and are no longer applicable. Use [README](../README.md) and the [living implementation plan](IMPLEMENTATION_PLAN.md) for current commands.\n
 
 The static renderer and local Content Studio share a JSON source of truth. GitHub Pages remains an **unindexed preview**. This is intentionally separate from authorizing the public production website.
 

@@ -15,8 +15,8 @@ const data=validate(JSON.parse(await readFile(path.join(dataRoot,'content','site
 const publication=publicationSettings(data,process.env);
 const media=await inspectMedia(data,dataRoot);
 const pages=collectPages(data,{publication});
-if(publication.indexing&&basePath!=='/')throw Error('External production release requires TA_BASE_PATH=/');
-console.log('Media preflight: '+media.files+' assets, '+media.bytes+' bytes; indexing '+(publication.indexing?'enabled':'disabled'));
+if(publication.origin&&basePath!=='/')throw Error('TA_PUBLIC_ORIGIN requires a root-domain build (TA_BASE_PATH=/)');
+console.log('Media preflight: '+media.files+' assets, '+media.bytes+' bytes');
 // Published CSS is independent of legacy editor chrome. Only strict grayscale print styles ship.
 // Generate to a sibling directory first. An invalid or failed build cannot
 // partially overwrite the previously verified static release.
@@ -31,7 +31,7 @@ for(const page of pages){
   await writeFile(path.join(folder,'index.html'),prefixSitePaths(page.html,basePath));
 }
 console.log(`Built ${pages.length} static pages to dist/`);
-if(publication.indexing){
+if(publication.indexing&&publication.origin){
   const urls=pages.map(({route})=>publication.origin+route).sort();
   const sitemap='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+
     urls.map(loc=>'  <url><loc>'+loc+'</loc></url>').join('\n')+'\n</urlset>\n';
@@ -39,8 +39,7 @@ if(publication.indexing){
   await writeFile(path.join(staging,'robots.txt'),
     'User-agent: *\nAllow: /\nSitemap: '+publication.origin+'/sitemap.xml\n');
 }else{
-  // Staging remains intentionally hidden even if it lives on a public URL.
-  await writeFile(path.join(staging,'robots.txt'),'User-agent: *\nDisallow: /\n');
+  await writeFile(path.join(staging,'robots.txt'),'User-agent: *\nAllow: /\n');
 }
 
 await writeFile(path.join(staging,'404.html'),prefixSitePaths(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Page not found — TA</title><link rel="stylesheet" href="/site.css"><meta name="robots" content="noindex"></head><body class="published-site"><div class="webpage"><nav class="web-nav"><a class="web-logo" href="/">TA/</a></nav><main class="web-content"><p class="b-text eyebrow">404 / PAGE NOT FOUND</p><h1 class="not-found-title">Nothing here.</h1><p>The address may have moved, or the page is still a draft.</p><p><a class="b-action" href="/">Back to the index →</a></p></main></div></body></html>`,basePath));

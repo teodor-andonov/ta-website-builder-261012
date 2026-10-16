@@ -8,11 +8,13 @@ import {renderPagePreview,cardGridStyle,collectPages} from '../src/render.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const load=async()=>JSON.parse(await readFile(path.join(root,'content/site.json'),'utf8'));
 const clone=x=>JSON.parse(JSON.stringify(x));
+const roots=scope=>scope.composition?[scope.composition]:scope.blocks;
+const scopes=data=>[...data.pages,...data.templates,...data.components,...data.collections.flatMap(c=>c.records.filter(r=>r.composition))];
 
 test('all canonical Page/Template/Component Cards use strict equal grid and explicit child cells',async()=>{
  const data=validate(await load());
- for(const scope of [...data.pages,...data.templates,...data.components]){
-  assert.ok(scope.blocks.every(x=>x.type==='card'),scope.id);
+ for(const scope of scopes(data)){
+  assert.ok(roots(scope).every(x=>x.type==='card'),scope.id);
   function visit(blocks){
    for(const b of blocks)if(b.type==='card'){
     assert.ok(Number.isInteger(b.columns)&&b.columns>=1,b.id);
@@ -25,22 +27,23 @@ test('all canonical Page/Template/Component Cards use strict equal grid and expl
     visit(b.children);
    }
   }
-  visit(scope.blocks);
+  visit(roots(scope));
  }
 });
 test('grid CSS uses fixed equal tracks, child cell positions and constrained width-factor height',async()=>{
  const data=validate(await load()),home=data.pages.find(p=>p.id==='home');
- const hero=home.blocks.find(b=>b.id==='m6-hero');
+ const hero=home.composition.children.find(b=>b.id==='m6-hero');
  assert.equal(hero.constrainHeight,true);
  assert.equal(hero.heightFactor,.48);
  assert.match(cardGridStyle(hero),/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(cardGridStyle(hero),/grid-template-rows:repeat\(1,minmax\(0,1fr\)\)/);
  assert.match(cardGridStyle(hero),/aspect-ratio:1 \/ 0.48/);
- const html=renderPagePreview(data,home.blocks,null,{route:'/'});
+ assert.match(cardGridStyle(home.composition),/grid-template-rows:repeat\(8,max-content\)/,'unconstrained sections use content heights rather than the tallest sibling height');
+ const html=renderPagePreview(data,home.blocks,null,{route:'/',pageId:home.id});
  assert.match(html,/grid-column:2\/3;grid-row:1\/2/);
  assert.match(html,/semantic-header/);assert.match(html,/semantic-page/);assert.match(html,/semantic-footer/);
- assert.match(html,/semantic-header bg-transparent\" style=\"aspect-ratio:1 \/ 0\.06/);
- assert.match(html,/semantic-footer bg-transparent\" style=\"aspect-ratio:1 \/ 0\.05/);
+ assert.match(html,/<nav class="[^"]*semantic-header[^"]*"[^>]*aspect-ratio:1 \/ 0\.06/);
+ assert.match(html,/<footer class="[^"]*semantic-footer[^"]*"[^>]*aspect-ratio:1 \/ 0\.05/);
  assert.ok(!html.includes('b-divider'));
 });
 test('CSS is width proportional, grayscale and has no adaptive breakpoints',async()=>{
@@ -53,9 +56,9 @@ test('CSS is width proportional, grayscale and has no adaptive breakpoints',asyn
 test('validator rejects invalid area, over-large grids, invalid height and tinted palette',async()=>{
  const good=validate(await load());
  const cases=[
-  d=>d.pages[0].blocks[0].columns=0,
-  d=>d.pages[0].blocks[0].children[0].area.x2=999,
-  d=>d.pages[0].blocks[0].heightFactor=-1,
+  d=>d.pages[0].composition.columns=0,
+  d=>d.pages[0].composition.children[0].area.x2=999,
+  d=>d.pages[0].composition.heightFactor=-1,
   d=>d.site.design.palette.ink='#112233',
   d=>d.site.design.frame.header.heightFactor=0,
  ];
@@ -73,18 +76,18 @@ test('global and per-Card outlines are translucent, non-layout, and configurable
  const data=validate(await load());
  assert.equal(data.site.design.cardBorders,true,'global outlines should be on');
  const home=data.pages.find(p=>p.id==='home');
- const html=renderPagePreview(data,home.blocks,null,{route:'/'});
+ const html=renderPagePreview(data,home.blocks,null,{route:'/',pageId:home.id});
  assert.match(html,/class="card card-page webpage view show-card-borders"/);
  const stylesheet=await readFile(path.join(root,'src/public.css'),'utf8');
- assert.match(stylesheet,/outline:1px solid color-mix\(in srgb, currentColor 20%, transparent\)/);
+ assert.match(stylesheet,/outline:1px solid color-mix\(in srgb, currentColor var\(--ta-outline-opacity\), transparent\)/);
  assert.match(stylesheet,/outline-offset:-1px/);
  assert.doesNotMatch(stylesheet,/border:1px solid transparent/,'a hidden border would change geometry');
  assert.match(stylesheet,/\.show-card-borders \.card/,'all nested, header and footer Cards must be included');
  assert.match(stylesheet,/\.webpage\.show-card-borders/,'the master Page Card should be included');
  const off=clone(data);
  off.site.design.cardBorders=false;
- off.pages.find(p=>p.id==='home').blocks[0].border=true;
- const offHtml=renderPagePreview(off,off.pages.find(p=>p.id==='home').blocks,null,{route:'/'});
+ off.pages.find(p=>p.id==='home').composition.border=true;
+ const offHtml=renderPagePreview(off,off.pages.find(p=>p.id==='home').blocks,null,{route:'/',pageId:'home'});
  assert.doesNotMatch(offHtml,/show-card-borders/);
  assert.match(offHtml,/has-border/,'single Card override remains available');
 });
@@ -95,7 +98,7 @@ test('every Card has nonzero 1x/2x/4x padding and gap, including single-object w
  assert.equal(data.site.design.pad,1);
  assert.equal(data.site.design.gap,1);
  let single=0,cards=0;
- for(const scope of [...data.pages,...data.templates,...data.components]){
+ for(const scope of scopes(data)){
   const visit=blocks=>{for(const b of blocks){
    if(b.type!=='card')continue;
    cards++;
@@ -104,7 +107,7 @@ test('every Card has nonzero 1x/2x/4x padding and gap, including single-object w
    if(b.children.length===1){single++;assert.notEqual(b.padding,'none',b.id)}
    visit(b.children);
   }};
-  visit(scope.blocks);
+  visit(roots(scope));
  }
  assert.ok(cards>30);
  assert.ok(single>5);
@@ -113,7 +116,7 @@ test('every Card has nonzero 1x/2x/4x padding and gap, including single-object w
 test('site pad and gap scale independently; Card items and nested Cards fill grid cells',async()=>{
  const data=validate(await load()),home=data.pages.find(p=>p.id==='home');
  const css=await readFile(path.join(root,'src/public.css'),'utf8');
- const html=renderPagePreview(data,home.blocks,null,{route:'/'});
+ const html=renderPagePreview(data,home.blocks,null,{route:'/',pageId:home.id});
  assert.match(html,/--ta-pad:1cqw;--ta-gap:1cqw/);
  for(const cls of ['pad-x1','pad-x2','gap-x1','gap-x2'])assert.ok(html.includes(cls),cls);
  for(const expr of [
@@ -130,7 +133,7 @@ test('site pad and gap scale independently; Card items and nested Cards fill gri
  ])assert.match(css,expr,String(expr));
  const mutated=clone(data);
  mutated.site.design.pad=1.5;mutated.site.design.gap=0.75;
- const other=renderPagePreview(mutated,mutated.pages.find(p=>p.id==='home').blocks,null,{route:'/'});
+ const other=renderPagePreview(mutated,mutated.pages.find(p=>p.id==='home').blocks,null,{route:'/',pageId:'home'});
  assert.match(other,/--ta-pad:1.5cqw;--ta-gap:0.75cqw/);
  assert.doesNotMatch(css,/@media|@container|clamp\(/);
 });

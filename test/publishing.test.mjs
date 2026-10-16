@@ -1,100 +1,116 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile,mkdtemp,mkdir,writeFile,cp,rm,stat} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,cp,mkdtemp,rm,stat} from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {parsePublicOrigin,publicationSettings} from '../src/publishing.mjs';
 import {collectPages} from '../src/render.mjs';
+import {validate} from '../src/model.mjs';
 import {inspectMedia} from '../scripts/media-budget.mjs';
 
 const root=path.resolve(fileURLToPath(new URL('../',import.meta.url)));
 const initial=JSON.parse(await readFile(path.join(root,'content/site.json'),'utf8'));
 const clone=()=>structuredClone(initial);
-const approvedFixture=()=>{
- const data=clone();
- data.site.contact.bookingUrl='https://calendly.com/owned-example/introduction';
- data.pages.forEach(p=>{p.placeholder=false;p.approvedForPublication=true});
- data.collections.forEach(c=>c.records.forEach(r=>{r.placeholder=false;r.approvedForPublication=true}));
- data.assets.forEach(a=>{a.placeholder=false;a.src='/assets/uploads/'+a.id+'.png'});
- return data;
-};
-test('M10 preview always has noindex and useful escaped social metadata without unverified canonical',()=>{
+
+test('placeholder website requests no indexing from the JSON publishing switch',()=>{
  const d=clone();
  assert.deepEqual(publicationSettings(d,{}),{indexing:false,origin:null});
- assert.deepEqual(publicationSettings(d,{TA_PUBLIC_ORIGIN:'https://real-portfolio.com'}),{indexing:false,origin:null});
- for(const p of collectPages(d)){
-  assert.match(p.html,/<meta name="robots" content="noindex, nofollow">/);
-  assert.match(p.html,/<meta property="og:site_name"/);
-  assert.match(p.html,/<meta property="og:title"/);
-  assert.match(p.html,/<meta property="og:description"/);
-  assert.match(p.html,/<meta name="twitter:card" content="summary">/);
-  assert.doesNotMatch(p.html,/<link rel="canonical"/);
-  assert.doesNotMatch(p.html,/<meta property="og:url"/);
+ for(const page of collectPages(d)){
+  assert.match(page.html,/<meta name="robots" content="noindex, nofollow">/);
+  assert.match(page.html,/<meta property="og:site_name"/);
+  assert.match(page.html,/<meta property="og:title"/);
+  assert.match(page.html,/<meta property="og:description"/);
+  assert.match(page.html,/<meta name="twitter:card" content="summary">/);
+  assert.doesNotMatch(page.html,/<link rel="canonical"/);
+  assert.doesNotMatch(page.html,/<meta property="og:url"/);
  }
 });
-test('M10 rejects unsafe release origin and refuses indexing while sample content remains',()=>{
- for(const bad of ['','http://ta-studio.com','https://localhost','https://127.0.0.1','https://foo.local','https://name:pass@studio.com','https://studio.com/path','https://studio.com/?x=1','https://example.com','javascript:alert(1)']){
-  assert.throws(()=>parsePublicOrigin(bad),/TA_PUBLIC_ORIGIN/);
+test('switching indexing on and off is independent of editorial approval',()=>{
+ const d=clone();
+ assert.equal(publicationSettings(d,{}).indexing,false);
+ d.site.publishing.indexing=true;
+ assert.equal(publicationSettings(d,{}).indexing,true);
+ assert.ok(collectPages(d).every(p=>p.html.includes('content="index, follow"')));
+ delete d.site.publishing;
+ assert.doesNotThrow(()=>validate(d)); // Older JSON without a publishing flag stays safely nonindexed.
+ assert.equal(publicationSettings(d,{}).indexing,false);
+ assert.ok(collectPages(d).every(p=>p.html.includes('content="noindex, nofollow"')));
+ for(const invalid of [null,true,{indexing:'no'},{indexing:0},{indexing:true,typo:false}]){
+  d.site.publishing=invalid;
+  assert.throws(()=>validate(d),/site.publishing.indexing/);
  }
+});
+test('optional HTTPS canonical origin is checked independently from editing or content approval',()=>{
+ for(const bad of ['','http://ta-studio.com','https://localhost','https://127.0.0.1',
+  'https://foo.local','https://name:pass@studio.com','https://studio.com/path',
+  'https://studio.com/?x=1','https://example.com','javascript:alert(1)'])
+   assert.throws(()=>parsePublicOrigin(bad),/TA_PUBLIC_ORIGIN/);
  assert.equal(parsePublicOrigin('https://portfolio.example.co.uk'),'https://portfolio.example.co.uk');
- assert.throws(()=>publicationSettings(clone(),{TA_ENABLE_INDEXING:'1',TA_PUBLIC_ORIGIN:'https://ta-studio.com'}),/Public indexing blocked/);
- assert.throws(()=>publicationSettings(clone(),{TA_ENABLE_INDEXING:'yes'}),/TA_ENABLE_INDEXING/);
+ assert.deepEqual(publicationSettings(clone(),{TA_PUBLIC_ORIGIN:'https://ta-studio.com'}),
+   {indexing:false,origin:'https://ta-studio.com'});
 });
-test('M10 production-only metadata uses canonical route, article type and verified nonplaceholder image',()=>{
- const d=approvedFixture(),publication=publicationSettings(d,{TA_ENABLE_INDEXING:'1',TA_PUBLIC_ORIGIN:'https://ta-studio.com'});
- const pages=collectPages(d,{publication}),home=pages.find(p=>p.route==='/');
- const work=pages.find(p=>p.route==='/work/balkan-house/'),post=pages.find(p=>p.route==='/posts/designing-with-code/');
- assert.match(home.html,/<meta name="robots" content="index, follow">/);
+test('optional root-domain metadata includes canonical page URLs and true article type',()=>{
+ const d=clone();d.site.publishing.indexing=true;
+ const publication=publicationSettings(d,{TA_PUBLIC_ORIGIN:'https://ta-studio.com'});
+ const pages=collectPages(d,{publication});
+ const home=pages.find(p=>p.route==='/'),post=pages.find(p=>p.route==='/posts/designing-with-code/');
  assert.match(home.html,/<link rel="canonical" href="https:\/\/ta-studio.com\/">/);
- assert.match(work.html,/<meta property="og:image" content="https:\/\/ta-studio.com\/assets\/uploads\/house.png">/);
  assert.match(post.html,/<meta property="og:type" content="article">/);
  assert.match(post.html,/<meta property="og:url" content="https:\/\/ta-studio.com\/posts\/designing-with-code\/">/);
+ assert.ok(pages.every(p=>p.html.includes('content="index, follow"')));
  assert.ok(!pages.some(p=>p.html.includes('href="https://ta-studio.com//')));
 });
-test('M10 production build emits sitemap/robots only with external approval; preview is not indexed',async()=>{
- const tmp=await mkdtemp(path.join(tmpdir(),'ta-publish-'));
+test('local and Pages builds preserve noindex; an explicitly indexable custom-domain build creates a sitemap',async()=>{
+ const tmp=await mkdtemp(path.join(tmpdir(),'ta-public-output-'));
  try{
-  const output=path.join(tmp,'published');
-  let result=spawnSync(process.execPath,['src/build.mjs'],{
-   cwd:root,encoding:'utf8',env:{...process.env,TA_OUTPUT_DIR:output,TA_ENABLE_INDEXING:'1',TA_PUBLIC_ORIGIN:'https://ta-studio.com'},timeout:20000
+  const output=path.join(tmp,'website');
+  let run=spawnSync(process.execPath,['src/build.mjs'],{
+   cwd:root,encoding:'utf8',env:{...process.env,TA_OUTPUT_DIR:output,TA_PUBLIC_ORIGIN:'',TA_BASE_PATH:'/'},timeout:25000
   });
-  assert.notEqual(result.status,0,'Unapproved source should not be indexed');
-  assert.match(result.stderr,/Public indexing blocked/);
-  const dataRoot=path.join(tmp,'approved-data');
-  await mkdir(path.join(dataRoot,'content'),{recursive:true});
-  await cp(path.join(root,'assets'),path.join(dataRoot,'assets'),{recursive:true});
-  await mkdir(path.join(dataRoot,'assets','uploads'),{recursive:true});
-  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/T3sAAAAASUVORK5CYII=','base64');
-  for(const a of approvedFixture().assets)
-    await writeFile(path.join(dataRoot,'.'+a.src),png);
-  await writeFile(path.join(dataRoot,'content/site.json'),JSON.stringify(approvedFixture()));
-  result=spawnSync(process.execPath,['src/build.mjs'],{
-   cwd:root,encoding:'utf8',env:{...process.env,TA_DATA_ROOT:dataRoot,TA_OUTPUT_DIR:output,TA_ENABLE_INDEXING:'1',TA_PUBLIC_ORIGIN:'https://ta-studio.com',TA_BASE_PATH:'/repo/'},timeout:20000
+  assert.equal(run.status,0,run.stderr);
+  assert.match(await readFile(path.join(output,'robots.txt'),'utf8'),/Allow: \/(?:\n|$)/);
+  assert.match(await readFile(path.join(output,'index.html'),'utf8'),/name="robots" content="noindex, nofollow"/);
+  await assert.rejects(stat(path.join(output,'sitemap.xml')));
+  const pagesOutput=path.join(tmp,'pages-dist');
+  run=spawnSync(process.execPath,['src/build.mjs'],{
+   cwd:root,encoding:'utf8',env:{...process.env,TA_OUTPUT_DIR:pagesOutput,TA_BASE_PATH:'/ta-website-builder-261012/',TA_PUBLIC_ORIGIN:''},timeout:25000
   });
-  assert.notEqual(result.status,0);
-  assert.match(result.stderr,/TA_BASE_PATH=\//);
-  result=spawnSync(process.execPath,['src/build.mjs'],{
-   cwd:root,encoding:'utf8',env:{...process.env,TA_DATA_ROOT:dataRoot,TA_OUTPUT_DIR:output,TA_ENABLE_INDEXING:'1',TA_PUBLIC_ORIGIN:'https://ta-studio.com',TA_BASE_PATH:'/'},timeout:20000
+  assert.equal(run.status,0,run.stderr);
+  assert.match(await readFile(path.join(pagesOutput,'index.html'),'utf8'),/href="\/ta-website-builder-261012\/site.css"/);
+  assert.match(await readFile(path.join(pagesOutput,'robots.txt'),'utf8'),/Allow: \/(?:\n|$)/);
+  assert.match(await readFile(path.join(pagesOutput,'index.html'),'utf8'),/name="robots" content="noindex, nofollow"/);
+  run=spawnSync(process.execPath,['src/build.mjs'],{
+   cwd:root,encoding:'utf8',env:{...process.env,TA_OUTPUT_DIR:path.join(tmp,'invalid'),TA_PUBLIC_ORIGIN:'https://ta-studio.com',TA_BASE_PATH:'/repo/'},timeout:25000
   });
-  assert.equal(result.status,0,result.stderr);
-  const sitemap=await readFile(path.join(output,'sitemap.xml'),'utf8');
-  const robots=await readFile(path.join(output,'robots.txt'),'utf8');
-  const html=await readFile(path.join(output,'index.html'),'utf8');
-  assert.match(sitemap,/<loc>https:\/\/ta-studio.com\/work\/balkan-house\/<\/loc>/);
-  assert.match(robots,/Sitemap: https:\/\/ta-studio.com\/sitemap.xml/);
-  assert.match(html,/<meta name="robots" content="index, follow">/);
-  assert.ok((await stat(path.join(output,'posts/designing-with-code/index.html'))).isFile());
+  assert.notEqual(run.status,0);
+  assert.match(run.stderr,/TA_PUBLIC_ORIGIN requires a root-domain build/);
+  run=spawnSync(process.execPath,['src/build.mjs'],{
+   cwd:root,encoding:'utf8',env:{...process.env,TA_OUTPUT_DIR:path.join(tmp,'custom'),TA_PUBLIC_ORIGIN:'https://ta-studio.com',TA_BASE_PATH:'/'},timeout:25000
+  });
+  assert.equal(run.status,0,run.stderr);
+  assert.match(await readFile(path.join(tmp,'custom','index.html'),'utf8'),/name="robots" content="noindex, nofollow"/);
+  await assert.rejects(stat(path.join(tmp,'custom','sitemap.xml')));
+  const publishedRoot=path.join(tmp,'indexed-source');
+  await mkdir(path.join(publishedRoot,'content'),{recursive:true});
+  await cp(path.join(root,'assets'),path.join(publishedRoot,'assets'),{recursive:true});
+  const indexed=clone();indexed.site.publishing.indexing=true;
+  await writeFile(path.join(publishedRoot,'content','site.json'),JSON.stringify(indexed));
+  run=spawnSync(process.execPath,['src/build.mjs'],{
+   cwd:root,encoding:'utf8',env:{...process.env,TA_DATA_ROOT:publishedRoot,TA_OUTPUT_DIR:path.join(tmp,'indexed'),TA_PUBLIC_ORIGIN:'https://ta-studio.com',TA_BASE_PATH:'/'},timeout:25000
+  });
+  assert.equal(run.status,0,run.stderr);
+  assert.match(await readFile(path.join(tmp,'indexed','index.html'),'utf8'),/name="robots" content="index, follow"/);
+  assert.match(await readFile(path.join(tmp,'indexed','sitemap.xml'),'utf8'),/https:\/\/ta-studio.com\/work\/balkan-house\//);
+  assert.match(await readFile(path.join(tmp,'indexed','robots.txt'),'utf8'),/Sitemap: https:\/\/ta-studio.com\/sitemap.xml/);
  }finally{await rm(tmp,{recursive:true,force:true})}
 });
-test('M10 media audit counts local files, rejects references that escape assets and missing binaries',async()=>{
- const data=clone();
- const result=await inspectMedia(data,root);
- assert.ok(result.files>=4);
- assert.ok(result.bytes>0 && result.bytes<1024*1024);
- data.assets[0].src='/assets/../../content/site.json';
- await assert.rejects(inspectMedia(data,root),/Unsafe or unsupported/);
- data.assets[0].src='/assets/placeholder/missing-file.svg';
- await assert.rejects(inspectMedia(data,root),/Missing image file/);
+test('media audit still rejects unsafe and missing binaries, independently of publication',async()=>{
+ const d=clone(),result=await inspectMedia(d,root);
+ assert.ok(result.files>=4);assert.ok(result.bytes>0);
+ d.assets[0].src='/assets/../../content/site.json';
+ await assert.rejects(inspectMedia(d,root),/Unsafe or unsupported/);
+ d.assets[0].src='/assets/placeholder/missing-file.svg';
+ await assert.rejects(inspectMedia(d,root),/Missing image file/);
 });
