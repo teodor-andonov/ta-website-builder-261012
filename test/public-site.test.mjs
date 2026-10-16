@@ -39,8 +39,9 @@ test('navigation highlights current top-level section on detail and index pages'
 });
 test('editor preview remains identical to published document for bespoke pages and records',()=>{
   for(const item of data.pages.filter(x=>x.status==='Published')){
-    const page=pages.find(x=>x.route===resolvePreviewRoute(data,item.blocks));
-    const preview=renderPagePreview(data,item.blocks,null,{pageId:item.id,route:resolvePreviewRoute(data,item.blocks)});
+    const route=item.slug==='/'?'/':item.slug.replace(/\/$/,'')+'/';
+    const page=pages.find(x=>x.route===route);
+    const preview=renderPagePreview(data,item.blocks,null,{pageId:item.id,route});
     assert.ok(page?.html.includes(preview),item.id);
   }
   for(const collection of data.collections)for(const record of collection.records.filter(r=>r.status!=='Draft')){
