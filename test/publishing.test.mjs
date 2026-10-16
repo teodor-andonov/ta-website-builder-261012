@@ -34,8 +34,9 @@ test('switching indexing on and off is independent of editorial approval',()=>{
  assert.equal(publicationSettings(d,{}).indexing,true);
  assert.ok(collectPages(d).every(p=>p.html.includes('content="index, follow"')));
  delete d.site.publishing;
- assert.doesNotThrow(()=>validate(d)); // Legacy V1 content remains indexable unless explicitly switched off.
- assert.equal(publicationSettings(d,{}).indexing,true);
+ assert.doesNotThrow(()=>validate(d)); // Older JSON without a publishing flag stays safely nonindexed.
+ assert.equal(publicationSettings(d,{}).indexing,false);
+ assert.ok(collectPages(d).every(p=>p.html.includes('content="noindex, nofollow"')));
  for(const invalid of [null,true,{indexing:'no'},{indexing:0},{indexing:true,typo:false}]){
   d.site.publishing=invalid;
   assert.throws(()=>validate(d),/site.publishing.indexing/);
