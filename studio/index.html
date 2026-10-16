@@ -351,7 +351,7 @@ function recordView(){let c=coll(),r=rec();if(!r)return `<div class="content-wra
 function templateFor(c,r){let id=c?.formatTemplates?.[r?.[c.formatField]]||c?.defaultTemplate;return db.templates.find(t=>t.id===id)||db.templates[0]}
 // Shared rendering contract: the preview and the published build import the same module.
 function renderBlocks(blocks,ctx=null,design=false){return renderSharedBlocks(blocks,ctx,db,{design,selectedId:ui.node,topLevel:true})}
-function siteFrame(content,design=false){let route='/';if(ui.section==='record'){const c=coll(),r=rec();if(c&&r)route=c.base+'/'+r.slug+'/'}else if(ui.section==='page')route=page()?.slug||'/';else if(ui.section==='template'){const c=db.collections.find(c=>c.id===tpl()?.collection),r=c?.records.find(r=>r.id===ui.sample);if(c&&r)route=c.base+'/'+r.slug+'/'}return renderSiteFrame(content,db,{design,route})}
+function siteFrame(content,design=false){let route='/';if(ui.section==='record'){const c=coll(),r=rec();if(c&&r)route=c.base+'/'+r.slug+'/'}else if(ui.section==='page')route=page()?.slug||'/';else if(ui.section==='template'){const c=db.collections.find(c=>c.id===tpl()?.collection),r=c?.records.find(r=>r.id===ui.sample);if(c&&r)route=c.base+'/'+r.slug+'/'}const chrome=ui.section==='record'?templateFor(coll(),rec())?.chrome:ui.section==='template'?tpl()?.chrome:null;return renderSiteFrame(content,db,{design,route,chrome})}
 function designView(){
  const isT=ui.section==='template',isC=ui.section==='component',s=currentScope();
  if(!s)return '<div class="content-wrap"><div class="empty">Nothing selected.</div></div>';
