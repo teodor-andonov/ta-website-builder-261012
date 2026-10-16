@@ -10,14 +10,14 @@ test('M8 rejects duplicate IDs across a Card and its descendant within one page'
   const parent=d.pages[0].composition.children.find(n=>n.type==='card'&&n.children?.length);
   assert.ok(parent);
   parent.children[0].id=parent.id;
-  assert.throws(()=>validate(d),/Duplicate node ID in home: /);
+  assert.throws(()=>validate(d),/Duplicate node ID in home composition: /);
 });
 test('M8 rejects duplicate sibling IDs in one authoring scope',()=>{
   const d=copy();
   const parent=d.pages[0].composition.children.find(n=>n.type==='card'&&n.children?.length>1);
   assert.ok(parent);
   parent.children[1].id=parent.children[0].id;
-  assert.throws(()=>validate(d),/Duplicate node ID in home: /);
+  assert.throws(()=>validate(d),/Duplicate node ID in home composition: /);
 });
 test('M8 rejects duplicate node IDs in a component independently of pages',()=>{
   const d=copy();
