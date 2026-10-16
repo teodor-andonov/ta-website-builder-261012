@@ -25,7 +25,7 @@ export function cardGridStyle(block){
 
 export const recordPath = (collection, record) => `${collection.base}/${record.slug}/`;
 export function templateFor(data, collection, record) {
-  const id = collection?.formatTemplates?.[record?.[collection?.formatField]] || collection?.defaultTemplate;
+  const id = record?.template || collection?.formatTemplates?.[record?.[collection?.formatField]] || collection?.defaultTemplate;
   return data.templates.find(template => template.id === id);
 }
 export function bind(value, context, data) {
@@ -305,7 +305,7 @@ export function renderSiteFrame(content,data,{design=false,route='/',isolated=fa
 }
 export function renderPagePreview(data,blocks,context=null,options={}) {
   // Opt-in M12 pages share the same assembler in the editor preview and build.
-  // Legacy V1 pages and record detail pages remain byte-identical.
+  // Legacy routes retain their original trees; opt-in records use the same M12 assembler.
   const page=options.pageId?data.pages.find(p=>p.id===options.pageId):null;
   if(options.pageId&&!page)throw Error('Unknown preview page: '+options.pageId);
   let composed=blocks,layout=null;
@@ -316,6 +316,10 @@ export function renderPagePreview(data,blocks,context=null,options={}) {
     for(const collection of data.collections){
       if(collection.records.some(record=>record.id===context.id)){
         layout=templateFor(data,collection,context);
+        if(context.composition){
+          if(!layout||layout.layoutMode!=='slot')throw Error('Record composition requires a slot template: '+context.id);
+          composed=assemblePage(layout,context.composition);
+        }
         break;
       }
     }
