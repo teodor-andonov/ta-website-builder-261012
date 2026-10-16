@@ -22,7 +22,7 @@ async function fixture(dir,data,{base='/',origin=null}={}){
   await writeFile(file,prefixSitePaths(item.html,base));
  }
  if(origin){
-  await writeFile(join(dir,'sitemap.xml'),'<urlset/>\n');
+  await writeFile(join(dir,'sitemap.xml'),'<urlset>\n'+pages.map(p=>'  <url><loc>'+origin+p.route+'</loc></url>').join('\n')+'\n</urlset>\n');
   await writeFile(join(dir,'robots.txt'),'User-agent: *\nAllow: /\nSitemap: '+origin+'/sitemap.xml\n');
  }else await writeFile(join(dir,'robots.txt'),'User-agent: *\nAllow: /\n');
 }
@@ -64,5 +64,7 @@ test('M17 indexable custom-domain scanner accepts canonical metadata and sitemap
   assert.equal(checked.pages,10);
   assert.equal(checked.sitemap,true);
   assert.equal(checked.robots,'index, follow');
+  await writeFile(join(temp,'sitemap.xml'),'<urlset/>');
+  await assert.rejects(checkOutput(temp,data,{indexing:true,origin}),/Sitemap missing canonical route/);
  }finally{await rm(temp,{recursive:true,force:true})}
 });
