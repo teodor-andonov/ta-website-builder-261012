@@ -2095,89 +2095,89 @@
       "title": "Work",
       "slug": "/work",
       "status": "Published",
-      "blocks": [
-        {
-          "id": "work-index-section",
-          "type": "card",
-          "variant": "work-index",
-          "columns": 12,
-          "rows": 16,
-          "padding": "x1",
-          "gap": "x1",
-          "background": "transparent",
-          "border": false,
-          "constrainHeight": true,
-          "heightFactor": 1.27,
-          "children": [
-            {
-              "id": "b_rfoptf",
-              "type": "text",
-              "text": "TA / ARCHIVE",
-              "style": "eyebrow",
-              "area": {
-                "x1": 1,
-                "y1": 1,
-                "x2": 13,
-                "y2": 2
-              }
-            },
-            {
-              "id": "b_6o0c4y",
-              "type": "text",
-              "text": "Selected work.",
-              "style": "display",
-              "area": {
-                "x1": 1,
-                "y1": 2,
-                "x2": 13,
-                "y2": 4
-              }
-            },
-            {
-              "id": "b_bseqsf",
-              "type": "text",
-              "text": "Architecture, prototypes, experiments and ongoing research.",
-              "style": "body",
-              "area": {
-                "x1": 1,
-                "y1": 4,
-                "x2": 13,
-                "y2": 5
-              }
-            },
-            {
-              "id": "b_73h0n0",
-              "type": "card",
-              "variant": "collection",
-              "area": {
-                "x1": 1,
-                "y1": 5,
-                "x2": 13,
-                "y2": 17
-              },
-              "columns": 2,
-              "rows": 1,
-              "gap": "x1",
-              "padding": "x1",
-              "background": "transparent",
-              "border": false,
-              "constrainHeight": false,
-              "heightFactor": 0.5,
-              "source": {
-                "collection": "projects",
-                "template": "project-tile",
-                "filter": "all",
-                "sort": "newest",
-                "count": 12,
-                "layout": "grid"
-              },
-              "children": []
-            }
-          ]
-        }
-      ],
+      "blocks": [],
       "placeholder": true,
-      "approvedForPublication": false
+      "approvedForPublication": false,
+      "template": "page-general",
+      "composition": {
+        "id": "work-index-section",
+        "type": "card",
+        "variant": "work-index",
+        "columns": 12,
+        "rows": 16,
+        "padding": "x1",
+        "gap": "x1",
+        "background": "transparent",
+        "border": false,
+        "constrainHeight": true,
+        "heightFactor": 1.27,
+        "children": [
+          {
+            "id": "b_rfoptf",
+            "type": "text",
+            "text": "TA / ARCHIVE",
+            "style": "eyebrow",
+            "area": {
+              "x1": 1,
+              "y1": 1,
+              "x2": 13,
+              "y2": 2
+            }
+          },
+          {
+            "id": "b_6o0c4y",
+            "type": "text",
+            "text": "Selected work.",
+            "style": "display",
+            "area": {
+              "x1": 1,
+              "y1": 2,
+              "x2": 13,
+              "y2": 4
+            }
+          },
+          {
+            "id": "b_bseqsf",
+            "type": "text",
+            "text": "Architecture, prototypes, experiments and ongoing research.",
+            "style": "body",
+            "area": {
+              "x1": 1,
+              "y1": 4,
+              "x2": 13,
+              "y2": 5
+            }
+          },
+          {
+            "id": "b_73h0n0",
+            "type": "card",
+            "variant": "collection",
+            "area": {
+              "x1": 1,
+              "y1": 5,
+              "x2": 13,
+              "y2": 17
+            },
+            "columns": 2,
+            "rows": 1,
+            "gap": "x1",
+            "padding": "x1",
+            "background": "transparent",
+            "border": false,
+            "constrainHeight": false,
+            "heightFactor": 0.5,
+            "source": {
+              "collection": "projects",
+              "template": "project-tile",
+              "filter": "all",
+              "sort": "newest",
+              "count": 12,
+              "layout": "grid"
+            },
+            "children": []
+          }
+        ]
+      }
     },
     {
       "id": "journal",
