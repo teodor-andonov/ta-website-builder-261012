@@ -44,7 +44,56 @@
         }
       },
       "pad": 1,
-      "gap": 1
+      "gap": 1,
+      "tokens": {
+        "fontFamily": "mono",
+        "radius": 1.15,
+        "outlineOpacity": 0.2
+      },
+      "styles": [
+        {
+          "id": "index-root",
+          "name": "Index · neutral",
+          "target": "card",
+          "properties": {
+            "background": "transparent",
+            "padding": "x1",
+            "gap": "x1",
+            "border": false
+          }
+        },
+        {
+          "id": "soft-card",
+          "name": "Card · soft surface",
+          "target": "card",
+          "properties": {
+            "background": "grey-100",
+            "padding": "x2",
+            "gap": "x2",
+            "border": false
+          }
+        },
+        {
+          "id": "eyebrow-label",
+          "name": "Label · eyebrow",
+          "target": "item",
+          "properties": {
+            "role": "eyebrow",
+            "tone": "inherit",
+            "weight": "inherit"
+          }
+        },
+        {
+          "id": "quiet-caption",
+          "name": "Text · quiet caption",
+          "target": "item",
+          "properties": {
+            "role": "caption",
+            "tone": "muted",
+            "weight": "regular"
+          }
+        }
+      ]
     },
     "publishing": {
       "indexing": false
@@ -2218,7 +2267,8 @@
               "y1": 1,
               "x2": 13,
               "y2": 2
-            }
+            },
+            "styleRef": "eyebrow-label"
           },
           {
             "id": "b_6o0c4y",
@@ -2272,7 +2322,8 @@
             },
             "children": []
           }
-        ]
+        ],
+        "styleRef": "index-root"
       }
     },
     {
@@ -2307,7 +2358,8 @@
               "y1": 1,
               "x2": 13,
               "y2": 2
-            }
+            },
+            "styleRef": "eyebrow-label"
           },
           {
             "id": "b_fal1dt",
@@ -2361,7 +2413,8 @@
             },
             "children": []
           }
-        ]
+        ],
+        "styleRef": "index-root"
       }
     },
     {
