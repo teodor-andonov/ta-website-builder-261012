@@ -697,6 +697,27 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  }
  case'undo-structure':restoreScopeEdit('undo');break;
  case'redo-structure':restoreScopeEdit('redo');break;
+ case'add-nav':{
+   const candidate=clone(db),links=candidate.site.navigation||(candidate.site.navigation=[]);
+   const next=candidate.pages.find(p=>p.status==='Published'&&!links.some(n=>n.href.replace(/\\/$/,'')===p.slug.replace(/\\/$/,'')));
+   if(!next){alert('Every published Page is already in navigation.');break}
+   links.push({label:next.title,href:next.slug});
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;persist();renderAll();break;
+ }
+ case'remove-nav':{
+   const candidate=clone(db),index=Number(id);
+   if(!Number.isInteger(index)||index<0||index>=candidate.site.navigation.length)break;
+   candidate.site.navigation.splice(index,1);
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;persist();renderAll();break;
+ }
+ case'move-nav':{
+   const candidate=clone(db),index=Number(id),other=index+Number(btn.dataset.delta);
+   if(!Number.isInteger(index)||other<0||other>=candidate.site.navigation.length)break;
+   [candidate.site.navigation[index],candidate.site.navigation[other]]=[candidate.site.navigation[other],candidate.site.navigation[index]];
+   db=candidate;persist();renderAll();break;
+ }
  case'new-page':createModal('page');break;
  case'new-collection':createModal('collection');break;
  case'new-template':ui.draftSection=btn.dataset.collection||coll()?.id||db.collections[0]?.id;createModal('template');break;
@@ -965,6 +986,14 @@ document.addEventListener('dragend',()=>{draggingId=null;clearTreeDrag()});
 
 document.addEventListener('click',event=>{let target=event.target.closest('[data-act]');if(target){handleAction(target);return}let n=event.target.closest('[data-node-id]');if(n&&ui.mode==='design'){event.preventDefault();selectStudioNode(n.dataset.nodeId);return}let g=event.target.closest('[data-open-generated]');if(g&&ui.mode!=='design'){event.preventDefault();openRecord(g.dataset.openGenerated,g.dataset.forCollection);return}let nav=event.target.closest('[data-site-route]');if(nav){event.preventDefault();let p=db.pages.find(p=>p.slug===nav.dataset.siteRoute);if(p)choose('page',p.id);return}if(event.target.id==='modalBack')closeModal()});
 document.addEventListener('change',event=>{let el=event.target;
+ if(el.dataset.siteNavIndex!==undefined){
+   const index=Number(el.dataset.siteNavIndex),key=el.dataset.siteNavField;
+   if(!Number.isInteger(index)||!['label','href'].includes(key)||!db.site.navigation?.[index])return;
+   const candidate=clone(db);
+   candidate.site.navigation[index][key]=el.value.trim();
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
+   db=candidate;persist();renderAll();return;
+ }
  if(el.dataset.cell){let r=recById(ui.collection,el.dataset.id),f=coll()?.fields.find(x=>x.key===el.dataset.key);if(r){setRecordValue(r,el.dataset.key,el.type==='checkbox'?el.checked:el.value,f);persist();queueMicrotask(renderAll)}return}
  if(el.dataset.recordField){let r=rec(),f=coll()?.fields.find(x=>x.key===el.dataset.recordField);
   if(r){
