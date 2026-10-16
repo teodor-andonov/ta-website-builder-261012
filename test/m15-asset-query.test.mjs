@@ -50,7 +50,7 @@ test('M15 Balkan House query uses real Image Items, alt text, caption and public
  const d=copy(),b=balkan(d),detail=html(d,'/work/balkan-house/');
  assert.match(detail,/HIGHLIGHTED ASSETS/);
  assert.match(detail,/card-query/);
- assert.match(detail,/src="\/assets\/placeholder\/house.svg"/);
+ assert.equal((detail.match(/src="\/assets\/placeholder\/house.svg"/g)||[]).length,2,'cover and generated gallery must each render the matching asset');
  assert.match(detail,/alt="[^"]+"/);
  assert.ok(!detail.includes('No assets match this query'));
  const preview=renderPagePreview(d,templateFor(d,d.collections.find(c=>c.id==='projects'),b).blocks,b,{route:'/work/balkan-house/'});
@@ -64,7 +64,7 @@ test('M15 gallery reacts to asset metadata edits but unrelated Projects stay unc
  const changed=collectPages(d);
  const detail=changed.find(x=>x.route==='/work/balkan-house/').html;
  assert.match(detail,/No assets match this query/);
- assert.ok(!detail.includes('balkan-highlights-query_house_image'));
+ assert.equal((detail.match(/src="\/assets\/placeholder\/house.svg"/g)||[]).length,1,'only the fixed Project cover remains when gallery has no matches');
  assert.equal(changed.find(x=>x.route==='/work/responsive-envelope/').html,
    before.find(x=>x.route==='/work/responsive-envelope/').html);
  house.properties.projectCode='4424';
