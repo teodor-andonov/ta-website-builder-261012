@@ -117,6 +117,33 @@ try{
      throw Error('M12 isolated Page composition/full preview mismatch: '+id+' '+JSON.stringify(state));
  }
  console.log('M12_PAGE_PREVIEW_OK two Pages edit composition alone and preview assembled template');
+ const sharedChrome=await evaluate(`(()=>{
+   window.__TA_STUDIO__.navigate('dashboard');
+   const navLabel=document.querySelector('[data-site-nav-index="1"][data-site-nav-field="label"]');
+   if(!navLabel)return {error:'Editable site.navigation label missing'};
+   navLabel.value='Portfolio';
+   navLabel.dispatchEvent(new Event('change',{bubbles:true}));
+   window.__TA_STUDIO__.navigate('page','work');
+   document.querySelector('[data-act="mode"][data-mode="preview"]')?.click();
+   const linkText=document.querySelector('#workbody nav.card-nav a[href="/work/"]')?.textContent;
+   window.__TA_STUDIO__.navigate('component','site-navbar');
+   const logo=!!document.querySelector('#workbody [data-node-id="site-navbar-logo"]');
+   const navbar=!!document.querySelector('#workbody nav.card-nav');
+   window.__TA_STUDIO__.navigate('component','site-footer');
+   const footer=!!document.querySelector('#workbody footer.card-footer [data-node-id="site-footer-name"]');
+   window.__TA_STUDIO__.navigate('template','page-general');
+   const templateControls=!!document.querySelector('[data-template-chrome="navigation"]')&&
+     !!document.querySelector('[data-template-chrome="footer"]');
+   window.__TA_STUDIO__.navigate('dashboard');
+   const reset=document.querySelector('[data-site-nav-index="1"][data-site-nav-field="label"]');
+   reset.value='Work';reset.dispatchEvent(new Event('change',{bubbles:true}));
+   return {linkText,logo,navbar,footer,templateControls,
+     restored:window.__TA_STUDIO__.getData().site.navigation[1].label};
+ })()`);
+ if(sharedChrome.linkText!=='Portfolio'||!sharedChrome.logo||!sharedChrome.navbar||
+    !sharedChrome.footer||!sharedChrome.templateControls||sharedChrome.restored!=='Work')
+   throw Error('M12 shared chrome Studio controls failed: '+JSON.stringify(sharedChrome));
+ console.log('M12_CHROME_OK editable site nav, semantic Navbar/Footer and template selectors');
  // M9: verify the actual site-wide contact editor, typed URL guard, and CTA.
  const configured=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('dashboard');
