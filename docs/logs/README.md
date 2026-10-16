@@ -41,4 +41,6 @@ Short, dated records of **completed or active development cycles**. These comple
 
 | 2026-10-16 | [Design-system history audit and explicit approval rule](2026-10-16-design-system-audit.md) |
 
+| 2026-10-16 | [V2 approved merge, verified Pages publication and V3 branch](2026-10-16-v2-merge-v3-handoff.md) |
+
 Older `docs/M*_*.md` files are **technical references and milestone snapshots**, not competing plans.

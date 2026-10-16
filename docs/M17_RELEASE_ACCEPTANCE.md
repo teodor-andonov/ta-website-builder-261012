@@ -1,6 +1,6 @@
 # M17 — local V2 release acceptance
 
-**Current state (2026-10-16):** the **full local automated acceptance run passed** (169/169 Node tests plus Chrome, restore/build/ZIP checks). Five desktop captures are ready; **human visual signoff and explicit merge approval remain pending**. See [the acceptance log](logs/2026-10-16-m17-local-acceptance.md). This guide does not itself certify a release. `main` continues to publish the existing V1 website. No merge or production upload is part of these commands.
+**Current state (2026-10-16):** the **full local automated acceptance run passed** (169/169 Node tests plus Chrome, restore/build/ZIP checks). Five desktop captures were reviewed and **the user approved V2 merging on 2026-10-16**. PR #24 was squash-merged at `e875bd8`; Pages deployment succeeded. [V3 handoff](logs/2026-10-16-v2-merge-v3-handoff.md). See [the acceptance log](logs/2026-10-16-m17-local-acceptance.md). This guide does not itself certify a release. `main` now publishes the accepted V2 website. No merge or production upload is part of these commands.
 
 ## Why local?
 
@@ -54,8 +54,8 @@ Keep the snapshot **outside** the public ZIP. It contains editable `content/site
 | Chromium DOM/Studio/wheel browser tests | **Passed locally, 2026-10-16** |
 | Root / GitHub Pages / indexable static builds | **Passed locally, 2026-10-16** |
 | Restored JSON + media snapshot and ZIP verification | **Passed locally, 2026-10-16** |
-| Five desktop screenshots and human visual review | **Captured and agent-inspected; user review pending** |
+| Five desktop screenshots and human visual review | **Captured, agent-inspected and user-approved, 2026-10-16** |
 | Release ZIP handoff and independent hosting review | **ZIP verified, extracted and served locally; external hosting deferred** |
-| User approval to merge to `main` | **Not granted** |
+| User approval to merge to `main` | **Granted and executed, 2026-10-16; PR #24 merged** |
 
 The integrated toolchain is committed so these can be run in a local checkout. Do not mark M17 accepted just because source checks or the release script's own syntax pass.
