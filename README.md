@@ -31,6 +31,16 @@ You can run commands using VS Code's **Explorer → NPM SCRIPTS** play buttons o
 - The public ZIP exporter rebuilds the same site for a **root directory** (e.g. Hostinger's `public_html/`) and is not automatically uploaded. The ZIP keeps the chosen indexing mode and includes it in the release manifest. `TA_PUBLIC_ORIGIN` is optional for canonical links; a sitemap is emitted only if indexing is On and a verified custom-domain origin is provided. `robots.txt` stays crawlable when indexing is Off so crawlers can read the page-level `noindex` tags. Studio changes must be committed to `main` before the live Pages site reflects them.
 - The repository's currently published `main` still has the previous V1 output until the V2 branch is merged. This publishing simplification is being developed in `feature/v2-unified-studio` / [PR #24](https://github.com/teodor-andonov/ta-website-builder-261012/pull/24).
 
+## M12 — shared page templates and compositions
+
+Content Studio now supports **Page compositions** independently of **Page templates**. The published **Work** and **Journal** indexes both reference the `page-general` template, each with a separate root Card. Editing their Page in **Design** shows only its own composition; **Preview** assembles the selected shared template and full website chrome. Edits to `page-general` affect both pages, without copying their unique content.
+
+- To create a new Page, use **Pages → +**. New Pages start as draft, with a unique root composition using the first Page template.
+- Select a Page with no object selected in the inspector to change its shared Page template; **Edit template** opens the independent template editor.
+- Existing legacy Pages (Home and Studio) are kept intact. **Convert to composition** is an explicit action: it nests the existing Cards under a new root, with a warning that visual geometry may change. Do not convert without reviewing the result.
+- In **Templates**, use **+ / New page template** to create a one-main-slot Page layout. Record-detail templates remain separate. The editor protects the required root Card and main slot from deletion/duplication.
+- Site Navbar/Footer are still authored by the existing shared renderer, not yet editable component references. This is the remaining M12 extraction step; do not claim M12 complete until that work and final visual verification are done.
+
 ## Project structure
 
 | Location | Purpose |
@@ -40,6 +50,7 @@ You can run commands using VS Code's **Explorer → NPM SCRIPTS** play buttons o
 | `studio/index.html` | Local desktop Content Studio (not published) |
 | `src/model.mjs` | Shared data validation |
 | `src/render.mjs` | Shared renderer for Studio previews and public site |
+| `src/page-assembly.mjs` | Pure one-main-slot template + unique composition assembler |
 | `src/build.mjs` | Public static build: `dist/` |
 | `src/server.mjs` | Local-only authoring API |
 | `scripts/` | Local testing, backup and optional ZIP utilities |
