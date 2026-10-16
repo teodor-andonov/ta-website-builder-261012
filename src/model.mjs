@@ -71,12 +71,14 @@ export function validate(data) {
     claimRoute(route !== '/' ? route.replace(/\/$/,'') : route);
   }
   for (const collection of data.collections) {
+    if(collection.detailPages!==undefined&&typeof collection.detailPages!=='boolean')fail('Invalid collection detailPages: '+collection.id);
     if (typeof collection.base !== 'string' || !/^\/[a-z0-9-]+(?:\/[a-z0-9-]+)*$/.test(collection.base))
       fail(`Invalid collection base: ${collection.base}`);
     if (!Array.isArray(collection.records) || !Array.isArray(collection.fields)) fail(`Invalid collection: ${collection.id}`);
     distinctIds(collection.records, `${collection.id} records`);
     const localSlugs = new Set();
     for (const record of collection.records) {
+      if(record.detailPage!==undefined&&typeof record.detailPage!=='boolean')fail('Invalid record detailPage: '+record.id);
       if (!safeSlug(record.slug)) fail(`Invalid ${collection.id} slug: ${record.slug}`);
       if (localSlugs.has(record.slug)) fail(`Duplicate ${collection.id} slug: ${record.slug}`);
       localSlugs.add(record.slug);
