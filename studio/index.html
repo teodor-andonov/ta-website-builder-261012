@@ -369,7 +369,7 @@ function designView(){
      :example?renderPagePreview(db,example.blocks,null,{pageId:example.id,route:example.slug})
        :renderSiteFrame(renderBlocks(s.blocks,null,false),db,{route:'/'});
  }else if(isC&&s.frameRole){
-   const chrome=renderChromeComponent(db,s.frameRole,{design,selectedId:ui.node,route:'/'});
+   const chrome=renderChromeComponent(db,s.frameRole,{design,selectedId:ui.node,route:'/',componentId:s.id});
    canvas=renderSiteFrame(chrome,db,{design:true,isolated:true,route:'/'});
  }else canvas=siteFrame(renderBlocks(s.blocks,context,design),design);
  const label=isPageLayout?'One main content slot · used by '+db.pages.filter(p=>p.template===s.id).length+' pages'
