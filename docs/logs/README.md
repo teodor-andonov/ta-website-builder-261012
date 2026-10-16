@@ -29,5 +29,6 @@ Short, dated records of **completed or active development cycles**. These comple
 | 2026-10-15 | [V1 staging release candidate, final acceptance and production blockers](2026-10-15-v1-release-candidate.md) |
 | 2026-10-15 | [V2 local-first publishing and GitHub workflow simplification](2026-10-15-v2-local-first-publishing-cleanup.md) |
 | 2026-10-16 | [V2 site-wide search indexing switch and local-only validation handoff](2026-10-16-site-indexing-switch.md) |
+| 2026-10-16 | [M12 Work/Journal page-template migration and isolated Studio design](2026-10-16-m12-page-compositions.md) |
 
 Older `docs/M*_*.md` files are **technical references and milestone snapshots**, not competing plans.
