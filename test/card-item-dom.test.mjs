@@ -16,12 +16,13 @@ test('canonical graph contains Cards and atomic Items only, with source/referenc
   else assert.equal(node.children,undefined,'Items cannot have children');
  }};
  for(const scope of [...data.pages,...data.components,...data.templates]){walk(scope.blocks);if(scope.composition)walk([scope.composition])}
+ for(const c of data.collections)for(const record of c.records)if(record.composition)walk([record.composition])
  assert.ok(all.filter(n=>n.type==='card'&&n.source).length>=4);
  assert.ok(all.some(n=>n.type==='card'&&n.reference));
  assert.ok(!all.some(n=>n.type==='query'||n.type==='component'||n.type==='block'));
 });
 test('semantic Page/Nav/Main/Footer and authored Cards occupy real DOM nodes',()=>{
- const html=renderPagePreview(data,home.blocks,null,{route:'/'});
+ const html=renderPagePreview(data,home.blocks,null,{pageId:home.id,route:'/'});
  assert.match(html,/<div class="card card-page webpage view/);
  assert.match(html,/<nav class="card card-nav /);
  assert.match(html,/<main id="main-content" tabindex="-1" class="card card-main /);
@@ -63,7 +64,7 @@ test('items clip by default, scrolling is opt-in and does not block document whe
  assert.ok(!clip.includes('item-scroll'));
  assert.ok(scroll.includes('item-scroll'));
  const invalid=structuredClone(data);
- invalid.pages[0].blocks[0].children[0].overflow='invented';
+ invalid.pages[0].composition.children[0].overflow='invented';
  assert.throws(()=>validate(invalid),/Invalid item overflow/);
 });
 test('editor uses the shared direct-Card renderer and source Card authoring',async()=>{
@@ -75,8 +76,8 @@ test('editor uses the shared direct-Card renderer and source Card authoring',asy
 });
 
 
-test('annotated homepage has one Card per semantic section, with no redundant wrappers',()=>{
- const sections=home.blocks;
+test('annotated homepage preserves its original section Cards inside one composition root',()=>{
+ const sections=home.composition.children;
  assert.equal(sections.length,8);
  const byId=id=>{const s=sections.find(x=>x.id===id);assert.ok(s,id);return s};
  const work=byId('m6-work-title');
@@ -96,7 +97,7 @@ test('annotated homepage has one Card per semantic section, with no redundant wr
  assert.equal(close.children.filter(x=>x.type!=='card').length,3);
  const black=close.children.find(x=>x.type==='card'&&x.background==='black');
  assert.ok(black&&black.children.length===1&&black.children[0].type==='button');
- const html=renderPagePreview(data,sections,null,{route:'/'});
+ const html=renderPagePreview(data,home.blocks,null,{pageId:home.id,route:'/'});
  assert.doesNotMatch(html,/card-nav-links/,'links should occupy the nav Card grid directly');
  assert.match(html,/card-work-section/);
  assert.match(html,/card-methods-section/);
