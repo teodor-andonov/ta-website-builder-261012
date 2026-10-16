@@ -34,7 +34,7 @@ export async function rehearseRelease(){
   const baseline=await bundle(working,'site-original',baselineZip);
   const baselineHash=hash(await read(baselineZip));
   const originalHTML=await read(join(temporary,'site-original','index.html'));
-  if(!originalHTML.includes('index, follow'))throw Error('Rollback baseline did not build the public website');
+  if(!originalHTML.includes(baseline.indexable?'index, follow':'noindex, nofollow'))throw Error('Rollback baseline has an unexpected indexing mode');
   // Simulate a real authoring update on the disposable data copy.
   const document=validate(JSON.parse((await read(join(working,'content','site.json'))).toString()));
   document.site.name='TA rehearsal updated content';
@@ -75,7 +75,7 @@ export async function rehearseRelease(){
    snapshotFiles:snapshot.fileCount,publicFiles:baseline.files,
    zipBytes:baseline.zipBytes,recoveredZipMatches:true,
    failedBuildRetainedLastGood:true,existingWorkingFolderUntouched:true,
-   indexable:true
+   indexable:baseline.indexable
   };
  }finally{await rm(temporary,{recursive:true,force:true})}
 }
