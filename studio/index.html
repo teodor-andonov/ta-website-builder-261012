@@ -425,7 +425,7 @@ function renderInspector(){let h='';if(ui.section==='dashboard'||ui.section==='d
  const contact=db.site.contact||{email:'',bookingUrl:''};
  h=inspectorEmpty('Website settings','Publishing, public contact and content files.')+
  '<div class="rule"></div><div class="upper">SEARCH INDEXING</div>'+
- '<div class="field"><label>Allow search engines to index the published website</label><select class="control" data-site-indexing="1"><option value="false"'+(db.site.publishing?.indexing===false?' selected':'')+'>Off · request no indexing</option><option value="true"'+(db.site.publishing?.indexing!==false?' selected':'')+'>On · allow indexing</option></select></div>'+
+ '<div class="field"><label>Allow search engines to index the published website</label><select class="control" data-site-indexing="1"><option value="false"'+(db.site.publishing?.indexing!==true?' selected':'')+'>Off · request no indexing</option><option value="true"'+(db.site.publishing?.indexing===true?' selected':'')+'>On · allow indexing</option></select></div>'+
  '<p class="help">Applies to GitHub Pages, local dist/ and website.zip after rebuilding and publishing. Off adds noindex metadata but does not make the site private.</p>'+
  '<div class="rule"></div><div class="upper">PUBLIC CONTACT</div>'+
  '<p class="help">Only add verified destinations. Until a booking URL is configured, the 15-minute call CTA is not clickable.</p>'+
