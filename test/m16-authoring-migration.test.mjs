@@ -69,3 +69,11 @@ test('M16 direct asset references in reusable Components cannot be silently dele
  validate(d);
  assert.ok(findAssetUses(d,'field').some(x=>x.includes('Component')&&x.includes('m16-direct-image')));
 });
+
+test('M16 site font tokens do not break quoted HTML attributes',()=>{
+ const html=collectPages(copy())[0].html;
+ const opening=html.match(/<div class="card card-page[^>]+>/)?.[0]||'';
+ assert.ok(opening.includes("--ta-mono:'Geist Mono','PT Mono',Consolas,monospace"));
+ assert.equal((opening.match(/style="/g)||[]).length,1);
+ assert.ok(opening.endsWith('">'),'one safely quoted style attribute');
+});
