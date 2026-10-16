@@ -15,7 +15,7 @@ test('canonical graph contains Cards and atomic Items only, with source/referenc
   if(node.type==='card')walk(node.children);
   else assert.equal(node.children,undefined,'Items cannot have children');
  }};
- for(const scope of [...data.pages,...data.components,...data.templates])walk(scope.blocks);
+ for(const scope of [...data.pages,...data.components,...data.templates]){walk(scope.blocks);if(scope.composition)walk([scope.composition])}
  assert.ok(all.filter(n=>n.type==='card'&&n.source).length>=4);
  assert.ok(all.some(n=>n.type==='card'&&n.reference));
  assert.ok(!all.some(n=>n.type==='query'||n.type==='component'||n.type==='block'));
@@ -34,7 +34,7 @@ test('semantic Page/Nav/Main/Footer and authored Cards occupy real DOM nodes',()
  assert.match(html,/grid-column:2\/3;grid-row:1\/2/);
 });
 test('Work source Card generates linkable project Cards with direct cover and title Items',()=>{
- const html=renderPagePreview(data,work.blocks,null,{route:'/work/'});
+ const html=renderPagePreview(data,work.blocks,null,{pageId:work.id,route:'/work/'});
  assert.match(html,/card-query/);
  const results=[...html.matchAll(/<a class="card grid-card [^"]*card-record[^"]*"[^>]*href="(\/work\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/g)];
  assert.ok(results.length>=4,'expected linked project Cards, found '+results.length);
@@ -112,8 +112,9 @@ test('semantic Page, Nav, Main and Footer all have intrinsic rounded corners',as
 test('Work and Journal index headings share a single Card with their collection Card',()=>{
  for(const id of ['work','journal']){
   const page=data.pages.find(p=>p.id===id);
-  assert.equal(page.blocks.length,1,id+' should use one compositional section');
-  const children=page.blocks[0].children;
+  assert.equal(page.blocks.length,0,id+' uses a shared slot template');
+  assert.equal(page.template,'page-general');
+  const children=page.composition.children;
   assert.equal(children.length,4,id+' should have 3 Items and one source Card');
   assert.equal(children.filter(b=>b.type!=='card').length,3);
   assert.equal(children.filter(b=>b.type==='card'&&b.source).length,1);
