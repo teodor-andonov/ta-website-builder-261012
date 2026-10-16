@@ -172,6 +172,33 @@ try{
     styleEditing.override!=='black'||styleEditing.reset!==undefined||styleEditing.inherited!=='transparent')
    throw Error('M13 Studio inheritance / local override reset failed: '+JSON.stringify(styleEditing));
  console.log('M13_STYLES_OK shared Card styles, local overrides and inherited reset in Studio');
+ // M14: draft record compositions edit in isolation and new records use collection slot defaults.
+ const recordComposition=await evaluate(`(()=>{
+   const app=window.__TA_STUDIO__;
+   app.navigate('record',{collection:'posts',record:'post-four'});
+   const initial=app.getData().collections.find(c=>c.id==='posts').records.find(r=>r.id==='post-four');
+   const hasDesignMode=!!document.querySelector('[data-act="mode"][data-mode="design"]');
+   document.querySelector('[data-act="mode"][data-mode="design"]')?.click();
+   const isolatedRoot=!!document.querySelector('#workbody [data-node-id="record-post-four-root"]');
+   const hasNavInDesign=!!document.querySelector('#workbody nav.card-nav');
+   document.querySelector('[data-act="mode"][data-mode="preview"]')?.click();
+   const fullNav=!!document.querySelector('#workbody nav.card-nav');
+   const fullFooter=!!document.querySelector('#workbody footer.card-footer');
+   app.navigate('collection','projects');
+   document.querySelector('[data-act="new-record"]')?.click();
+   const created=app.getData().collections.find(c=>c.id==='projects').records[0];
+   const hasNewDesign=!!document.querySelector('[data-act="mode"][data-mode="design"]');
+   return {hasDesignMode,isolatedRoot,hasNavInDesign,fullNav,fullFooter,
+     draft:initial.status,created:created.id,createdTemplate:created.template,
+     createdHasRoot:created.composition?.type==='card',
+     createdStatus:created.status,hasNewDesign};
+ })()`);
+ if(!recordComposition.hasDesignMode||!recordComposition.isolatedRoot||recordComposition.hasNavInDesign||
+    !recordComposition.fullNav||!recordComposition.fullFooter||recordComposition.draft!=='Draft'||
+    recordComposition.createdTemplate!=='record-project-layout'||!recordComposition.createdHasRoot||
+    recordComposition.createdStatus!=='Draft'||!recordComposition.hasNewDesign)
+   throw Error('M14 record composition Studio integration failed: '+JSON.stringify(recordComposition));
+ console.log('M14_RECORDS_OK isolated draft record editor, assembled preview and independent new project root');
  // M9: verify the actual site-wide contact editor, typed URL guard, and CTA.
  const configured=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('dashboard');
