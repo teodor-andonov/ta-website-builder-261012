@@ -737,6 +737,22 @@ function setNodeField(key,value){
  else n[key]=value;
  saveScopeEdit(before,selectedBefore);
 }
+function validatedDesignEdit(mutator){
+ const candidate=clone(db);
+ try{mutator(candidate);validateSiteData(candidate)}
+ catch(error){alert(error.message);renderAll();return false}
+ db=candidate;persist();renderAll();return true;
+}
+function editSelectedAppearance(mutator){
+ const found=ui.node?findNode(ui.node):null;if(!found)return false;
+ const before=snapshotScope(),selectedBefore=ui.node;
+ mutator(found.node);
+ try{validateSiteData(db)}
+ catch(error){
+   assignScopeBlocks(before);ui.node=selectedBefore;alert(error.message);renderAll();return false;
+ }
+ saveScopeEdit(before,selectedBefore);return true;
+}
 function openRecord(recordId,collectionId){if(collectionId)ui.collection=collectionId;ui.record=recordId;choose('record',{collection:ui.collection,record:recordId})}
 function download(name,text,type='application/json'){let blob=new Blob([text],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
 function exportJSON(){download('ta-site-content-v2.json',JSON.stringify(db,null,2))}
@@ -812,6 +828,20 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    if(!Number.isInteger(index)||other<0||other>=candidate.site.navigation.length)break;
    [candidate.site.navigation[index],candidate.site.navigation[other]]=[candidate.site.navigation[other],candidate.site.navigation[index]];
    db=candidate;persist();renderAll();break;
+ }
+ case'select-style':ui.styleId=id;renderWork();renderInspector();break;
+ case'new-style':{
+   const target=btn.dataset.target;if(!['card','item'].includes(target))break;
+   const id=uid('style'),name=target==='card'?'New Card style':'New Item style';
+   const properties=target==='card'?{background:'transparent',padding:'x1',gap:'x1',border:false}:{role:'body',tone:'inherit',weight:'inherit'};
+   validatedDesignEdit(d=>d.site.design.styles.push({id,name,target,properties}));
+   ui.styleId=id;renderWork();break;
+ }
+ case'delete-style':{
+   if(styleUsageCount(ui.styleId)>0){alert('Style is still referenced by authored Cards or Items.');break}
+   if(!confirm('Delete this unused style?'))break;
+   validatedDesignEdit(d=>{d.site.design.styles=d.site.design.styles.filter(x=>x.id!==ui.styleId)});
+   ui.styleId=db.site.design.styles[0]?.id||'';renderWork();break;
  }
  case'new-page':createModal('page');break;
  case'new-collection':createModal('collection');break;
@@ -1092,6 +1122,38 @@ document.addEventListener('dragend',()=>{draggingId=null;clearTreeDrag()});
 
 document.addEventListener('click',event=>{let target=event.target.closest('[data-act]');if(target){handleAction(target);return}let n=event.target.closest('[data-node-id]');if(n&&ui.mode==='design'){event.preventDefault();selectStudioNode(n.dataset.nodeId);return}let g=event.target.closest('[data-open-generated]');if(g&&ui.mode!=='design'){event.preventDefault();openRecord(g.dataset.openGenerated,g.dataset.forCollection);return}let nav=event.target.closest('[data-site-route]');if(nav){event.preventDefault();let p=db.pages.find(p=>p.slug===nav.dataset.siteRoute);if(p)choose('page',p.id);return}if(event.target.id==='modalBack')closeModal()});
 document.addEventListener('change',event=>{let el=event.target;
+ if(el.dataset.nodeStyleRef!==undefined){
+   const requested=el.value;
+   editSelectedAppearance(n=>{
+     if(requested)n.styleRef=requested;
+     else{delete n.styleRef;delete n.appearance}
+   });return;
+ }
+ if(el.dataset.nodeAppearance!==undefined){
+   const key=el.dataset.nodeAppearance,raw=el.value;
+   editSelectedAppearance(n=>{
+     n.appearance||={};
+     if(raw==='__inherit__')delete n.appearance[key];
+     else n.appearance[key]=key==='border'?raw==='true':raw;
+     if(!Object.keys(n.appearance).length)delete n.appearance;
+   });return;
+ }
+ if(el.dataset.styleName!==undefined||el.dataset.styleProp!==undefined){
+   const styleId=ui.styleId,key=el.dataset.styleProp,name=el.value;
+   validatedDesignEdit(d=>{
+     const target=d.site.design.styles.find(x=>x.id===styleId);
+     if(!target)throw Error('No style selected');
+     if(key!==undefined)target.properties[key]=key==='border'?name==='true':name;
+     else target.name=name.trim();
+   });return;
+ }
+ if(el.dataset.designToken!==undefined||el.dataset.designPalette!==undefined){
+   const token=el.dataset.designToken,color=el.dataset.designPalette;
+   validatedDesignEdit(d=>{
+     if(color!==undefined)d.site.design.palette[color]=el.value.trim();
+     else d.site.design.tokens[token]=token==='fontFamily'?el.value:Number(el.value);
+   });return;
+ }
  if(el.dataset.siteChrome){
    const role=el.dataset.siteChrome;
    if(!['navigation','footer'].includes(role))return;
