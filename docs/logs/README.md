@@ -35,5 +35,6 @@ Short, dated records of **completed or active development cycles**. These comple
 | 2026-10-16 | [M14 Record compositions, collection defaults and optional detail routes](2026-10-16-m14-record-compositions.md) |
 | 2026-10-16 | [M15 Contextual asset galleries, typed queries and Balkan House conversion](2026-10-16-m15-asset-query-galleries.md) |
 | 2026-10-16 | [M16 Unified demo authoring, migrated compositions and safe media workflow](2026-10-16-m16-unified-authoring.md) |
+| 2026-10-16 | [M17 Local release acceptance audit, static ZIP and visual review workflow](2026-10-16-m17-release-readiness.md) |
 
 Older `docs/M*_*.md` files are **technical references and milestone snapshots**, not competing plans.
