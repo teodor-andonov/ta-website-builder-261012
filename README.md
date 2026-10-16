@@ -45,6 +45,19 @@ Content Studio now supports **Page compositions** independently of **Page templa
 - **Templates → Properties → Shared site frame:** inherit defaults or select a different Navbar/Footer for that template. The General Page template explicitly references both defaults. Existing Home/Studio Page body Cards are still legacy; their site chrome is shared regardless.
 - M12 code paths are present and targeted model/render smoke checks passed; **full local Node, Chrome, actual build, ZIP and visual acceptance remain deferred until the end of V2**. Do not interpret this as a completed release review.
 
+## M13 — reusable design styles
+
+A Style describes appearance, not a new graphic object. It is separate from a Component, which owns a reusable Card/Item composition.
+
+- **Styles** in Studio's Structure navigation opens a library of named **Card** and **Item** styles. Add, rename, edit and remove unused definitions. Usage counts show how many Cards/Items reference each style.
+- The inspector for a selected Card/Item exposes **Named appearance → Style reference**. Choose a named style to inherit its properties. Explicit **local overrides** are labelled and can be reset to **Inherit**, returning control to the shared definition.
+- Card styles control **background, gap, padding and outline**; Item styles control **text role, tone and weight**. Grid divisions, areas, content and structure remain with the individual Card/Item, not its style.
+- **Site design tokens** include the grayscale palette, monospaced/system type family, corner radius, outline opacity and existing page-relative master spacing. They compile to allowlisted CSS variables—not arbitrary author CSS.
+- Canonical model: `site.design.tokens`, `site.design.styles[]`, optional `node.styleRef` and `node.appearance`. Resolution is **existing/site defaults → named style → explicit local overrides**; pages lacking new fields remain compatible.
+- **Work and Journal** use shared `index-root` Card styling and `eyebrow-label` Item styling, seeded to match the previous appearance. Editing those named styles affects both indexes without modifying the original Home composition.
+
+New Node/browser regression checks cover inheritance, safe validation, template preview parity, shared propagation and resetting an override. The complete local Node/browser/build/ZIP/visual acceptance is still deferred until the end of V2.
+
 ## Project structure
 
 | Location | Purpose |
@@ -55,6 +68,7 @@ Content Studio now supports **Page compositions** independently of **Page templa
 | `src/model.mjs` | Shared data validation |
 | `src/render.mjs` | Shared renderer for Studio previews and public site |
 | `src/page-assembly.mjs` | Pure one-main-slot template + unique composition assembler |
+| `src/style-system.mjs` | M13 named style resolution, site token variables and validated style definitions |
 | `src/build.mjs` | Public static build: `dist/` |
 | `src/server.mjs` | Local-only authoring API |
 | `scripts/` | Local testing, backup and optional ZIP utilities |
