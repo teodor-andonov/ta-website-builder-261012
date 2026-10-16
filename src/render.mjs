@@ -228,13 +228,50 @@ export function resolvePreviewRoute(data,blocks,context=null) {
 }
 export const normalizeRoute = route => route==='/' ? '/' : `${String(route||'/').replace(/\/+$/,'')}/`;
 function publishedRoutes(data){return new Set(data.pages.filter(p=>p.status==='Published').map(p=>normalizeRoute(p.slug)));}
-/** Shared site shell. Navigation is authored in JSON; drafts are hidden. */
-export function renderSiteFrame(content,data,{design=false,route='/',isolated=false}={}) {
+/** Dynamic published links have exactly one authoring source: site.navigation. */
+function navigationItems(data,route){
   const published=publishedRoutes(data);
   const here=normalizeRoute(route);
   const section=here==='/'?'/':here.startsWith('/work/')?'/work/':here.startsWith('/posts/')?'/posts/':here;
   const nav=(data.site.navigation || [{label:'Home',href:'/'},{label:'Work',href:'/work/'},{label:'Journal',href:'/posts/'}]).filter(link=>published.has(normalizeRoute(link.href)));
   const logo=published.has('/')?'<a class="item item-logo web-logo" href="/" aria-label="TA — Home" data-site-route="/">TA<span style="font-weight:300">/</span></a>':'<span class="item item-logo web-logo">TA<span style="font-weight:300">/</span></span>';
+  const links=nav.map((link,i)=>{
+    const href=normalizeRoute(link.href),active=href===section;
+    // Navigation links are direct Items in the Nav Card's twelve-column grid.
+    const slot=Math.max(1,Math.floor(6/Math.max(1,nav.length)));
+    const x1=Math.min(12,7+i*slot),x2=i===nav.length-1?13:Math.min(13,x1+slot);
+    return `<a class="item item-link${active?' is-active':''}" style="grid-column:${x1}/${x2};grid-row:1;" href="${escapeHtml(href)}" data-site-route="${escapeHtml(href)}"${active?' aria-current="page"':''}>${escapeHtml(link.label)}</a>`;
+  }).join('');
+  return {logo,links};
+}
+/** The component's root Card is the actual semantic landmark, not a nested wrapper.
+ * Its children are ordinary editable Items/Cards; link Items come from site.navigation.
+ */
+export function renderChromeComponent(data,role,{design=false,selectedId=null,route='/'}={}){
+  const id=data.site?.chrome?.[role];
+  if(!id)return null; // Older JSON keeps the legacy hardcoded chrome exactly.
+  const component=data.components.find(c=>c.id===id&&c.frameRole===role);
+  if(!component)throw Error('Missing site '+role+' component');
+  const root=component.blocks?.[0];
+  if(!root||root.type!=='card')throw Error('Invalid semantic frame Card: '+id);
+  const nav=role==='navigation',background=backgrounds.has(root.background)?root.background:'transparent';
+  const gap=['x1','x2','x4'].includes(root.gap)?root.gap:'x1';
+  const padding=['x1','x2','x4'].includes(root.padding)?root.padding:'x1';
+  const classes=['card',nav?'card-nav':'card-footer',nav?'web-nav':'web-footer',
+    'grid-card',nav?'semantic-header':'semantic-footer','bg-'+background,'gap-'+gap,'pad-'+padding];
+  if(root.border)classes.push('has-border');
+  const attrs=' class="'+classes.join(' ')+'"'+(design?' data-node-id="'+escapeHtml(root.id)+'" data-kind="card"':'')+
+    ' style="'+cardGridStyle(root)+'"'+(nav?' aria-label="Main navigation"':'');
+  const children=renderBlocks(root.children,null,data,{
+    design,selectedId,parentColumns:root.columns,parentRows:root.rows,topLevel:false
+  });
+  const links=nav?navigationItems(data,route).links:'';
+  const tag=nav?'nav':'footer';
+  return '<'+tag+attrs+'>'+children+links+'</'+tag+'>';
+}
+/** Shared site shell. Navigation is authored in JSON; drafts are hidden. */
+export function renderSiteFrame(content,data,{design=false,route='/',isolated=false}={}) {
+  const {logo,links}=navigationItems(data,route);
   const frameHeight = name => {
     const settings=data.site?.design?.frame?.[name];
     return settings?.constrainHeight && Number.isFinite(settings.heightFactor) && settings.heightFactor>0 && settings.heightFactor<=4
@@ -243,23 +280,18 @@ export function renderSiteFrame(content,data,{design=false,route='/',isolated=fa
   // Master spacing is expressed in page-width units; no per-Card pixel overrides.
   const unit=value=>Number.isFinite(value)&&value>0&&value<=4?value:1;
   const spacingStyle=` style="--ta-pad:${unit(data.site?.design?.pad)}cqw;--ta-gap:${unit(data.site?.design?.gap)}cqw"`;
-  const links=nav.map((link,i)=>{
-    const href=normalizeRoute(link.href),active=href===section;
-    // Navigation links are direct Items in the Nav Card's twelve-column grid.
-    const slot=Math.max(1,Math.floor(6/Math.max(1,nav.length)));
-    const x1=Math.min(12,7+i*slot),x2=i===nav.length-1?13:Math.min(13,x1+slot);
-    return `<a class="item item-link${active?' is-active':''}" style="grid-column:${x1}/${x2};grid-row:1;" href="${escapeHtml(href)}" data-site-route="${escapeHtml(href)}"${active?' aria-current="page"':''}>${escapeHtml(link.label)}</a>`;
-  }).join('');
+  const header=renderChromeComponent(data,'navigation',{design,route}) ||
+    '<nav class="card card-nav web-nav grid-card semantic-header bg-transparent"'+frameHeight('header')+' aria-label="Main navigation">'+logo+links+'</nav>';
+  const footer=renderChromeComponent(data,'footer',{design,route}) ||
+    '<footer class="card card-footer web-footer grid-card semantic-footer bg-transparent"'+frameHeight('footer')+'>'+
+    '<span class="item item-footer">'+escapeHtml(data.site.name)+'</span>'+
+    '<span class="item item-footer">© '+new Date().getUTCFullYear()+'</span></footer>';
   const opening='<div class="card card-page webpage '+(design?'design':'view')+(data.site?.design?.cardBorders?' show-card-borders':'')+'"'+spacingStyle+'>';
   // Isolated Studio design canvas never contains the template or shared site chrome.
   if(isolated)return opening+'<main id="main-content" tabindex="-1" class="card card-main web-content semantic-page bg-transparent">'+content+'</main></div>';
   return opening+'<a class="skip-link" href="#main-content">Skip to content</a>'+
-    '<nav class="card card-nav web-nav grid-card semantic-header bg-transparent"'+frameHeight('header')+' aria-label="Main navigation">'+
-    logo+links+'</nav>'+
-    '<main id="main-content" tabindex="-1" class="card card-main web-content semantic-page bg-transparent">'+content+'</main>'+
-    '<footer class="card card-footer web-footer grid-card semantic-footer bg-transparent"'+frameHeight('footer')+'>'+
-    '<span class="item item-footer">'+escapeHtml(data.site.name)+'</span>'+
-    '<span class="item item-footer">© '+new Date().getUTCFullYear()+'</span></footer></div>';
+    header+'<main id="main-content" tabindex="-1" class="card card-main web-content semantic-page bg-transparent">'+content+'</main>'+
+    footer+'</div>';
 }
 export function renderPagePreview(data,blocks,context=null,options={}) {
   // Opt-in M12 pages share the same assembler in the editor preview and build.
