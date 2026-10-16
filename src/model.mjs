@@ -229,6 +229,17 @@ export function validate(data) {
   }
   // M12 is opt-in: V1 pages and record-detail templates remain untouched.
   for(const template of data.templates){
+    if(template.chrome!==undefined){
+      const refs=template.chrome;
+      if(!refs||typeof refs!=='object'||Array.isArray(refs)||
+         Object.keys(refs).some(key=>!['navigation','footer'].includes(key)))
+        fail('Invalid template chrome references: '+template.id);
+      for(const [role,id] of Object.entries(refs)){
+        const component=data.components.find(c=>c.id===id);
+        if(!component||component.frameRole!==role)
+          fail('Unknown '+role+' frame Component in template: '+template.id);
+      }
+    }
     if(template.layoutMode===undefined){
       if(slotsIn(template.blocks).length)fail('Legacy template cannot contain a main slot: '+template.id);
     }else if(template.layoutMode==='slot'){
