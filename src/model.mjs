@@ -237,9 +237,16 @@ export function validate(data) {
   for (const component of data.components) if (!Array.isArray(component.blocks)) fail(`Invalid component ${component.id}`);
   const templateIds = new Set(data.templates.map(t=>t.id));
   for (const collection of data.collections) {
-    if (collection.defaultTemplate && !templateIds.has(collection.defaultTemplate)) fail(`Missing default template ${collection.defaultTemplate}`);
-    for (const id of Object.values(collection.formatTemplates ?? {}))
-      if (!templateIds.has(id)) fail(`Missing format template ${id}`);
+    if(collection.defaultTemplate){
+      const t=data.templates.find(t=>t.id===collection.defaultTemplate);
+      if(!t||t.collection!==collection.id||t.layoutMode==='slot')
+        fail('Collection defaultTemplate must be a legacy detail template: '+collection.id);
+    }
+    for(const id of Object.values(collection.formatTemplates??{})){
+      const t=data.templates.find(t=>t.id===id);
+      if(!t||t.collection!==collection.id||t.layoutMode==='slot')
+        fail('Format detail template must be a legacy collection template: '+collection.id);
+    }
     if(collection.compositionTemplate!==undefined){
       const t=data.templates.find(t=>t.id===collection.compositionTemplate);
       if(!t||t.layoutMode!=='slot'||t.collection!==collection.id)
