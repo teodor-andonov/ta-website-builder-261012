@@ -36,11 +36,11 @@ test('M11 packages the actual preview site as a standalone public ZIP with SHA-2
  try{
   const dist=join(tmp,'dist'),destination=join(tmp,'handoff','ta-site-preview.zip');
   const result=await packageSite({dist,destination,env:{...process.env,TA_PUBLIC_ORIGIN:''}});
-  assert.equal(result.indexable,true);
+  assert.equal(result.indexable,false);
   assert.ok(result.files>14);
   const archiveBytes=await readFile(destination);
   const verified=await verifySitePackage(destination);
-  assert.equal(verified.indexable,true);
+  assert.equal(verified.indexable,false);
   assert.equal(verified.valid,true);
   assert.equal(verified.files,result.files);
   const damaged=Buffer.from(archiveBytes);
@@ -55,9 +55,9 @@ test('M11 packages the actual preview site as a standalone public ZIP with SHA-2
   assert.equal(archive.has('content/site.json'),false);
   assert.equal(archive.has('studio/index.html'),false);
   assert.equal(archive.has('src/server.mjs'),false);
-  assert.match(archive.get('index.html').toString(),/name="robots" content="index, follow"/);
+  assert.match(archive.get('index.html').toString(),/name="robots" content="noindex, nofollow"/);
   const manifest=JSON.parse(archive.get('release-manifest.json'));
-  assert.equal(manifest.indexable,true);
+  assert.equal(manifest.indexable,false);
   assert.equal(manifest.files.length,result.files);
   for(const file of manifest.files){
    assert.equal(createHash('sha256').update(archive.get(file.path)).digest('hex'),file.sha256,file.path);
