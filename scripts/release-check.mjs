@@ -41,24 +41,32 @@ export function routeFile(route){
 export async function checkOutput(dir,data,{base='/',indexing=false,origin=null}={}){
  const routes=collectPages(data).map(p=>p.route),required=new Set(routes.map(routeFile));
  const mode=indexing?yesIndex:noIndex;
- for(const name of required){
-  const html=await readFile(path.join(dir,name),'utf8');
+ for(const route of routes){
+  const name=routeFile(route),html=await readFile(path.join(dir,name),'utf8');
   ensure(html.includes(mode),'Wrong indexing metadata: '+name);
   ensure(html.includes('href="'+base+'site.css"'),'Incorrect stylesheet base in '+name);
-  if(origin)ensure(html.includes('rel="canonical"'),'Missing canonical tag: '+name);
+  if(origin)ensure(html.includes('rel="canonical" href="'+origin+route+'"'),
+    'Incorrect/missing canonical URL: '+name);
   // Verify local links & asset paths in the built bytes, not the source DOM.
   for(const [,attribute,url] of html.matchAll(/\b(href|src|poster)="([^"]+)"/g)){
    if(url.startsWith('#')||/^(?:https?:|mailto:|tel:|data:)/i.test(url))continue;
    if(!url.startsWith('/'))continue;
+   ensure(!url.startsWith('//'),'Protocol-relative URL forbidden: '+name+' -> '+url);
    ensure(url.startsWith(base),'Wrong base prefix '+name+' -> '+url);
    const rest=url.slice(base.length).split(/[?#]/,1)[0];
    if(!rest)continue;
-   const target=path.join(dir,rest.endsWith('/')?rest+'index.html':rest);
+   const target=path.resolve(dir,rest.endsWith('/')?rest+'index.html':rest);
+   ensure(target.startsWith(path.resolve(dir)+path.sep),'Unsafe local link '+name+' -> '+url);
    ensure(await pathExists(target),'Broken '+attribute+' in '+name+': '+url);
   }
  }
  const sitemap=await pathExists(path.join(dir,'sitemap.xml'));
  const robots=await readFile(path.join(dir,'robots.txt'),'utf8');
+ if(origin&&indexing&&sitemap){
+  const xml=await readFile(path.join(dir,'sitemap.xml'),'utf8');
+  for(const route of routes)ensure(xml.includes('<loc>'+origin+route+'</loc>'),
+    'Sitemap missing canonical route: '+route);
+ }
  ensure(indexing&&origin? sitemap:!sitemap,'Unexpected sitemap for selected publication mode');
  ensure(robots.includes('Allow: /'),'Crawler accessibility changed');
  if(indexing&&origin)ensure(robots.includes('Sitemap: '+origin+'/sitemap.xml'),'Incorrect sitemap origin');
