@@ -1,4 +1,5 @@
 import {assertSlotTemplate,slotsIn} from './page-assembly.mjs';
+import {validateStyleDefinitions,validateNodeStyle} from './style-system.mjs';
 // Shared data contract for the local editor API and static build.
 export function validate(data) {
   // Expose validation failures as HTTP 400, rather than a misleading server error.
@@ -127,6 +128,16 @@ export function validate(data) {
       if(x.slice(0,2)!==x.slice(2,4)||x.slice(2,4)!==x.slice(4,6))fail('Palette must be grayscale only');
     }
   }
+  validateStyleDefinitions(data,fail);
+  const tokens=data.site.design?.tokens;
+  if(tokens!==undefined){
+    if(!tokens||typeof tokens!=='object'||Array.isArray(tokens)||
+       Object.keys(tokens).some(key=>!['fontFamily','radius','outlineOpacity'].includes(key))||
+       (tokens.fontFamily!==undefined&&!['mono','system'].includes(tokens.fontFamily))||
+       (tokens.radius!==undefined&&(!Number.isFinite(tokens.radius)||tokens.radius<.1||tokens.radius>5))||
+       (tokens.outlineOpacity!==undefined&&(!Number.isFinite(tokens.outlineOpacity)||tokens.outlineOpacity<0||tokens.outlineOpacity>1)))
+      fail('Invalid site design tokens');
+  }
   // The editor selects nodes by ID within an authoring scope (Page, Template, Component).
   // Reuse across independent scopes is fine; aliases within one scope are ambiguous.
   const checkBlocks=(blocks,where,seen=new Set(),depth=0)=>{
@@ -136,6 +147,7 @@ export function validate(data) {
       if(!b||typeof b!=='object'||!safeId(b.id))fail(`Invalid block in ${where}`);
       if(seen.has(b.id))fail(`Duplicate node ID in ${where}: ${b.id}`);
       seen.add(b.id);
+      validateNodeStyle(b,data,fail);
       if(b.overflow!==undefined&&!['clip','scroll'].includes(b.overflow))fail(`Invalid item overflow: ${b.id}`);
       if(b.type==='query'||b.type==='component')fail(`Legacy directive must be a source/reference Card: ${b.id}`);
       if(b.type!=='card'){
