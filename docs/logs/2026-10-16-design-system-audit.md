@@ -26,6 +26,8 @@ Other release changes fix module serving, draft duplication validation, Windows/
 
 ## Future application
 
+The user clarified that the design system is **actively evolving with the early product**, not an immutable canon. Fix issues within its existing boundaries directly. When an issue exposes a missing or unsuitable rule, surface the problem and discuss how to incorporate the solution into the system. Once agreed, update the shared rules and affected usages consistently so the same problem does not recur. The approval boundary supports collaborative design-system development; it must not become a reason to preserve flawed behavior or ask about routine compliant fixes.
+
 For visual fixes, name the existing design rule being restored. Do not infer that a clipped/long title permits smaller type, changed copy, arbitrary CSS, new breakpoints or altered grid coordinates. Use the approved authoring/style controls only within the intended composition. If the specification conflicts or the desired result needs a new rule, present that decision to the user first. Record approved design changes in the applicable specification and dated history; preserve historical decisions rather than silently rewriting them.
 
 Documentation-only audit: reviewed diffs and `git diff --check`; no product changes, new screenshots or full-test reruns were needed. Prior automated acceptance still applies to the unchanged product code. No merge or publication occurred.
