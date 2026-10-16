@@ -39,7 +39,11 @@ Content Studio now supports **Page compositions** independently of **Page templa
 - Select a Page with no object selected in the inspector to change its shared Page template; **Edit template** opens the independent template editor.
 - Existing legacy Pages (Home and Studio) are kept intact. **Convert to composition** is an explicit action: it nests the existing Cards under a new root, with a warning that visual geometry may change. Do not convert without reviewing the result.
 - In **Templates**, use **+ / New page template** to create a one-main-slot Page layout. Record-detail templates remain separate. The editor protects the required root Card and main slot from deletion/duplication.
-- Site Navbar/Footer are still authored by the existing shared renderer, not yet editable component references. This is the remaining M12 extraction step; do not claim M12 complete until that work and final visual verification are done.
+- **Navbar and Footer are now reusable, editable semantic Card components**: `site-navbar` and `site-footer` in `content/site.json`. The component root *is* the semantic `<nav>` or `<footer>` landmark, not a decorative nested Card. `site.chrome` selects the defaults and Page/record templates may independently override either via `template.chrome`.
+- **Overview → Website settings:** edit or switch the default Navbar/Footer; change, reorder, add and remove navigation labels/routes. `site.navigation` is the one canonical source for link destinations and labels; hidden draft pages and active-section highlighting remain automatic.
+- **Components → Navbar / Footer:** edit the actual Card and Items in isolation, including the Navbar logo, footer name, copyright text, grid placement, background, spacing and height. Duplicate a frame Component to create an alternate, then select it from a template without affecting other pages. The Navbar's right six columns are reserved for automatically generated links; its Home logo is required.
+- **Templates → Properties → Shared site frame:** inherit defaults or select a different Navbar/Footer for that template. The General Page template explicitly references both defaults. Existing Home/Studio Page body Cards are still legacy; their site chrome is shared regardless.
+- M12 code paths are present and targeted model/render smoke checks passed; **full local Node, Chrome, actual build, ZIP and visual acceptance remain deferred until the end of V2**. Do not interpret this as a completed release review.
 
 ## Project structure
 
