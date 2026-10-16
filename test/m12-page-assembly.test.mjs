@@ -74,7 +74,7 @@ test('M12 shared page layout updates both Work and Journal, never duplicates the
   assert.notEqual(newHtml,oldHtml,route+' should inherit shared template styling');
   assert.match(newHtml,/bg-grey-100/);
  }
- assert.equal(after.find(x=>x.route==='/').html,before.find(x=>x.route==='/').html);
+ assert.notEqual(after.find(x=>x.route==='/').html,before.find(x=>x.route==='/').html,'Home now inherits the General slot template too');
  assert.deepEqual(journal.composition,beforeJournal);
  assert.deepEqual(work.composition,beforeWork);
  const journalClone=structuredClone(d);
@@ -122,14 +122,14 @@ test('M12 rejects missing page content and unsupported template settings',()=>{
  page.template='missing';
  assert.throws(()=>validate(d),/requires a known slot template/);
 });
-test('M12 rejects a slot in a legacy template, Page or reusable Component',()=>{
+test('M12 rejects a slot in a legacy template, Page composition or reusable Component',()=>{
  const d=copy();
  d.templates[0].blocks[0].slot='main';
  assert.throws(()=>validate(d),/Legacy template cannot contain a main slot/);
  delete d.templates[0].blocks[0].slot;
- d.pages[0].blocks[0].slot='main';
- assert.throws(()=>validate(d),/Page authoring cannot contain a template slot/);
- delete d.pages[0].blocks[0].slot;
+ d.pages[0].composition.children[0].slot='main';
+ assert.throws(()=>validate(d),/Page requires exactly one root Card without area or slot/);
+ delete d.pages[0].composition.children[0].slot;
  d.components[0].blocks[0].slot='main';
  assert.throws(()=>validate(d),/Component cannot own a page slot/);
 });
