@@ -449,7 +449,7 @@ function treeRows(blocks=currentBlocks(),depth=0){return (blocks||[]).map(n=>`<b
 
 const structureMode=()=>['page','template','component'].includes(ui.section)||false;
 const recordStructureMode=()=>ui.section==='record'&&compositionRecord();
-function isStructureEditing(){return (isStructureEditing()||recordStructureMode())&&ui.mode==='design'};
+function isStructureEditing(){return (structureMode()||recordStructureMode())&&ui.mode==='design'}
 function structureLabel(n){
  if(n.label)return String(n.label).slice(0,70);
  if(n.type==='card')return n.source?'Collection · '+n.source.collection:n.reference?'Component · '+n.reference:n.variant?'Card · '+n.variant:'Card';
