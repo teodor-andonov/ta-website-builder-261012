@@ -113,9 +113,8 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .card-journal-record{min-height:6cqw}
 :is(.published-site,.editor-shell) .web-nav.semantic-header{
  display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
- grid-template-rows:1fr;gap:var(--ta-gap);
- padding:var(--ta-pad);align-items:center;
- min-height:0;background:transparent;border:0;
+ grid-template-rows:1fr;align-items:center;
+ min-height:0;border:0; /* authored Card owns gap, padding and background */
 }
 :is(.published-site,.editor-shell) .web-logo{
  grid-column:1/4;grid-row:1;align-self:center;
@@ -137,8 +136,7 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .web-content.semantic-page>.card-section{width:100%;margin:0}
 :is(.published-site,.editor-shell) .web-footer.semantic-footer{
  display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:1fr;
- padding:var(--ta-pad);gap:var(--ta-gap);
- border:0;background:transparent;
+ border:0; /* authored Footer Card controls padding, gap and background */
  font:450 .7cqw/1.4 var(--ta-mono);color:var(--ta-grey-600);
 }
 :is(.published-site,.editor-shell) .web-footer>*:first-child{grid-column:1/7}
