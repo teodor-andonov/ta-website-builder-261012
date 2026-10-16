@@ -37,6 +37,17 @@ export function validate(data) {
       navPaths.add(route);
     }
   }
+  // Site chrome is selected by reference; the navigation data remains in site.navigation.
+  if(data.site.chrome!==undefined){
+    const chrome=data.site.chrome;
+    if(!chrome||typeof chrome!=='object'||Array.isArray(chrome)||Object.keys(chrome).some(k=>!['navigation','footer'].includes(k))||
+       typeof chrome.navigation!=='string'||typeof chrome.footer!=='string')
+      fail('site.chrome must select navigation and footer components');
+    for(const role of ['navigation','footer']){
+      const component=data.components.find(c=>c.id===chrome[role]);
+      if(!component||component.frameRole!==role)fail('Invalid site.chrome '+role+' component');
+    }
+  }
   const seenRoutes = new Set();
   const claimRoute = (route) => {
     if (seenRoutes.has(route)) fail(`Duplicate route: ${route}`);
@@ -164,6 +175,22 @@ export function validate(data) {
     }
   };
   for(const p of [...data.pages,...data.templates,...data.components])checkBlocks(p.blocks,p.id);
+  for(const component of data.components){
+    if(component.frameRole===undefined)continue;
+    if(!['navigation','footer'].includes(component.frameRole)||
+       component.blocks.length!==1||component.blocks[0]?.type!=='card'||
+       component.blocks[0].area!==undefined||component.blocks[0].slot!==undefined||
+       component.blocks[0].source||component.blocks[0].reference||
+       component.blocks[0].columns!==12||component.blocks[0].rows!==1)
+      fail('Invalid semantic site frame component: '+component.id);
+    if(component.frameRole==='navigation'){
+      const logos=component.blocks[0].children.filter(node=>node.type==='button'&&node.variant==='site-logo');
+      if(logos.length!==1||logos[0].href!=='/')
+        fail('Navigation component requires one Home logo Item: '+component.id);
+      if(component.blocks[0].children.some(node=>node.area?.x2>7&&node.variant!=='site-logo'))
+        fail('Navigation reserves the right half for generated links: '+component.id);
+    }
+  }
   // Reusable component references (including query tile sources) must form an acyclic graph.
   // The renderer cannot expand cycles safely; reject them before storing canonical JSON.
   const edges=new Map(data.components.map(component=>[component.id,new Set()]));
