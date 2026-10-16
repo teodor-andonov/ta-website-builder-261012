@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,writeFile,rm,mkdir} from 'node:fs/promises';
+import {mkdtemp,readFile,writeFile,rm,mkdir,cp} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {inflateRawSync} from 'node:zlib';
@@ -69,6 +69,25 @@ test('M11 packages the actual preview site as a standalone public ZIP with SHA-2
    dist:join(tmp,'bad-origin-dist'),destination:join(tmp,'handoff','bad-origin.zip'),
    env:{...process.env,TA_PUBLIC_ORIGIN:'https://example.com'}
   }),/Static build rejected:[\s\S]*TA_PUBLIC_ORIGIN/);
+ }finally{await rm(tmp,{recursive:true,force:true})}
+});
+test('ZIP switch On emits indexable HTML, sitemap and matching verified manifest',{timeout:40000},async()=>{
+ const tmp=await mkdtemp(join(tmpdir(),'ta-indexed-package-'));
+ try{
+  const dataRoot=join(tmp,'source'),destination=join(tmp,'public.zip');
+  await mkdir(join(dataRoot,'content'),{recursive:true});
+  await cp(new URL('../assets/',import.meta.url),join(dataRoot,'assets'),{recursive:true});
+  const data=JSON.parse(await readFile(new URL('../content/site.json',import.meta.url),'utf8'));
+  data.site.publishing.indexing=true;
+  await writeFile(join(dataRoot,'content','site.json'),JSON.stringify(data));
+  const result=await packageSite({dist:join(tmp,'dist'),destination,env:{...process.env,TA_DATA_ROOT:dataRoot,TA_PUBLIC_ORIGIN:'https://ta-studio.com'}});
+  assert.equal(result.indexable,true);
+  const verified=await verifySitePackage(destination);
+  assert.equal(verified.indexable,true);
+  const archive=unpack(await readFile(destination));
+  assert.match(archive.get('index.html').toString(),/name="robots" content="index, follow"/);
+  assert.match(archive.get('sitemap.xml').toString(),/https:\/\/ta-studio.com\/work\//);
+  assert.match(archive.get('robots.txt').toString(),/Sitemap: https:\/\/ta-studio.com\/sitemap.xml/);
  }finally{await rm(tmp,{recursive:true,force:true})}
 });
 test('M11 packager refuses a private editor/source artifact in static output',{timeout:10000},async()=>{
