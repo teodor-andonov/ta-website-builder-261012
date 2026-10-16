@@ -115,8 +115,8 @@ export function verifySiteArchive(bytes){
   if(!robots.includes('Allow: /'))throw Error('Public package must allow crawlers');
   if(found.has('sitemap.xml')!==robots.includes('Sitemap: https://'))
    throw Error('Sitemap and robots.txt disagree');
- }else if(found.has('sitemap.xml')||!robots.includes('Disallow: /'))
-  throw Error('Unindexed package has inconsistent robots instructions');
+ }else if(found.has('sitemap.xml')||!robots.includes('Allow: /')||robots.includes('Sitemap:'))
+  throw Error('Unindexed package must remain crawlable for noindex discovery, without a sitemap');
  return {files:manifest.files.length,bytes:total,indexable:manifest.indexable,valid:true};
 }
 export async function verifySitePackage(path){return verifySiteArchive(await readFile(resolve(path)))}
