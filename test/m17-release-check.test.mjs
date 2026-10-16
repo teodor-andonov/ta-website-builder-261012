@@ -6,7 +6,7 @@ import {join,dirname} from 'node:path';
 import {validate} from '../src/model.mjs';
 import {collectPages} from '../src/render.mjs';
 import {prefixSitePaths} from '../src/deploy-paths.mjs';
-import {checkOutput,routeFile} from '../scripts/release-check.mjs';
+import {checkOutput,routeFile,fingerprintAuthoring} from '../scripts/release-check.mjs';
 
 const sample=JSON.parse(await readFile(new URL('../content/site.json',import.meta.url),'utf8'));
 const copy=()=>structuredClone(sample);
@@ -66,5 +66,23 @@ test('M17 indexable custom-domain scanner accepts canonical metadata and sitemap
   assert.equal(checked.robots,'index, follow');
   await writeFile(join(temp,'sitemap.xml'),'<urlset/>');
   await assert.rejects(checkOutput(temp,data,{indexing:true,origin}),/Sitemap missing canonical route/);
+ }finally{await rm(temp,{recursive:true,force:true})}
+});
+
+test('M17 fingerprints all editable JSON and media, including assets not referenced in JSON',async()=>{
+ const temp=await mkdtemp(join(tmpdir(),'ta-m17-fingerprint-'));
+ try{
+  await mkdir(join(temp,'content'));await mkdir(join(temp,'assets'));
+  await writeFile(join(temp,'content','site.json'),'{"demo":true}\n');
+  await writeFile(join(temp,'assets','image.svg'),'<svg/>');
+  const original=await fingerprintAuthoring(temp);
+  assert.equal(original.files,2);
+  assert.deepEqual(await fingerprintAuthoring(temp),original);
+  await writeFile(join(temp,'assets','image.svg'),'<svg><!-- modified --></svg>');
+  assert.notEqual((await fingerprintAuthoring(temp)).sha256,original.sha256);
+  await writeFile(join(temp,'assets','unreferenced.svg'),'<svg/>');
+  assert.equal((await fingerprintAuthoring(temp)).files,3);
+  await writeFile(join(temp,'content','site.json'),'{"demo":false}\n');
+  assert.notEqual((await fingerprintAuthoring(temp)).sha256,original.sha256);
  }finally{await rm(temp,{recursive:true,force:true})}
 });
