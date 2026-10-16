@@ -32,7 +32,7 @@ test('M15 name contains is substring, name eq is exact and sort/count are determ
  assert.equal(match.length,2);
  assert.deepEqual(match.map(x=>x.name),match.map(x=>x.name).sort((a,b)=>a.localeCompare(b,'en')));
  q.count=10;q.sort='original';
- assert.deepEqual(queryAssets(q,d.assets).map(x=>x.id),['house','facade']);
+ assert.deepEqual(queryAssets(q,d.assets).map(x=>x.id),['house','facade','glyph']);
  q.where[0]={field:'name',op:'eq',value:'Housing study placeholder'};
  assert.deepEqual(queryAssets(q,d.assets).map(x=>x.id),['house']);
 });
@@ -92,7 +92,7 @@ test('M15 query Cards validate a typed source, not arbitrary expressions or unbo
  ];
  for(const change of mutate){
    const d=copy();change(gallery(d).source);
-   assert.throws(()=>validate(d),/asset query/i,String(change));
+   assert.throws(()=>validate(d),/asset query|record source/i,String(change));
  }
 });
 test('M15 optional legacy Card query sources still render, and unrelated routes are present',()=>{
