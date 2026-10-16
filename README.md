@@ -72,6 +72,19 @@ Each Project/Post record can now own a **unique editable root Card** while conti
 
 Validation and regression tests cover missing/wrong slot templates, duplicate/invalid record roots, independent changes, shared layout inheritance, retained public routes, explicit detail-page opt-out and Studio Design/Preview. Full Node/browser/build/ZIP/visual acceptance remains scheduled for the end of V2.
 
+## M15 — contextual asset queries
+
+A Card can now generate an **image gallery from asset metadata**, without maintaining links or separate image lists on Project records.
+
+- **Create:** In any Page/record Design view, choose **Add object → Asset gallery · dynamic**. It creates an ordinary Card with `source.kind = "assets"`, not a new graphical node type.
+- **Filter:** The Card inspector edits a list of **AND predicates**. Available fields are `projectCode` (equals), `tags` (contains an exact tag, ignoring case), and `name` (equals or contains text). Values can be literal or a safe record binding such as `{{projectCode}}`. Querying outside a record or with an empty project code returns no assets—not the whole library.
+- **Present:** Choose 1/2/3-column arrangement, original/name order, a maximum image count and captions. The renderer creates ordinary nested Card/Image Items with existing asset URLs, alt text and optional captions. The original image files are never copied.
+- **Maintain:** Asset Library metadata (`properties.projectCode`, `tags`, name, caption) remains the single source of truth. Update an asset tag/project code once and every matching gallery refreshes.
+- **Demo:** **Balkan House** is converted to its own M14 root composition with a highlighted-assets query: `projectCode = {{projectCode}}` **AND** `tags contains Architecture`. Demo project code `4424` matches the Housing placeholder image. Responsive Envelope has demo code `4430`; other legacy Project/Post pages can likewise be converted since all current content is demo material.
+- **Safety:** The query schema only permits allowlisted fields/operators, a bounded result count and simple field bindings—no arbitrary JavaScript, CSS, URL expressions or relationship engine. Validation and regression coverage include missing context, AND behaviour, ordering, tag matching, malformed queries and assembled preview/public parity.
+
+As agreed, converting demo legacy layouts is now allowed during V2 development; keeping them byte-identical is **not** a product requirement. Keep routes and authored data consistent, and complete the final visual/browser review before merging.
+
 ## Project structure
 
 | Location | Purpose |
@@ -83,6 +96,7 @@ Validation and regression tests cover missing/wrong slot templates, duplicate/in
 | `src/render.mjs` | Shared renderer for Studio previews and public site |
 | `src/page-assembly.mjs` | Pure one-main-slot template + unique composition assembler |
 | `src/style-system.mjs` | M13 named style resolution, site token variables and validated style definitions |
+| `src/asset-query.mjs` | M15 typed AND filters, record-context binding and deterministic asset selection |
 | `src/build.mjs` | Public static build: `dist/` |
 | `src/server.mjs` | Local-only authoring API |
 | `scripts/` | Local testing, backup and optional ZIP utilities |
