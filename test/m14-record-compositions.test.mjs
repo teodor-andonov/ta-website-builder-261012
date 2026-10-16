@@ -61,10 +61,10 @@ test('M14 editing one Project root never edits another Project, Post or shared t
  for(const page of before.filter(x=>x.route!=='/work/balkan-house/'))
    assert.equal(html(d,page.route),page.html,page.route);
  assert.deepEqual(layout,oldTemplate);
- assert.equal(record(d,'projects','p-facade').composition,undefined);
+ assert.equal(record(d,'projects','p-facade').composition.type,'card','other Project retains independent migrated composition');
 });
 
-test('M14 shared record slot template changes all assigned records while leaving legacy routes intact',()=>{
+test('M14 shared record slot template changes all Project records while leaving unrelated routes intact',()=>{
  const d=copy(),before=collectPages(d);
  composeProject(d,'p-balkan');composeProject(d,'p-facade');
  const t=d.templates.find(t=>t.id==='record-project-layout');
@@ -72,12 +72,14 @@ test('M14 shared record slot template changes all assigned records while leaving
  validate(d);
  assert.match(html(d,'/work/balkan-house/'),/bg-grey-100/);
  assert.match(html(d,'/work/responsive-envelope/'),/bg-grey-100/);
- for(const page of before.filter(x=>!['/work/balkan-house/','/work/responsive-envelope/'].includes(x.route)))
+ for(const page of before.filter(x=>!x.route.startsWith('/work/')||x.route==='/work/'))
    assert.equal(html(d,page.route),page.html,page.route);
 });
 
 test('M14 supports record template override independently of format default',()=>{
  const d=copy(),post=record(d,'posts','post-one');
+ delete post.composition;delete post.template;
+ const other=record(d,'posts','post-two');delete other.composition;delete other.template;
  assert.equal(templateFor(d,collection(d,'posts'),post).id,'post-note');
  post.template='post-news';
  validate(d);
@@ -139,7 +141,7 @@ test('M14 refuses unsupported record template/geometry/reference combinations',(
  d=>{record(d,'posts','post-four').template='project-detail'},
  d=>{record(d,'posts','post-four').template='record-project-layout'},
  d=>{delete record(d,'posts','post-four').template},
- d=>{record(d,'posts','post-one').template='record-post-layout'},
+ d=>{record(d,'posts','post-one').template='post-note'},
  d=>{record(d,'posts','post-four').composition.area={x1:1,y1:1,x2:2,y2:2}},
  d=>{record(d,'posts','post-four').composition.slot='main'},
  d=>{record(d,'posts','post-four').composition.type='text'},
