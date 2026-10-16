@@ -27,8 +27,8 @@ You can run commands using VS Code's **Explorer → NPM SCRIPTS** play buttons o
 
 - `main` publishes automatically via the repository's **one** GitHub Pages workflow (build `dist/` with the GitHub Pages project prefix, upload site, deploy).
 - **No tests, browser checks, separate staging runs or ZIP archives are uploaded to GitHub Actions.** Test the code on your own PC. GitHub is only version control and the current host.
-- Site pages are **indexable by default**; no content-approval or `noindex` gate. The editable placeholder copy/images can therefore be discoverable via search. Publishing a build does not guarantee Google will index it.
-- The public ZIP exporter rebuilds the same site for a **root directory** (e.g. Hostinger's `public_html/`) and is not automatically uploaded. `TA_PUBLIC_ORIGIN` is optional and only needed for canonical links/sitemaps on a future custom domain.
+- **Indexing is a simple site-wide switch**, in **Content Studio → Overview → Website settings → Search indexing**, stored as `site.publishing.indexing` in `content/site.json`. It's currently **Off** while the site has placeholder material. Off adds `noindex, nofollow` to every public page; On adds `index, follow`. Both modes build and export without editorial gates. `noindex` is a request to search engines, not access control.
+- The public ZIP exporter rebuilds the same site for a **root directory** (e.g. Hostinger's `public_html/`) and is not automatically uploaded. The ZIP keeps the chosen indexing mode and includes it in the release manifest. `TA_PUBLIC_ORIGIN` is optional for canonical links; a sitemap is emitted only if indexing is On and a verified custom-domain origin is provided. `robots.txt` stays crawlable when indexing is Off so crawlers can read the page-level `noindex` tags. Studio changes must be committed to `main` before the live Pages site reflects them.
 - The repository's currently published `main` still has the previous V1 output until the V2 branch is merged. This publishing simplification is being developed in `feature/v2-unified-studio` / [PR #24](https://github.com/teodor-andonov/ta-website-builder-261012/pull/24).
 
 ## Project structure
