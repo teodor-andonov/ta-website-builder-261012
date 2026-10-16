@@ -48,6 +48,8 @@ Backups: `npm run backup:create` and `npm run backup:restore -- <snapshot> <new-
 
 ## Working policy
 
+- **Design-system review (user instruction, 2026-10-16):** all future changes must stay within the documented M7/V2 design system. Ask the user before implementing any departure or resolving a material design-rule ambiguity. Bug-fix/release/demo-migration permission does not authorise redesign. The release fix changed unconstrained row sizing according to M7's content-height rule; it did not change title text, type sizes, site tokens or authored grid areas. See [design-system audit](logs/2026-10-16-design-system-audit.md) and the binding rule in `AGENTS.md`. Merge approval remains pending.
+
 - Preserve JSON as the single authoring source, the shared rendering contract and the nonadaptive print-style public Card/Item grid. Studio remains desktop-focused. Leave `prototype-v2/` historical and untouched. Site defaults and template-specific semantic Navbar/Footer references are canonical JSON: `site.chrome`, `template.chrome`, and Component `frameRole`. `site.navigation` alone supplies dynamic links; do not hardcode secondary navigation copies.
 - Prefer one meaningful, reviewed step per user-triggered cycle (larger coherent steps are welcome). Targeted static/in-memory checks are useful interim evidence, but full Node/browser/build/ZIP/visual tests and both indexing states are reserved for final V2 acceptance by user decision. No new background automation and no automatic screenshots.
 - After substantial changes, update this plan and add a dated [log](logs/README.md). Be clear about unrun local tests when the environment cannot execute the repository.
