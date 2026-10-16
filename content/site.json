@@ -258,7 +258,8 @@
           "placeholder": true,
           "approvedForPublication": false
         }
-      ]
+      ],
+      "compositionTemplate": "record-project-layout"
     },
     {
       "id": "posts",
@@ -404,9 +405,73 @@
           ],
           "featured": false,
           "placeholder": true,
-          "approvedForPublication": false
+          "approvedForPublication": false,
+          "template": "record-post-layout",
+          "composition": {
+            "id": "record-post-four-root",
+            "type": "card",
+            "columns": 1,
+            "rows": 4,
+            "gap": "x1",
+            "padding": "x1",
+            "background": "transparent",
+            "border": false,
+            "constrainHeight": false,
+            "heightFactor": 0.5,
+            "children": [
+              {
+                "id": "record-post-four-kicker",
+                "type": "text",
+                "style": "eyebrow",
+                "text": "NOTE / {{date}}",
+                "area": {
+                  "x1": 1,
+                  "y1": 1,
+                  "x2": 2,
+                  "y2": 2
+                }
+              },
+              {
+                "id": "record-post-four-title",
+                "type": "text",
+                "style": "heading",
+                "text": "{{title}}",
+                "area": {
+                  "x1": 1,
+                  "y1": 2,
+                  "x2": 2,
+                  "y2": 3
+                }
+              },
+              {
+                "id": "record-post-four-body",
+                "type": "rich",
+                "source": "{{body}}",
+                "area": {
+                  "x1": 1,
+                  "y1": 3,
+                  "x2": 2,
+                  "y2": 4
+                }
+              },
+              {
+                "id": "record-post-four-tags",
+                "type": "text",
+                "style": "caption",
+                "text": "{{tags}}",
+                "area": {
+                  "x1": 1,
+                  "y1": 4,
+                  "x2": 2,
+                  "y2": 5
+                }
+              }
+            ],
+            "label": "Draft post composition"
+          }
         }
-      ]
+      ],
+      "compositionTemplate": "record-post-layout"
     }
   ],
   "templates": [
@@ -1056,6 +1121,94 @@
         "navigation": "site-navbar",
         "footer": "site-footer"
       }
+    },
+    {
+      "id": "record-project-layout",
+      "name": "Project composition layout",
+      "description": "One editable record root composition in a shared detail template",
+      "collection": "projects",
+      "layoutMode": "slot",
+      "blocks": [
+        {
+          "id": "record-project-layout-root",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "x1",
+          "padding": "x1",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "record-project-layout-main",
+              "type": "card",
+              "columns": 1,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "children": [],
+              "slot": "main",
+              "label": "Main content slot",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "record-post-layout",
+      "name": "Post composition layout",
+      "description": "One editable record root composition in a shared detail template",
+      "collection": "posts",
+      "layoutMode": "slot",
+      "blocks": [
+        {
+          "id": "record-post-layout-root",
+          "type": "card",
+          "columns": 1,
+          "rows": 1,
+          "gap": "x1",
+          "padding": "x1",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": false,
+          "heightFactor": 0.5,
+          "children": [
+            {
+              "id": "record-post-layout-main",
+              "type": "card",
+              "columns": 1,
+              "rows": 1,
+              "gap": "x1",
+              "padding": "x1",
+              "background": "transparent",
+              "border": false,
+              "constrainHeight": false,
+              "heightFactor": 0.5,
+              "children": [],
+              "slot": "main",
+              "label": "Main content slot",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 2,
+                "y2": 2
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "components": [
