@@ -423,7 +423,10 @@ function placeholderSelect(kind,enabled){
 }
 function renderInspector(){let h='';if(ui.section==='dashboard'||ui.section==='data'){
  const contact=db.site.contact||{email:'',bookingUrl:''};
- h=inspectorEmpty('Website settings','Site-wide contact details and content files.')+
+ h=inspectorEmpty('Website settings','Publishing, public contact and content files.')+
+ '<div class="rule"></div><div class="upper">SEARCH INDEXING</div>'+
+ '<div class="field"><label>Allow search engines to index the published website</label><select class="control" data-site-indexing="1"><option value="false"'+(db.site.publishing?.indexing===false?' selected':'')+'>Off · request no indexing</option><option value="true"'+(db.site.publishing?.indexing!==false?' selected':'')+'>On · allow indexing</option></select></div>'+
+ '<p class="help">Applies to GitHub Pages, local dist/ and website.zip after rebuilding and publishing. Off adds noindex metadata but does not make the site private.</p>'+
  '<div class="rule"></div><div class="upper">PUBLIC CONTACT</div>'+
  '<p class="help">Only add verified destinations. Until a booking URL is configured, the 15-minute call CTA is not clickable.</p>'+
  '<div class="field"><label>Contact email</label><input class="control" type="email" data-site-contact="email" value="'+e(contact.email||'')+'" placeholder="Verified address"></div>'+
@@ -865,6 +868,13 @@ document.addEventListener('change',event=>{let el=event.target;
  if(el.dataset.assetProp){let a=asset();if(a){if(el.dataset.assetProp==='src'&&String(a.src).startsWith('/assets/uploads/'))return;a[el.dataset.assetProp]=el.dataset.assetProp==='tags'?el.value.split(',').map(x=>x.trim()).filter(Boolean):el.value;persist();renderAll()}return}
  if(el.dataset.customVal){let a=asset();if(a){a.properties[el.dataset.customVal]=el.value;persist()}return}
  if(el.dataset.customKey){let a=asset(),old=el.dataset.customKey,k=el.value.trim();if(a&&k&&!Object.hasOwn(a.properties,k)){a.properties[k]=a.properties[old];delete a.properties[old];persist();renderInspector()}return}
+ if(el.dataset.siteIndexing){
+  const candidate=clone(db);
+  candidate.site.publishing={indexing:el.value==='true'};
+  try{validateSiteData(candidate)}
+  catch(error){alert(error.message);renderInspector();return}
+  db=candidate;persist();renderInspector();return
+ }
  if(el.dataset.siteContact){
   const key=el.dataset.siteContact;
   if(key!=='email'&&key!=='bookingUrl')return;
