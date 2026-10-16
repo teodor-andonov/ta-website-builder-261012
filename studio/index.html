@@ -310,6 +310,14 @@ function historyScope(){const scope=currentScope();return scope?ui.section+':'+s
 function snapshotScope(){return clone(currentBlocks())}
 function saveScopeEdit(before,selectedBefore){
  const key=historyScope();
+ // Reject invalid structural edits while preserving the last valid authoring tree.
+ if(frameComponent()||compositionPage()||(ui.section==='template'&&tpl()?.layoutMode==='slot')){
+   try{validateSiteData(db)}
+   catch(error){
+     assignScopeBlocks(before);ui.node=selectedBefore;ui.areaDraft=null;
+     alert(error.message);renderAll();return false;
+   }
+ }
  if(!key||!editorHistory.record(key,before,currentBlocks(),selectedBefore,ui.node))return false;
  persist();renderAll();return true;
 }
@@ -500,7 +508,9 @@ function renderInspector(){let h='';if(ui.section==='dashboard'||ui.section==='d
  h+='<div class="rule"></div><div class="upper">SHARED SITE COMPONENTS</div>';
  for(const [role,label] of [['navigation','Navbar'],['footer','Footer']]){
    const chosen=db.components.find(c=>c.id===db.site.chrome?.[role]);
-   h+='<div class="field"><label>'+label+'</label><button class="btn sm" data-act="edit-component" data-id="'+e(chosen?.id||'')+'"'+(chosen?'':' disabled')+'>'+ic('blocks')+' Edit '+e(chosen?.name||label)+'</button></div>';
+   h+='<div class="field"><label>'+label+'</label><select class="control" data-site-chrome="'+role+'">'+
+     db.components.filter(c=>c.frameRole===role).map(c=>'<option value="'+e(c.id)+'"'+(chosen?.id===c.id?' selected':'')+'>'+e(c.name)+'</option>').join('')+
+     '</select></div><button class="btn sm" data-act="edit-component" data-id="'+e(chosen?.id||'')+'"'+(chosen?'':' disabled')+'>'+ic('blocks')+' Edit '+e(chosen?.name||label)+'</button>';
  }
  h+='<div class="rule"></div><div class="upper">NAVIGATION LINKS</div><p class="help">One canonical route list, used by every Navbar. Draft Pages are hidden on the public site.</p>';
  for(const [i,link] of (db.site.navigation||[]).entries()){
@@ -605,8 +615,13 @@ function insertNode(type){
    const arr=parent.children||(parent.children=[]);let taken=new Set();
    for(const child of arr){const a=child.area;if(a)for(let y=a.y1;y<a.y2;y++)for(let x=a.x1;x<a.x2;x++)taken.add(x+':'+y);}
    let x=1,y=1;
-   outer:for(let row=1;row<=parent.rows;row++)for(let col=1;col<=parent.columns;col++)if(!taken.has(col+':'+row)){x=col;y=row;break outer;}
-   if(taken.has(x+':'+y)){parent.rows+=1;x=1;y=parent.rows;}
+   const frameRoot=frameComponent()&&parent===currentBlocks()[0];
+   const allowedColumns=frameRoot&&component().frameRole==='navigation'?Math.min(6,parent.columns):parent.columns;
+   outer:for(let row=1;row<=parent.rows;row++)for(let col=1;col<=allowedColumns;col++)if(!taken.has(col+':'+row)){x=col;y=row;break outer;}
+   if(taken.has(x+':'+y)){
+     if(frameRoot){alert('No available space in this semantic frame Card. Adjust the existing Items first.');return}
+     parent.rows+=1;x=1;y=parent.rows;
+   }
    n.area={x1:x,y1:y,x2:x+1,y2:y+1};arr.push(n);
  } else {
    // Page/template root sections are always Cards.
@@ -1006,6 +1021,13 @@ document.addEventListener('dragend',()=>{draggingId=null;clearTreeDrag()});
 
 document.addEventListener('click',event=>{let target=event.target.closest('[data-act]');if(target){handleAction(target);return}let n=event.target.closest('[data-node-id]');if(n&&ui.mode==='design'){event.preventDefault();selectStudioNode(n.dataset.nodeId);return}let g=event.target.closest('[data-open-generated]');if(g&&ui.mode!=='design'){event.preventDefault();openRecord(g.dataset.openGenerated,g.dataset.forCollection);return}let nav=event.target.closest('[data-site-route]');if(nav){event.preventDefault();let p=db.pages.find(p=>p.slug===nav.dataset.siteRoute);if(p)choose('page',p.id);return}if(event.target.id==='modalBack')closeModal()});
 document.addEventListener('change',event=>{let el=event.target;
+ if(el.dataset.siteChrome){
+   const role=el.dataset.siteChrome;
+   if(!['navigation','footer'].includes(role))return;
+   const candidate=clone(db);candidate.site.chrome[role]=el.value;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
+   db=candidate;persist();renderAll();return;
+ }
  if(el.dataset.templateChrome){
    const role=el.dataset.templateChrome;
    if(ui.section!=='template'||!['navigation','footer'].includes(role))return;
