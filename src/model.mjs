@@ -1,5 +1,6 @@
 import {assertSlotTemplate,slotsIn} from './page-assembly.mjs';
 import {validateStyleDefinitions,validateNodeStyle} from './style-system.mjs';
+import {validateAssetSource} from './asset-query.mjs';
 // Shared data contract for the local editor API and static build.
 export function validate(data) {
   // Expose validation failures as HTTP 400, rather than a misleading server error.
@@ -165,7 +166,8 @@ export function validate(data) {
       }
       if(!Number.isInteger(b.columns)||b.columns<1||b.columns>64||!Number.isInteger(b.rows)||b.rows<1||b.rows>64)
         fail(`Invalid grid divisions on ${b.id}`);
-      if(b.source!==undefined){
+      if(b.source!==undefined&&b.source?.kind==='assets')validateAssetSource(b.source,fail);
+      else if(b.source!==undefined){
         const src=b.source;
         if(!src||typeof src!=='object'||!safeId(src.collection)||!safeId(src.template)||
           !data.collections.some(c=>c.id===src.collection)||!data.components.some(c=>c.id===src.template)||
