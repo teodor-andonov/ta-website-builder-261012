@@ -24,6 +24,7 @@ export function cardGridStyle(block){
 }
 
 export const recordPath = (collection, record) => `${collection.base}/${record.slug}/`;
+export const recordDetailEnabled=(collection,record)=>collection?.detailPages!==false&&record?.detailPage!==false;
 export function templateFor(data, collection, record) {
   const id = record?.template || collection?.formatTemplates?.[record?.[collection?.formatField]] || collection?.defaultTemplate;
   return data.templates.find(template => template.id === id);
@@ -145,7 +146,7 @@ function renderBlock(node, context, data, options, depth) {
         const recordCard=template?.blocks?.find(b=>b.type==='card');
         const entry=recordCard?{...recordCard,id:node.id+'_'+record.id,area}:
           defaultCard(node.id+'_'+record.id,[{id:node.id+'_'+record.id+'_title',type:'text',text:'{{title}}',area:{x1:1,y1:1,x2:2,y2:2}}],area);
-        return renderBlock(entry,record,data,{...settings,design:false,linkHref:recordPath(collection,record)},depth+1);
+        return renderBlock(entry,record,data,{...settings,design:false,linkHref:recordDetailEnabled(collection,record)?recordPath(collection,record):null},depth+1);
       }).join('')||'<div class="item item-placeholder placeholder">No records match this query</div>';
     }else if(card.reference){
       const component=data.components.find(c=>c.id===card.reference);
@@ -353,7 +354,7 @@ export function collectPages(data,{publication={indexing:data.site?.publishing?.
   for(const page of data.pages) if(page.status==='Published')
     pages.push({route:normalizeRoute(page.slug),html:renderDocument(data,{title:page.title,blocks:page.blocks,pageId:page.id,route:normalizeRoute(page.slug),publication})});
   for(const collection of data.collections)for(const record of collection.records){
-    if(record.status==='Draft')continue;
+    if(record.status==='Draft'||!recordDetailEnabled(collection,record))continue;
     const template=templateFor(data,collection,record);
     if(!template)throw Error(`Missing template for ${collection.id}/${record.slug}`);
     pages.push({route:recordPath(collection,record),html:renderDocument(data,{title:record.title,blocks:template.blocks,context:record,route:recordPath(collection,record),collectionId:collection.id,publication})});
