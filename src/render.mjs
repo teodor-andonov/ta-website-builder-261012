@@ -150,6 +150,8 @@ function renderBlock(node, context, data, options, depth) {
         renderBlocks(nodes.map((child,i)=>({...child,area:{x1:1,y1:i+1,x2:2,y2:i+2}})),context,data,{...settings,design:false,referenceStack:[...stack,card.reference]},depth+1);
     }else{
       inner=renderBlocks(card.children,context,data,settings,depth+1);
+      if(card.slot==='main'&&options.design&&!inner)
+        inner='<div class="item item-placeholder placeholder">MAIN CONTENT SLOT · the Page inserts its own composition here</div>';
     }
     const background=backgrounds.has(card.background)?card.background:'transparent';
     const padding=['x1','x2','x4'].includes(card.padding)?card.padding:'x1';
@@ -214,7 +216,7 @@ export function resolvePreviewRoute(data,blocks,context=null) {
 export const normalizeRoute = route => route==='/' ? '/' : `${String(route||'/').replace(/\/+$/,'')}/`;
 function publishedRoutes(data){return new Set(data.pages.filter(p=>p.status==='Published').map(p=>normalizeRoute(p.slug)));}
 /** Shared site shell. Navigation is authored in JSON; drafts are hidden. */
-export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
+export function renderSiteFrame(content,data,{design=false,route='/',isolated=false}={}) {
   const published=publishedRoutes(data);
   const here=normalizeRoute(route);
   const section=here==='/'?'/':here.startsWith('/work/')?'/work/':here.startsWith('/posts/')?'/posts/':here;
@@ -235,8 +237,10 @@ export function renderSiteFrame(content,data,{design=false,route='/'}={}) {
     const x1=Math.min(12,7+i*slot),x2=i===nav.length-1?13:Math.min(13,x1+slot);
     return `<a class="item item-link${active?' is-active':''}" style="grid-column:${x1}/${x2};grid-row:1;" href="${escapeHtml(href)}" data-site-route="${escapeHtml(href)}"${active?' aria-current="page"':''}>${escapeHtml(link.label)}</a>`;
   }).join('');
-  return '<div class="card card-page webpage '+(design?'design':'view')+(data.site?.design?.cardBorders?' show-card-borders':'')+'"'+spacingStyle+
-    '><a class="skip-link" href="#main-content">Skip to content</a>'+
+  const opening='<div class="card card-page webpage '+(design?'design':'view')+(data.site?.design?.cardBorders?' show-card-borders':'')+'"'+spacingStyle+'>';
+  // Isolated Studio design canvas never contains the template or shared site chrome.
+  if(isolated)return opening+'<main id="main-content" tabindex="-1" class="card card-main web-content semantic-page bg-transparent">'+content+'</main></div>';
+  return opening+'<a class="skip-link" href="#main-content">Skip to content</a>'+
     '<nav class="card card-nav web-nav grid-card semantic-header bg-transparent"'+frameHeight('header')+' aria-label="Main navigation">'+
     logo+links+'</nav>'+
     '<main id="main-content" tabindex="-1" class="card card-main web-content semantic-page bg-transparent">'+content+'</main>'+
