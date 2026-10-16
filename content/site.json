@@ -197,9 +197,289 @@
             "Systems"
           ],
           "body": "## A repeatable housing system\n\nA design investigation into adaptable residential typologies, parametric rules and efficient construction.",
-          "projectCode": "",
+          "projectCode": "4424",
           "placeholder": true,
-          "approvedForPublication": false
+          "approvedForPublication": false,
+          "template": "record-project-layout",
+          "composition": {
+            "id": "balkan-composition-root",
+            "type": "card",
+            "label": "Balkan House · unique composition",
+            "columns": 1,
+            "rows": 8,
+            "padding": "x1",
+            "gap": "x1",
+            "background": "transparent",
+            "border": false,
+            "constrainHeight": false,
+            "heightFactor": 0.5,
+            "children": [
+              {
+                "id": "balkan-m7_project-detail_0",
+                "type": "card",
+                "columns": 1,
+                "rows": 1,
+                "gap": "x1",
+                "padding": "x1",
+                "background": "transparent",
+                "border": false,
+                "constrainHeight": false,
+                "heightFactor": 0.5,
+                "children": [
+                  {
+                    "id": "balkan-b_qbnj5k",
+                    "type": "text",
+                    "text": "{{category}} / {{year}}",
+                    "style": "eyebrow",
+                    "area": {
+                      "x1": 1,
+                      "y1": 1,
+                      "x2": 2,
+                      "y2": 2
+                    }
+                  }
+                ],
+                "area": {
+                  "x1": 1,
+                  "y1": 1,
+                  "x2": 2,
+                  "y2": 2
+                }
+              },
+              {
+                "id": "balkan-m7_project-detail_1",
+                "type": "card",
+                "columns": 1,
+                "rows": 1,
+                "gap": "x1",
+                "padding": "x1",
+                "background": "transparent",
+                "border": false,
+                "constrainHeight": false,
+                "heightFactor": 0.5,
+                "children": [
+                  {
+                    "id": "balkan-b_upm545",
+                    "type": "text",
+                    "text": "{{title}}",
+                    "style": "display",
+                    "area": {
+                      "x1": 1,
+                      "y1": 1,
+                      "x2": 2,
+                      "y2": 2
+                    }
+                  }
+                ],
+                "area": {
+                  "x1": 1,
+                  "y1": 2,
+                  "x2": 2,
+                  "y2": 3
+                }
+              },
+              {
+                "id": "balkan-m7_project-detail_2",
+                "type": "card",
+                "columns": 1,
+                "rows": 1,
+                "gap": "x1",
+                "padding": "x1",
+                "background": "transparent",
+                "border": false,
+                "constrainHeight": false,
+                "heightFactor": 0.5,
+                "children": [
+                  {
+                    "id": "balkan-b_gxh01p",
+                    "type": "image",
+                    "source": "{{cover}}",
+                    "fit": "cover",
+                    "caption": false,
+                    "area": {
+                      "x1": 1,
+                      "y1": 1,
+                      "x2": 2,
+                      "y2": 2
+                    }
+                  }
+                ],
+                "area": {
+                  "x1": 1,
+                  "y1": 3,
+                  "x2": 2,
+                  "y2": 4
+                }
+              },
+              {
+                "id": "balkan-b_2b58cu",
+                "type": "card",
+                "children": [
+                  {
+                    "id": "balkan-b_sp80n4",
+                    "type": "text",
+                    "text": "OVERVIEW",
+                    "style": "eyebrow",
+                    "area": {
+                      "x1": 1,
+                      "y1": 1,
+                      "x2": 2,
+                      "y2": 2
+                    }
+                  },
+                  {
+                    "id": "balkan-b_z0pg4y",
+                    "type": "text",
+                    "text": "{{summary}}",
+                    "style": "body",
+                    "area": {
+                      "x1": 2,
+                      "y1": 1,
+                      "x2": 3,
+                      "y2": 2
+                    }
+                  }
+                ],
+                "padding": "x1",
+                "columns": 2,
+                "rows": 1,
+                "gap": "x1",
+                "background": "grey-100",
+                "border": false,
+                "constrainHeight": false,
+                "heightFactor": 0.5,
+                "area": {
+                  "x1": 1,
+                  "y1": 4,
+                  "x2": 2,
+                  "y2": 5
+                }
+              },
+              {
+                "id": "balkan-m7_project-detail_4",
+                "type": "card",
+                "columns": 1,
+                "rows": 1,
+                "gap": "x1",
+                "padding": "x1",
+                "background": "transparent",
+                "border": false,
+                "constrainHeight": false,
+                "heightFactor": 0.5,
+                "children": [
+                  {
+                    "id": "balkan-b_yspl5b",
+                    "type": "rich",
+                    "source": "{{body}}",
+                    "area": {
+                      "x1": 1,
+                      "y1": 1,
+                      "x2": 2,
+                      "y2": 2
+                    }
+                  }
+                ],
+                "area": {
+                  "x1": 1,
+                  "y1": 5,
+                  "x2": 2,
+                  "y2": 6
+                }
+              },
+              {
+                "id": "balkan-m7_project-detail_5",
+                "type": "card",
+                "columns": 1,
+                "rows": 1,
+                "gap": "x1",
+                "padding": "x1",
+                "background": "transparent",
+                "border": false,
+                "constrainHeight": false,
+                "heightFactor": 0.5,
+                "children": [
+                  {
+                    "id": "balkan-b_acon1s",
+                    "type": "card",
+                    "variant": "reusable",
+                    "area": {
+                      "x1": 1,
+                      "y1": 1,
+                      "x2": 2,
+                      "y2": 2
+                    },
+                    "columns": 1,
+                    "rows": 1,
+                    "gap": "x1",
+                    "padding": "x1",
+                    "background": "transparent",
+                    "border": false,
+                    "constrainHeight": false,
+                    "heightFactor": 0.5,
+                    "reference": "contact-cta",
+                    "children": []
+                  }
+                ],
+                "area": {
+                  "x1": 1,
+                  "y1": 6,
+                  "x2": 2,
+                  "y2": 7
+                }
+              },
+              {
+                "id": "balkan-highlights-heading",
+                "type": "text",
+                "text": "HIGHLIGHTED ASSETS · {{projectCode}}",
+                "style": "eyebrow",
+                "area": {
+                  "x1": 1,
+                  "y1": 7,
+                  "x2": 2,
+                  "y2": 8
+                }
+              },
+              {
+                "id": "balkan-highlights-query",
+                "type": "card",
+                "label": "Project gallery · matched image assets",
+                "columns": 2,
+                "rows": 1,
+                "padding": "x1",
+                "gap": "x1",
+                "background": "transparent",
+                "border": false,
+                "constrainHeight": false,
+                "heightFactor": 0.5,
+                "children": [],
+                "source": {
+                  "kind": "assets",
+                  "where": [
+                    {
+                      "field": "projectCode",
+                      "op": "eq",
+                      "value": "{{projectCode}}"
+                    },
+                    {
+                      "field": "tags",
+                      "op": "contains",
+                      "value": "Architecture"
+                    }
+                  ],
+                  "sort": "original",
+                  "count": 12,
+                  "layout": "grid",
+                  "caption": true
+                },
+                "area": {
+                  "x1": 1,
+                  "y1": 8,
+                  "x2": 2,
+                  "y2": 9
+                }
+              }
+            ]
+          }
         },
         {
           "id": "p-facade",
@@ -216,7 +496,7 @@
             "Research"
           ],
           "body": "## The envelope as an active system\n\nAn ongoing study of performative architectural skins.",
-          "projectCode": "",
+          "projectCode": "4430",
           "placeholder": true,
           "approvedForPublication": false
         },
@@ -2739,7 +3019,7 @@
       ],
       "properties": {
         "project": "Balkan House",
-        "projectCode": ""
+        "projectCode": "4424"
       },
       "placeholder": true
     },
@@ -2757,7 +3037,7 @@
       ],
       "properties": {
         "stage": "Concept",
-        "projectCode": ""
+        "projectCode": "4430"
       },
       "placeholder": true
     },
