@@ -834,7 +834,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    const target=btn.dataset.target;if(!['card','item'].includes(target))break;
    const id=uid('style'),name=target==='card'?'New Card style':'New Item style';
    const properties=target==='card'?{background:'transparent',padding:'x1',gap:'x1',border:false}:{role:'body',tone:'inherit',weight:'inherit'};
-   validatedDesignEdit(d=>d.site.design.styles.push({id,name,target,properties}));
+   validatedDesignEdit(d=>(d.site.design.styles||=([])).push({id,name,target,properties}));
    ui.styleId=id;renderWork();break;
  }
  case'delete-style':{
@@ -1150,8 +1150,8 @@ document.addEventListener('change',event=>{let el=event.target;
  if(el.dataset.designToken!==undefined||el.dataset.designPalette!==undefined){
    const token=el.dataset.designToken,color=el.dataset.designPalette;
    validatedDesignEdit(d=>{
-     if(color!==undefined)d.site.design.palette[color]=el.value.trim();
-     else d.site.design.tokens[token]=token==='fontFamily'?el.value:Number(el.value);
+     if(color!==undefined){d.site.design.palette||={};d.site.design.palette[color]=el.value.trim()}
+     else{d.site.design.tokens||={};d.site.design.tokens[token]=token==='fontFamily'?el.value:Number(el.value)}
    });return;
  }
  if(el.dataset.siteChrome){
