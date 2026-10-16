@@ -520,6 +520,37 @@ function selectionPath(id){
 
 function optionsHtml(options,value){return options.map(([v,label])=>`<option value="${e(v)}" ${String(v)===String(value)?'selected':''}>${e(label)}</option>`).join('')}
 function nodeField(label,key,value,choices=null,multiline=false){if(choices)return `<div class="field"><label>${label}</label><select class="control" data-node-prop="${e(key)}">${optionsHtml(choices,value)}</select></div>`;return `<div class="field"><label>${label}</label>${multiline?`<textarea rows="5" class="control tall ${key==='source'?'mono':''}" data-node-prop="${e(key)}">${e(value)}</textarea>`:`<input class="control" data-node-prop="${e(key)}" value="${e(valText(value))}">`}</div>`}
+function nodeStyleControls(n){
+ const target=n.type==='card'?'card':'item';
+ const styles=(db.site.design.styles||[]).filter(x=>x.target===target);
+ const selected=styles.find(x=>x.id===n.styleRef);
+ const field=(key,value)=>{
+   const inherited=selected?.properties?.[key],actual=resolveAppearance(n,db)[key];
+   const choices=(STYLE_OPTIONS[key]||[]).map(v=>'<option value="'+e(String(v))+'"'+(String(v)===String(value)?' selected':'')+'>'+e(String(v))+'</option>').join('');
+   return '<div class="field"><label>'+e(key)+' · '+(value===undefined?'inherited':'overridden')+'</label>'+
+     '<select class="control" data-node-appearance="'+e(key)+'">'+
+     '<option value="__inherit__"'+(value===undefined?' selected':'')+'>Inherit'+(inherited!==undefined?' · '+e(String(inherited)):'')+'</option>'+choices+
+     '</select><small class="help">Effective: '+e(String(actual))+'</small></div>';
+ };
+ let markup='<div class="rule"></div><div class="upper">NAMED APPEARANCE</div>'+
+   '<div class="field"><label>Style reference</label><select class="control" data-node-style-ref="1">'+
+   '<option value=""'+(selected?'':' selected')+'>None · direct appearance</option>'+
+   styles.map(st=>'<option value="'+e(st.id)+'"'+(n.styleRef===st.id?' selected':'')+'>'+e(st.name)+'</option>').join('')+
+   '</select></div>';
+ if(selected){
+   markup+='<p class="help">Resolved as legacy/site defaults → '+e(selected.name)+' → explicit local override. Choose Inherit to reset one property.</p>'+
+     (target==='card'?CARD_PROPERTIES:ITEM_PROPERTIES).map(k=>field(k,n.appearance?.[k])).join('')+
+     '<button class="btn sm" data-act="navigate" data-section="styles">Edit named styles ↗</button>';
+ }else markup+='<p class="help">Choose a named style to inherit reusable appearance. Existing direct settings remain unchanged until then.</p>'+
+  '<button class="btn sm" data-act="navigate" data-section="styles">Open style library ↗</button>';
+ return markup;
+}
+function legacyCardAppearance(n){
+ return nodeField('Background','background',n.background||'transparent',[['transparent','Transparent'],['white','White'],['grey-100','Grey 100'],['grey-200','Grey 200'],['grey-300','Grey 300'],['grey-600','Grey 600'],['black','Black']])+
+ nodeField('Gap','gap',n.gap||'x1',[['x1','1 × gap'],['x2','2 × gap'],['x4','4 × gap']])+
+ nodeField('Padding','padding',n.padding||'x1',[['x1','1 × pad'],['x2','2 × pad'],['x4','4 × pad']])+
+ nodeField('Outline','border',String(Boolean(n.border)),[['false','None'],['true','20% currentColor outline']]);
+}
 function inspectorEmpty(title,desc){return `<h2 class="info-title">${e(title)}</h2><p class="info-sub">${e(desc)}</p>`}
 function frameConstraintField(region,label){
  const settings=db.site.design?.frame?.[region]||{constrainHeight:false,heightFactor:0.05};
@@ -567,6 +598,7 @@ function renderInspector(){let h='';if(ui.section==='dashboard'||ui.section==='d
 else if(ui.section==='collection'){let c=coll();h=inspectorEmpty('Collection · '+c.name,'Each record is an auto-generated page under '+c.base+'/')+`<div class="rule"></div><div class="upper">SCHEMA</div><div style="margin:14px 0">${c.fields.map(f=>`<div class="panel-row" style="padding:7px 0;border:0"><span>${e(f.label)}</span><span class="summary">${e(f.type)}</span></div>`).join('')}</div><button class="btn" data-act="mode" data-mode="settings">${ic('settings')} Configure fields</button><div class="rule"></div><div class="upper">GENERATED ROUTES</div><div style="margin-top:12px">${c.records.slice(0,8).map(r=>`<button class="tree-row" data-act="open-record" data-id="${e(r.id)}">${ic('page')}<span>${e(c.base+'/'+r.slug)}</span></button>`).join('')}</div>`}
 else if(ui.section==='record'){let r=rec(),c=coll();if(r){h=inspectorEmpty(r.title,`${c.base}/${r.slug}`)+`<div class="upper">GENERATED PAGE</div><div style="margin:10px 0 19px"><span class="badge purple">${e(r.format||r.category||'Record')}</span> <span class="badge">${e(r.status||'Draft')}</span></div><div class="field"><label>Template applied</label><div class="control">${e(templateFor(c,r)?.name||'Missing template')}</div></div>${placeholderSelect('record',r.placeholder===true)}${publicationApprovalSelect('record',r.approvedForPublication===true)}<div class="rule"></div>${c.fields.filter(f=>!['body','summary'].includes(f.key)).map(f=>recordFieldHtml(f,r)).join('')}<button class="btn" data-act="duplicate-record">${ic('duplicate')} Duplicate</button><div class="rule"></div><button class="btn" data-act="delete-record">${ic('trash')} Delete record</button>`}}
 else if(ui.section==='assets'){let a=asset();h=a?inspectorEmpty(a.name,'Asset / '+a.id)+`<img class="asset-large" src="${e(src(a))}" alt="${e(a.alt||'')}">${placeholderSelect('asset',a.placeholder===true)}<div class="field"><label>Project code · optional match key</label><input class="control" data-asset-project-code="${e(a.id)}" value="${e(a.properties?.projectCode||'')}" placeholder="e.g. 4424"></div>${['name','src','alt','caption','credit','tags'].map(k=>{let html=nodeField(k==='src'?'Image file / URL':k[0].toUpperCase()+k.slice(1),k,a[k],null,k==='alt'||k==='caption');if(k==='src'&&String(a.src).startsWith('/assets/uploads/'))html=html.replace('data-node-prop="src"','data-node-prop="src" readonly title="Stored file path (read-only)"');return html.replaceAll('data-node-prop','data-asset-prop')}).join('')}<div class="rule"></div><div class="upper" style="margin-bottom:9px">CUSTOM PROPERTIES</div>${Object.entries(a.properties||{}).filter(([k])=>k!=='projectCode').map(([k,v])=>`<div class="custom-row"><input value="${e(k)}" data-custom-key="${e(k)}"><input value="${e(valText(v))}" data-custom-val="${e(k)}"><button class="btn ghost sm" data-act="remove-custom" data-key="${e(k)}">×</button></div>`).join('')}<button class="btn sm" data-act="add-custom">${ic('add')} Property</button><div class="rule"></div><button class="btn" data-act="replace-asset-image">Replace image · keep asset ID</button><p class="help">Upload a new raster image to replace this asset’s source without changing existing project covers. Fill in the new alt text and credit after replacement.</p><button class="btn sm" data-act="delete-asset">${ic('trash')} Delete asset</button>`:inspectorEmpty('Asset properties','Select an image to inspect its metadata.')}
+else if(ui.section==='styles')h=inspectorEmpty('Style inheritance','Site defaults → named style → local Card/Item overrides. Use the Style library to edit reusable definitions.');
 else if(['page','template','component'].includes(ui.section)){let scope=currentScope(),found=ui.node?findNode(ui.node):null;if(!found){h=inspectorEmpty(scope?.name||scope?.title||'Page','Select an object on the canvas or from the structure below to edit it.');if(ui.section==='page'){
   const pageTemplates=db.templates.filter(t=>t.layoutMode==='slot');
   h+=inputField('Page title',scope.title,'page','title')+inputField('URL route',scope.slug,'page','slug');
@@ -598,7 +630,8 @@ else if(['page','template','component'].includes(ui.section)){let scope=currentS
  }
  h+='<div class="rule"></div>'+(frameComponent()?'<p class="help">The semantic root Card is required. Select it to edit its grid, padding, colour and height.</p>':`<button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section</button>`);if(ui.section!=='page')h+=`<div class="rule"></div><button class="btn sm" data-act="delete-scope">${ic('trash')} Delete ${ui.section}</button>`}
 else {let n=found.node;const lock=protectedNode(n.id)?' disabled':'';h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+nodeField('Structure label','label',n.label||'')+`<div style="display:flex;gap:5px;margin:0 0 22px"><button class="btn sm" data-act="move-node" data-delta="-1" ${lock} title="Move up">${ic('up')}</button><button class="btn sm" data-act="move-node" data-delta="1" ${lock} title="Move down">${ic('down')}</button><button class="btn sm" data-act="duplicate-node" ${lock} title="Duplicate">${ic('duplicate')}</button><button class="btn sm" data-act="delete-node" ${lock} title="Delete">${ic('trash')}</button></div>`;
- if(n.type==='text')h+=nodeField('Text · supports {{property}}','text',n.text,null,true)+nodeField('Typography','style',n.style,[['display','Display'],['heading','Heading'],['body','Body'],['eyebrow','Eyebrow'],['caption','Caption']]);
+ h+=nodeStyleControls(n);
+ if(n.type==='text')h+=nodeField('Text · supports {{property}}','text',n.text,null,true)+(n.styleRef?'':nodeField('Typography','style',n.style,[['display','Display'],['heading','Heading'],['body','Body'],['eyebrow','Eyebrow'],['caption','Caption']]));
  if(n.type==='image')h+=nodeField('Image source or {{cover}}','source',n.source)+nodeField('Fit','fit',n.fit,[['cover','Cover'],['contain','Contain']])+nodeField('Show caption','caption',!!n.caption,[['true','Yes'],['false','No']]);
  if(n.type!=='card')h+=nodeField('Overflow','overflow',n.overflow||'clip',[['clip','Clip to grid cell (default)'],['scroll','Scroll inside item']]);
  if(found.parent?.type==='card'){
@@ -608,10 +641,7 @@ else {let n=found.node;const lock=protectedNode(n.id)?' disabled':'';h=inspector
  if(n.type==='card'&&n.slot==='main')h+='<div class="rule"></div><p class="help">Required main content slot. The selected Page inserts its unique composition Card here. This slot must stay empty and 1 × 1.</p>';
  if(n.type==='card'&&n.slot!=='main')h+=`<div class="rule"></div><div class="upper">EQUAL GRID DIVISIONS</div>`+
  (frameComponent()&&n.id===currentBlocks()[0]?.id?'<p class="help">Semantic site chrome uses a fixed 12-column / 1-row grid.</p>':nodeField('Columns','columns',n.columns||1)+nodeField('Rows','rows',n.rows||1))+
- nodeField('Background','background',n.background||'transparent',[['transparent','Transparent'],['white','White'],['grey-100','Grey 100'],['grey-200','Grey 200'],['grey-300','Grey 300'],['grey-600','Grey 600'],['black','Black']])+
- nodeField('Gap','gap',n.gap||'x1',[['x1','1 × gap'],['x2','2 × gap'],['x4','4 × gap']])+
- nodeField('Padding','padding',n.padding||'x1',[['x1','1 × pad'],['x2','2 × pad'],['x4','4 × pad']])+
- nodeField('Outline','border',String(Boolean(n.border)),[['false','None'],['true','20% currentColor outline']])+
+ (n.styleRef?'<p class="help">Appearance is inherited from the named style unless overridden above.</p>':legacyCardAppearance(n))+
  `<div class="rule"></div><div class="upper">HEIGHT · SECTION CARD</div>`+
  nodeField('Constrain height','constrainHeight',String(Boolean(n.constrainHeight)),[['false','No · content height'],['true','Yes · width × factor']])+
  (n.constrainHeight?nodeField('Height factor (e.g. 0.5)','heightFactor',n.heightFactor||.5):'')+
