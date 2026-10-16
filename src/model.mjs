@@ -8,6 +8,11 @@ export function validate(data) {
     if (!Array.isArray(data[name])) fail(`${name} must be an array`);
   if (!data.site || typeof data.site.name !== 'string') fail('site.name must be a string');
   if (data.version !== 2) fail('Unsupported data version (expected 2)');
+  if(data.site.publishing!==undefined && (
+    !data.site.publishing || typeof data.site.publishing!=='object' ||
+    Array.isArray(data.site.publishing) || typeof data.site.publishing.indexing!=='boolean' ||
+    Object.keys(data.site.publishing).some(key=>key!=='indexing')))
+    fail('site.publishing.indexing must be a boolean');
   // Public contact details are intentionally optional until the user verifies them.
   // A missing booking destination must never become a live placeholder link.
   if(data.site.contact!==undefined){
