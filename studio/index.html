@@ -295,7 +295,7 @@ function assignScopeBlocks(blocks){
  return true;
 }
 function compositionRoot(){return compositionPage()?page().composition:null}
-function protectedNode(id){return Boolean(compositionPage()&&id===compositionRoot()?.id)||Boolean(ui.section==='template'&&findNode(id)?.node?.slot==='main')}
+function protectedNode(id){return Boolean(compositionPage()&&id===compositionRoot()?.id)||Boolean(ui.section==='template'&&tpl()?.layoutMode==='slot'&&(currentBlocks()[0]?.id===id||findNode(id)?.node?.slot==='main'))}
 
 // M8 authoring history records only completed Card/Item mutations, never hover
 // state, selection changes, invalid numeric drafts or pending drag gestures.
@@ -431,7 +431,7 @@ function findNodePath(id,nodes=currentBlocks(),trail=[]){
  return null;
 }
 function applyTreeMove(intent){
- if(!structureMode()||!ui.node)return false;
+ if(!structureMode()||!ui.node||protectedNode(ui.node))return false;
  const result=moveTreeByIntent(currentBlocks(),ui.node,intent);
  if(!result.ok)return false;
  const scope=currentScope(),before=snapshotScope(),selectedBefore=ui.node;
@@ -530,16 +530,20 @@ else {let n=found.node;h=inspectorEmpty(n.type.toUpperCase(),'Object / '+n.id)+n
 function modal(title,desc,body,buttons){$('#modalHost').innerHTML=`<div class="modal-back" id="modalBack"><div class="modal" role="dialog" aria-modal="true"><h2>${e(title)}</h2><p>${e(desc)}</p>${body}<div class="modal-foot"><button class="btn" data-act="modal-close">Cancel</button>${buttons}</div></div></div>`;$('#modalHost input')?.focus()}
 function closeModal(){$('#modalHost').innerHTML=''}
 function createModal(kind){if(kind==='page')modal('New custom page','Create a unique page composed from reusable objects.',`<div class="field"><label>Page name</label><input id="modalName" class="control" placeholder="About" value="About"></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="page">Create page</button>`);
+ if(kind==='page-template')modal('New page template','Build one shared Card layout with exactly one main content slot.',`<div class="field"><label>Template name</label><input id="modalName" class="control" value="Page layout"></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="page-template">Create page template</button>`);
  if(kind==='collection')modal('New content collection','Every collection can generate pages from a template.',`<div class="field"><label>Collection name</label><input id="modalName" class="control" placeholder="Publications" value="Publications"></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="collection">Create collection</button>`);
  if(kind==='component')modal('New component','Build a reusable design composition from primitives.',`<div class="field"><label>Component name</label><input id="modalName" class="control" value="New component"></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="component">Create component</button>`);
  if(kind==='template')modal('New template','Define a layout once and bind fields from a collection.',`<div class="field"><label>Template name</label><input id="modalName" class="control" value="New template"></div><div class="field"><label>Collection</label><select id="modalCollection" class="control">${db.collections.map(c=>`<option ${c.id===(ui.draftSection||coll()?.id)?'selected':''} value="${e(c.id)}">${e(c.name)}</option>`).join('')}</select></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="template">Create template</button>`);
  if(kind==='field')modal('New property','Add a typed field to this collection. It will appear in the table and record editor.',`<div class="field"><label>Property label</label><input id="modalName" class="control" value="Location" placeholder="Location"></div><div class="field"><label>Type</label><select id="modalType" class="control">${['text','number','boolean','date','select','asset','tags','textarea'].map(t=>`<option value="${t}">${t}</option>`).join('')}</select></div><div class="field"><label>Options (only for select · comma-separated)</label><input id="modalOptions" class="control" placeholder="Idea, Active, Complete"></div>`,`<button class="btn dark" data-act="confirm-create" data-kind="field">Add property</button>`)}
+function makePageTemplate(name){const slot=card([],'stack','clear','small');slot.slot='main';slot.label='Main content slot';const root=card([slot],'stack','clear','small');root.label=name+' layout';return {id:uid('tpl'),name,description:'Reusable page frame with one main composition slot',layoutMode:'slot',blocks:[root]}}
 function makeBlock(type){if(type==='text')return tb('A new text object.','body');if(type==='heading')return tb('A new heading.','heading');if(type==='image')return im(db.assets[0]?.id||'');if(type==='card')return card([tb('A new card.','body')],'split','soft');if(type==='rich')return {id:uid('b'),type:'rich',source:'{{body}}'};if(type==='query')return query(db.collections[0]?.id,'grid',4,db.components.find(c=>c.id==='project-tile')?.id||db.components[0]?.id,'all');if(type==='component')return comp(db.components[0]?.id);if(type==='divider')return {id:uid('b'),type:'divider'};if(type==='button')return {id:uid('b'),type:'button',text:'Read more ↗',href:'/posts'};return tb('New object')}
 function addBlockModal(inside){if(!currentScope())return;if(inside){const parent=ui.node?findNode(ui.node)?.node:null;if(!parent||parent.type!=='card'||parent.source||parent.reference)return;}ui.draftSection=inside;let items=[['text','Text','Paragraph or label'],['heading','Heading','Large editorial title'],['image','Image','Asset or record binding'],['card','Card / layout','Stack, split or grid'],['query','Collection feed','Filtered, repeatable records'],['component','Component','Reusable design fragment'],['rich','Markdown body','Long-form content'],['button','Button','Link or action'],['divider','Divider','Visual separator']];modal(inside?'Add child object':'Add object','Choose a block. Use the inspector to customise or bind its properties.',`<div class="choices">${items.map(([id,name,desc])=>`<button class="choice" data-act="insert-block" data-type="${id}">${ic(id==='query'?'table':id==='component'?'blocks':id==='image'?'image':'text')}<span><strong>${name}</strong><small>${desc}</small></span></button>`).join('')}</div>`,'' )}
 function regenIds(node){node.id=uid('b');(node.children||[]).forEach(regenIds);return node}
 function insertNode(type){
  const before=snapshotScope(),selectedBefore=ui.node;
  let n=makeBlock(type),parent=ui.draftSection&&findNode(ui.node)?.node;
+ if(!parent&&compositionPage())parent=compositionRoot();
+ if(!parent&&ui.section==='template'&&tpl()?.layoutMode==='slot')parent=currentBlocks()[0];
  if(parent?.type==='card'){
    const arr=parent.children||(parent.children=[]);let taken=new Set();
    for(const child of arr){const a=child.area;if(a)for(let y=a.y1;y<a.y2;y++)for(let x=a.x1;x<a.x2;x++)taken.add(x+':'+y);}
@@ -555,11 +559,12 @@ function insertNode(type){
  ui.node=n.id;closeModal();saveScopeEdit(before,selectedBefore);
  document.querySelector('.card.chosen, .item.chosen')?.scrollIntoView({block:'center',behavior:'smooth'});showInspector();
 }
-function moveNode(delta){let f=findNode(ui.node);if(!f)return;let j=f.index+delta;if(j<0||j>=f.arr.length)return;const before=snapshotScope(),selectedBefore=ui.node;[f.arr[f.index],f.arr[j]]=[f.arr[j],f.arr[f.index]];saveScopeEdit(before,selectedBefore)}
+function moveNode(delta){let f=findNode(ui.node);if(!f||protectedNode(ui.node))return;let j=f.index+delta;if(j<0||j>=f.arr.length)return;const before=snapshotScope(),selectedBefore=ui.node;[f.arr[f.index],f.arr[j]]=[f.arr[j],f.arr[f.index]];saveScopeEdit(before,selectedBefore)}
 function setNodeField(key,value){
  let f=findNode(ui.node);if(!f)return;
  const before=snapshotScope(),selectedBefore=ui.node;
  const n=f.node;
+ if(n.slot==='main'&&['columns','rows','reference','source.collection','source.template'].includes(key))return;
  if(key.startsWith('source.')){
    if(n.type!=='card'||!n.source)return;
    const field=key.slice(7);
@@ -645,10 +650,11 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'new-page':createModal('page');break;
  case'new-collection':createModal('collection');break;
  case'new-template':ui.draftSection=btn.dataset.collection||coll()?.id||db.collections[0]?.id;createModal('template');break;
+ case'new-page-template':createModal('page-template');break;
  case'new-component':createModal('component');break;
  case'new-field':createModal('field');break;
  case'new-record':{let c=coll();let n=c.records.length+1,r={id:uid('r'),placeholder:true,approvedForPublication:false};for(let f of c.fields){r[f.key]=f.type==='boolean'?false:f.type==='tags'?[]:'';}r.title=`Untitled ${n}`;r.slug='untitled-'+n;r.status='Draft';if(c.id==='posts'){r.format='Note';r.status='Draft';r.date=new Date().toISOString().slice(0,10)}c.records.unshift(r);persist();openRecord(r.id,c.id);ui.mode='fields';renderAll();break}
- case'confirm-create':{let kind=btn.dataset.kind,name=String($('#modalName')?.value||'').trim();if(!name){$('#modalName')?.focus();return}if(kind==='page'){let p={id:uid('p'),title:name,slug:'/'+slug(name),status:'Draft',blocks:[card([tb(name,'display')],'stack','clear','none')]};db.pages.push(p);closeModal();persist();choose('page',p.id)}else if(kind==='collection'){let id=slug(name);if(db.collections.some(c=>c.id===id)){alert('Collection name already exists');return}let t={id:uid('tpl'),name:name.replace(/s$/,'')+' detail',collection:id,description:'Generated content page',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};db.templates.push(t);db.collections.push({id,name,base:'/'+id,defaultTemplate:t.id,fields:[F('title','Title'),F('slug','Slug'),F('status','Status','select','Draft,Published'),F('summary','Summary','textarea'),F('body','Body','textarea')],records:[]});closeModal();persist();choose('collection',id)}else if(kind==='component'){let x={id:uid('cmp'),name,description:'Reusable content component',blocks:[card([tb('New component','heading')],'stack','clear','none')]};db.components.push(x);closeModal();persist();choose('component',x.id)}else if(kind==='template'){let x={id:uid('tpl'),name,collection:$('#modalCollection').value,description:'Custom generated page template',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};db.templates.push(x);closeModal();persist();choose('template',x.id)}else if(kind==='field'){let c=coll(),key=slug(name).replaceAll('-','_');if(c.fields.some(f=>f.key===key)){alert('A property with this key already exists');return}c.fields.push(F(key,name,$('#modalType').value,$('#modalOptions').value));c.records.forEach(r=>r[key]=$('#modalType').value==='boolean'?false:$('#modalType').value==='tags'?[]:'');closeModal();persist();renderAll()}break}
+ case'confirm-create':{let kind=btn.dataset.kind,name=String($('#modalName')?.value||'').trim();if(!name){$('#modalName')?.focus();return}if(kind==='page'){let t=db.templates.find(t=>t.layoutMode==='slot');let p={id:uid('p'),title:name,slug:'/'+slug(name),status:'Draft',blocks:[],...(t?{template:t.id,composition:card([tb(name,'display')],'stack','clear','none')}:{blocks:[card([tb(name,'display')],'stack','clear','none')]})};db.pages.push(p);closeModal();persist();choose('page',p.id)}else if(kind==='page-template'){let t=makePageTemplate(name);db.templates.push(t);closeModal();persist();choose('template',t.id)}else if(kind==='collection'){let id=slug(name);if(db.collections.some(c=>c.id===id)){alert('Collection name already exists');return}let t={id:uid('tpl'),name:name.replace(/s$/,'')+' detail',collection:id,description:'Generated content page',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};db.templates.push(t);db.collections.push({id,name,base:'/'+id,defaultTemplate:t.id,fields:[F('title','Title'),F('slug','Slug'),F('status','Status','select','Draft,Published'),F('summary','Summary','textarea'),F('body','Body','textarea')],records:[]});closeModal();persist();choose('collection',id)}else if(kind==='component'){let x={id:uid('cmp'),name,description:'Reusable content component',blocks:[card([tb('New component','heading')],'stack','clear','none')]};db.components.push(x);closeModal();persist();choose('component',x.id)}else if(kind==='template'){let x={id:uid('tpl'),name,collection:$('#modalCollection').value,description:'Custom generated page template',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};db.templates.push(x);closeModal();persist();choose('template',x.id)}else if(kind==='field'){let c=coll(),key=slug(name).replaceAll('-','_');if(c.fields.some(f=>f.key===key)){alert('A property with this key already exists');return}c.fields.push(F(key,name,$('#modalType').value,$('#modalOptions').value));c.records.forEach(r=>r[key]=$('#modalType').value==='boolean'?false:$('#modalType').value==='tags'?[]:'');closeModal();persist();renderAll()}break}
  case'modal-close':closeModal();break;
  case'open-record':openRecord(id,ui.collection);break;
  case'edit-template':if(id)choose('template',id);break;
@@ -668,7 +674,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'select-node':selectStudioNode(id);break;
  case'move-node':moveNode(Number(btn.dataset.delta));break;
  case'duplicate-node':{
-   const f=findNode(ui.node);if(!f)break;
+   const f=findNode(ui.node);if(!f||protectedNode(ui.node))break;
    const before=snapshotScope(),selectedBefore=ui.node;
    const n=regenIds(clone(f.node));
    if(f.parent){
@@ -680,6 +686,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    saveScopeEdit(before,selectedBefore);break;
  }
  case'delete-node':{
+   if(protectedNode(ui.node))break;
    const f=findNode(ui.node);
    if(f&&confirm('Delete this object and its children?')){
      const before=snapshotScope(),selectedBefore=ui.node;
@@ -688,7 +695,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    }
    break;
  }
- case'delete-scope':{let s=currentScope();if(!s||!confirm('Delete this '+ui.section+'?'))break;if(ui.section==='template'){if(db.templates.length<=1){alert('Keep at least one template.');break}db.templates=db.templates.filter(x=>x.id!==s.id);choose('template',db.templates[0].id)}else if(ui.section==='component'){db.components=db.components.filter(x=>x.id!==s.id);choose('component',db.components[0]?.id)}persist();break}
+ case'delete-scope':{let s=currentScope();if(!s||!confirm('Delete this '+ui.section+'?'))break;if(ui.section==='template'){if(db.pages.some(p=>p.template===s.id)||db.collections.some(c=>c.defaultTemplate===s.id||Object.values(c.formatTemplates||{}).includes(s.id))){alert('Template is in use. Reassign Pages or Collections before deleting it.');break}if(db.templates.length<=1){alert('Keep at least one template.');break}db.templates=db.templates.filter(x=>x.id!==s.id);choose('template',db.templates[0].id)}else if(ui.section==='component'){db.components=db.components.filter(x=>x.id!==s.id);choose('component',db.components[0]?.id)}persist();break}
  case'apply-json':{let scope=btn.dataset.scope;try{let obj=JSON.parse($('#jsonEditor').value);applyValidatedJSON(scope,obj);ui.jsonMessage='JSON applied successfully.';renderAll()}catch(err){ui.jsonMessage='Error: '+err.message;let x=$('#jsonNotice');if(x){x.textContent=ui.jsonMessage;x.className='notice error'}}break}
  case'copy-json':navigator.clipboard?.writeText($('#jsonEditor').value).then(()=>{if($('#jsonNotice'))$('#jsonNotice').textContent='Copied to clipboard.'}).catch(()=>{});break;
  case'export':exportJSON();break;
@@ -860,7 +867,7 @@ function clearTreeDrag(){
 }
 document.addEventListener('dragstart',event=>{
  const handle=event.target.closest('.structure-handle');
- if(!handle||!structureMode())return;
+ if(!handle||!structureMode()||protectedNode(handle.dataset.dragId))return;
  draggingId=handle.dataset.dragId;
  event.dataTransfer?.setData('text/plain',draggingId);
  if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
@@ -872,7 +879,7 @@ document.addEventListener('dragover',event=>{
  clearTreeDrag();
  if(!row||!mode)return;
  const trial=moveTreeNode(currentBlocks(),draggingId,row.dataset.rowId,mode);
- if(!trial.ok){if(event.dataTransfer)event.dataTransfer.dropEffect='none';return}
+ if(!trial.ok||(compositionPage()&&(trial.blocks.length!==1||trial.blocks[0]?.id!==compositionRoot().id))||(ui.section==='template'&&tpl()?.layoutMode==='slot'&&trial.blocks.length!==1)){if(event.dataTransfer)event.dataTransfer.dropEffect='none';return}
  event.preventDefault();
  if(event.dataTransfer)event.dataTransfer.dropEffect='move';
  row.classList.add('drop-'+mode);
@@ -885,8 +892,9 @@ document.addEventListener('drop',event=>{
  event.preventDefault();
  const result=moveTreeNode(currentBlocks(),id,row.dataset.rowId,mode);
  if(!result.ok){alert(result.error);return}
- const scope=currentScope(),before=snapshotScope(),selectedBefore=ui.node;
- scope.blocks=result.blocks;ui.node=id;
+ const before=snapshotScope(),selectedBefore=ui.node;
+ if(!assignScopeBlocks(result.blocks))return;
+ ui.node=id;
  if(result.parentId)ui.structureCollapsed.delete(result.parentId);
  saveScopeEdit(before,selectedBefore);
 });
