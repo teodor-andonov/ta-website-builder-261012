@@ -35,7 +35,7 @@ test('custom page previews match their published HTML',()=>{
 });
 
 test('design overlays preserve the identical content, adding only selection hooks',()=>{
-  const blocks=templateFor(data,project,publishedProject).blocks;
+  const blocks=[publishedProject.composition];
   const first=blocks[0].id;
   const plain=renderBlocks(blocks,publishedProject,data);
   const edit=renderBlocks(blocks,publishedProject,data,{design:true,selectedId:first});
