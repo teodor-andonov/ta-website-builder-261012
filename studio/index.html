@@ -417,7 +417,7 @@ function designView(){
    context=c?.records.find(r=>r.id===ui.sample)||c?.records[0];
  }
  const design=ui.mode==='design',pick=isT?db.templates:isC?db.components:db.pages;
- const modeText=isPageLayout?'PAGE TEMPLATE':isT?'RECORD TEMPLATE':isC&&s.frameRole?'SITE '+s.frameRole.toUpperCase():isC?'COMPONENT':'PAGE';
+ const modeText=isPageLayout?(s.collection?'RECORD SLOT TEMPLATE':'PAGE TEMPLATE'):isT?'RECORD TEMPLATE':isC&&s.frameRole?'SITE '+s.frameRole.toUpperCase():isC?'COMPONENT':'PAGE';
  let canvas;
  if(isUniqueComposition){
    canvas=design
@@ -425,27 +425,32 @@ function designView(){
      :renderPagePreview(db,s.blocks,null,{pageId:s.id,route:s.slug});
  }else if(isPageLayout){
    const example=db.pages.find(p=>p.template===s.id);
+   const collection=db.collections.find(c=>c.id===s.collection);
+   const matching=collection?.records.filter(r=>r.composition&&templateFor(collection,r)?.id===s.id)||[];
+   const sample=matching.find(r=>r.id===ui.sample)||matching[0];
+   const sampleRoute=sample?collection.base+'/'+sample.slug+'/':'/';
    canvas=design
-     ?renderSiteFrame(renderBlocks(s.blocks,null,true),db,{design:true,isolated:true,route:example?.slug||'/'})
+     ?renderSiteFrame(renderBlocks(s.blocks,sample,true),db,{design:true,isolated:true,route:example?.slug||sampleRoute})
      :example?renderPagePreview(db,example.blocks,null,{pageId:example.id,route:example.slug})
-       :renderSiteFrame(renderBlocks(s.blocks,null,false),db,{route:'/'});
+       :sample?renderPagePreview(db,s.blocks,sample,{route:sampleRoute})
+         :renderSiteFrame(renderBlocks(s.blocks,null,false),db,{route:'/'});
  }else if(isC&&s.frameRole){
    const chrome=renderChromeComponent(db,s.frameRole,{design,selectedId:ui.node,route:'/',componentId:s.id});
    canvas=renderSiteFrame(chrome,db,{design,isolated:true,route:'/'});
  }else canvas=siteFrame(renderBlocks(s.blocks,context,design),design);
- const label=isPageLayout?'One main content slot · used by '+db.pages.filter(p=>p.template===s.id).length+' pages'
+ const label=isPageLayout?(s.collection?'Record main slot · '+db.collections.find(c=>c.id===s.collection)?.records.filter(r=>r.template===s.id).length+' records':'One main content slot · used by '+db.pages.filter(p=>p.template===s.id).length+' pages')
    :isUniqueComposition?'Unique composition · shared template: '+(db.templates.find(t=>t.id===s.template)?.name||s.template)
    :isT?(db.collections.find(c=>c.id===s.collection)?.base||'Records')+'/{slug}'
    :isC?'Reusable on any page / template':s.slug;
  const count=isUniqueComposition?1:s.blocks.length;
- const tools=isT&&!isPageLayout
-   ?`<select class="control" id="samplePicker" style="max-width:160px;font-size:11px" title="Preview with record">${(db.collections.find(c=>c.id===s.collection)?.records||[]).map(r=>`<option value="${e(r.id)}" ${context?.id===r.id?'selected':''}>${e(r.title)}</option>`).join('')}</select>`
+ const tools=isT&&(!isPageLayout||Boolean(s.collection))
+   ?`<select class="control" id="samplePicker" style="max-width:160px;font-size:11px" title="Preview with record">${(db.collections.find(c=>c.id===s.collection)?.records||[]).filter(r=>!isPageLayout||r.composition&&templateFor(db.collections.find(c=>c.id===s.collection),r)?.id===s.id).map(r=>`<option value="${e(r.id)}" ${context?.id===r.id?'selected':''}>${e(r.title)}</option>`).join('')}</select>`
    :'';
  const scopeChooser=(isT||isC)?`<select class="control" id="scopePicker" style="max-width:160px;font-size:11px">${pick.map(x=>`<option value="${e(x.id)}" ${x.id===s.id?'selected':''}>${e(x.name||x.title)}</option>`).join('')}</select><button class="btn sm" data-act="${isT?'new-page-template':'new-component'}">${ic('add')}</button>`:'';
  const secondary=isUniqueComposition?`<button class="btn sm" data-act="edit-template" data-id="${e(s.template)}">Edit shared template ↗</button>`:'';
  const editMessage=isUniqueComposition
    ?'Design edits only this Page’s root composition. Preview assembles it inside the selected template, including shared site chrome.'
-   :isPageLayout?'Design edits the reusable Page template only. The marked main slot receives a Page composition in Preview.'
+   :isPageLayout?'Design edits only this reusable slot template. Preview assembles a chosen Page or Record composition into its main slot.'
    :isT?'Bound values such as {{title}} resolve against the selected record. Edits affect every generated page using this template.'
    :isC&&s.frameRole?'This semantic Card is used across every published page. Navigation links come only from Site settings; this component owns their layout, logo and appearance.'
    :isC?'This Component is reusable by reference; edits propagate to every instance.'
