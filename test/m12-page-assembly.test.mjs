@@ -22,15 +22,21 @@ function slotTemplate(){
 }
 function migratedPage(){
  const d=copy(),page=d.pages.find(p=>p.id==='work');
- const component=structuredClone(page.blocks[0]);
+ const component=structuredClone(page.composition||page.blocks[0]);
  page.template='m12-general';page.composition=component;page.blocks=[];
  d.templates.push(slotTemplate());
  return {d,page};
 }
-test('M12 opt-in template keeps existing V1 site and route output unchanged by default',()=>{
+test('M12 shared template serves Work and Journal without duplicating their content',()=>{
  const d=copy();
  assert.doesNotThrow(()=>validate(d));
  assert.deepEqual(collectPages(d),collectPages(copy()));
+ const work=d.pages.find(p=>p.id==='work'),journal=d.pages.find(p=>p.id==='journal');
+ assert.equal(work.template,journal.template);
+ assert.equal(work.template,'page-general');
+ assert.notEqual(work.composition.id,journal.composition.id);
+ assert.equal(work.blocks.length,0);
+ assert.equal(journal.blocks.length,0);
 });
 test('M12 one-slot template nests an independent page root Card without flattening grids',()=>{
  const {d,page}=migratedPage(),before=structuredClone(d);
