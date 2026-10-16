@@ -923,6 +923,16 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    validatedDesignEdit(d=>{d.site.design.styles=d.site.design.styles.filter(x=>x.id!==ui.styleId)});
    ui.styleId=db.site.design.styles[0]?.id||'';renderWork();break;
  }
+ case'add-asset-filter':{
+   const n=ui.node&&findNode(ui.node)?.node;
+   if(n?.source?.kind!=='assets'||n.source.where.length>=8)break;
+   editSelectedAppearance(node=>node.source.where.push({field:'tags',op:'contains',value:'Architecture'}));break;
+ }
+ case'remove-asset-filter':{
+   const n=ui.node&&findNode(ui.node)?.node,index=Number(id);
+   if(n?.source?.kind!=='assets'||n.source.where.length<=1||!Number.isInteger(index)||index<0||index>=n.source.where.length)break;
+   editSelectedAppearance(node=>node.source.where.splice(index,1));break;
+ }
  case'new-page':createModal('page');break;
  case'new-collection':createModal('collection');break;
  case'new-template':ui.draftSection=btn.dataset.collection||coll()?.id||db.collections[0]?.id;createModal('template');break;
@@ -1272,6 +1282,17 @@ document.addEventListener('change',event=>{let el=event.target;
    r.template=el.value;
    try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
    db=candidate;persist();renderAll();return;
+ }
+ if(el.dataset.assetFilterIndex!==undefined){
+   const index=Number(el.dataset.assetFilterIndex),key=el.dataset.assetFilterKey;
+   const n=ui.node&&findNode(ui.node)?.node;
+   if(n?.source?.kind!=='assets'||!Number.isInteger(index)||!n.source.where[index]||
+      !['field','op','value'].includes(key))return;
+   editSelectedAppearance(node=>{
+     const predicate=node.source.where[index];predicate[key]=el.value;
+     if(key==='field'&&!ASSET_FILTERS[predicate.field]?.includes(predicate.op))
+       predicate.op=ASSET_FILTERS[predicate.field]?.[0]||'eq';
+   });return;
  }
  if(el.dataset.nodeStyleRef!==undefined){
    const requested=el.value;
