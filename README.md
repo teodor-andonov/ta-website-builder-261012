@@ -58,6 +58,20 @@ A Style describes appearance, not a new graphic object. It is separate from a Co
 
 New Node/browser regression checks cover inheritance, safe validation, template preview parity, shared propagation and resetting an override. The complete local Node/browser/build/ZIP/visual acceptance is still deferred until the end of V2.
 
+## M14 — independent Project and Post compositions
+
+Each Project/Post record can now own a **unique editable root Card** while continuing to store its content/metadata as ordinary typed collection fields. This is a structural improvement; it does not copy a shared template into every record.
+
+- **Collection Settings:** choose the **default composition template for new records** or create another reusable one-main-slot record template. Project and Post collections now have `record-project-layout` and `record-post-layout` respectively.
+- **New records** start as Draft and receive a unique Card composition seeded from their collection's existing detail template. Their field bindings (`{{title}}`, `{{summary}}`, `{{body}}`, images and record metadata) remain live.
+- **Existing records:** select **Create unique composition** in the record inspector. The opt-in action clones its current detail layout into a one-root Card with regenerated IDs and warns that the nested geometry may change; there is no silent migration.
+- **Record Design** edits only that record's root Card with the same Structure/undo/typed Styles controls as Pages. **Preview** assembles the selected template, root Card, current record context and reusable Navbar/Footer. **Fields** continue to edit content separately.
+- **Record template override:** choose a compatible legacy detail template without converting the record, or choose a shared slot template for a record composition. Changes are validated for the collection and slot contract.
+- **Optional detail pages:** `collection.detailPages` and `record.detailPage` (default On) control public detail route generation without removing an entry from the collection index. When disabled, query cards render without dead links.
+- The draft Post **A field of soft modules** is a real composition-based example, still Draft. All currently published Project and Post detail pages remain on their pre-M14 layouts until their owner opts in.
+
+Validation and regression tests cover missing/wrong slot templates, duplicate/invalid record roots, independent changes, shared layout inheritance, retained public routes, explicit detail-page opt-out and Studio Design/Preview. Full Node/browser/build/ZIP/visual acceptance remains scheduled for the end of V2.
+
 ## Project structure
 
 | Location | Purpose |
