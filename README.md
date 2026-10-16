@@ -104,14 +104,14 @@ The V2 source now includes a **single local acceptance command**, with no GitHub
 
 ```sh
 npm run release:check     # full Node + Chromium, backup/restore, builds, both ZIP modes
-npm run release:visual    # 10 local screenshot captures for manual review
+npm run release:visual    # 5 desktop screenshots for manual review
 npm run package:site      # publishable public-only release/website.zip
 npm run preview           # loopback preview of the public static output
 ```
 
 The release audit verifies actual JSON/media snapshot restoration, all Node tests, local Chromium checks, a root-domain noindex build, the GitHub Pages subpath build, an indexable custom-domain build with canonical/sitemap, all internal link/asset references, no leaked Studio/source files and independently verified ZIP manifests. It generates a dated JSON report under `release/reports/`. It does **not** deploy, change publishing settings in the live source, merge Git branches or replace authored data. `--no-browser` is a **partial diagnostic** with nonzero exit status, not signoff.
 
-Visual capture creates `release/review/YYMMDD-HHmm_m17-visual/` with desktop and narrow Chromium PNGs, an SHA-256/dimensions manifest and explicit **pending human inspection** status. After local checks, manually review the Studio editor and the 10 public routes, both indexing modes and the extracted public ZIP. The root-hosted ZIP is portable to ordinary static hosting, but is not the editable content backup.
+Visual capture creates `release/review/YYMMDD-HHmm_m17-visual/` with **five desktop-only** Chromium PNGs (1440×900), an SHA-256/dimensions manifest and explicit **pending human inspection** status. Narrow/mobile screenshots are not part of V2 visual acceptance: smaller screens should retain the same proportional composition rather than introduce a separately designed mobile layout. After local checks, manually review the Studio editor and the 10 public routes, both indexing modes and the extracted public ZIP. The root-hosted ZIP is portable to ordinary static hosting, but is not the editable content backup.
 
 **Current acceptance status:** Audit/capture automation and regression tests are committed. **The complete local Node/Chromium/build/ZIP run and human visual review still have to be executed and approved before V2 can merge.** See [M17 release acceptance guide](docs/M17_RELEASE_ACCEPTANCE.md) for exact commands, data/media recovery and signoff.
 
