@@ -712,6 +712,13 @@ function makePageTemplate(name){const slot=card([],'stack','clear','small');slot
 function makeBlock(type){if(type==='text')return tb('A new text object.','body');if(type==='heading')return tb('A new heading.','heading');if(type==='image')return im(db.assets[0]?.id||'');if(type==='card')return card([tb('A new card.','body')],'split','soft');if(type==='rich')return {id:uid('b'),type:'rich',source:'{{body}}'};if(type==='query')return query(db.collections[0]?.id,'grid',4,db.components.find(c=>c.id==='project-tile')?.id||db.components[0]?.id,'all');if(type==='component')return comp(db.components[0]?.id);if(type==='divider')return {id:uid('b'),type:'divider'};if(type==='button')return {id:uid('b'),type:'button',text:'Read more ↗',href:'/posts'};return tb('New object')}
 function addBlockModal(inside){if(!currentScope())return;if(inside){const parent=ui.node?findNode(ui.node)?.node:null;if(!parent||parent.type!=='card'||parent.source||parent.reference||parent.slot==='main')return;}ui.draftSection=inside;let items=[['text','Text','Paragraph or label'],['heading','Heading','Large editorial title'],['image','Image','Asset or record binding'],['card','Card / layout','Stack, split or grid'],['query','Collection feed','Filtered, repeatable records'],['component','Component','Reusable design fragment'],['rich','Markdown body','Long-form content'],['button','Button','Link or action'],['divider','Divider','Visual separator']];modal(inside?'Add child object':'Add object','Choose a block. Use the inspector to customise or bind its properties.',`<div class="choices">${items.map(([id,name,desc])=>`<button class="choice" data-act="insert-block" data-type="${id}">${ic(id==='query'?'table':id==='component'?'blocks':id==='image'?'image':'text')}<span><strong>${name}</strong><small>${desc}</small></span></button>`).join('')}</div>`,'' )}
 function regenIds(node){node.id=uid('b');(node.children||[]).forEach(regenIds);return node}
+function recordRootFromTemplate(template,title){
+ const original=clone(template?.blocks||[]);
+ original.forEach(regenIds);
+ const root=card(original,'stack','clear','small');
+ root.label=(title||'Record')+' composition';
+ return root;
+}
 function insertNode(type){
  const before=snapshotScope(),selectedBefore=ui.node;
  let n=makeBlock(type),parent=ui.draftSection&&findNode(ui.node)?.node;
@@ -884,6 +891,17 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'new-collection':createModal('collection');break;
  case'new-template':ui.draftSection=btn.dataset.collection||coll()?.id||db.collections[0]?.id;createModal('template');break;
  case'new-page-template':createModal('page-template');break;
+ case'new-record-template':ui.draftSection=btn.dataset.collection||ui.collection;createModal('record-template');break;
+ case'enable-record-composition':{
+   const c=coll(),r=rec(),slot=db.templates.find(x=>x.id===c.compositionTemplate);
+   if(!r||r.composition||!slot){alert('No record composition template configured for this collection.');break}
+   if(!confirm('Create an independent root Card using this record’s existing detail template as a starting point? This is an opt-in structural conversion, and the layout may change visually.'))break;
+   const candidate=clone(db),collection=candidate.collections.find(x=>x.id===c.id),target=collection.records.find(x=>x.id===r.id);
+   target.composition=recordRootFromTemplate(templateFor(c,r),r.title);
+   target.template=slot.id;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;editorHistory.clear();ui.node=null;ui.mode='design';persist();renderAll();break;
+ }
  case'migrate-page':{
    const p=page(),t=db.templates.find(t=>t.layoutMode==='slot');
    if(!p||p.template||!t)return;
@@ -906,13 +924,32 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  }
  case'new-component':createModal('component');break;
  case'new-field':createModal('field');break;
- case'new-record':{let c=coll();let n=c.records.length+1,r={id:uid('r'),placeholder:true,approvedForPublication:false};for(let f of c.fields){r[f.key]=f.type==='boolean'?false:f.type==='tags'?[]:'';}r.title=`Untitled ${n}`;r.slug='untitled-'+n;r.status='Draft';if(c.id==='posts'){r.format='Note';r.status='Draft';r.date=new Date().toISOString().slice(0,10)}c.records.unshift(r);persist();openRecord(r.id,c.id);ui.mode='fields';renderAll();break}
+ case'new-record':{
+   const c=coll(),n=c.records.length+1,r={id:uid('r'),placeholder:true,approvedForPublication:false};
+   for(const f of c.fields)r[f.key]=f.type==='boolean'?false:f.type==='tags'?[]:'';
+   r.title=`Untitled ${n}`;r.slug='untitled-'+n;r.status='Draft';
+   if(c.id==='posts'){r.format='Note';r.date=new Date().toISOString().slice(0,10)}
+   const t=db.templates.find(x=>x.id===c.compositionTemplate),legacy=templateFor(c,r);
+   if(t?.layoutMode==='slot'){r.template=t.id;r.composition=recordRootFromTemplate(legacy,r.title)}
+   const candidate=clone(db);candidate.collections.find(x=>x.id===c.id).records.unshift(r);
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;persist();openRecord(r.id,c.id);ui.mode='fields';renderAll();break;
+ }
  case'confirm-create':{let kind=btn.dataset.kind,name=String($('#modalName')?.value||'').trim();if(!name){$('#modalName')?.focus();return}if(kind==='page'){let t=db.templates.find(t=>t.layoutMode==='slot');let p={id:uid('p'),title:name,slug:'/'+slug(name),status:'Draft',blocks:[],...(t?{template:t.id,composition:card([tb(name,'display')],'stack','clear','none')}:{blocks:[card([tb(name,'display')],'stack','clear','none')]})};db.pages.push(p);closeModal();persist();choose('page',p.id)}else if(kind==='page-template'){let t=makePageTemplate(name);db.templates.push(t);closeModal();persist();choose('template',t.id)}else if(kind==='collection'){let id=slug(name);if(db.collections.some(c=>c.id===id)){alert('Collection name already exists');return}let t={id:uid('tpl'),name:name.replace(/s$/,'')+' detail',collection:id,description:'Generated content page',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};db.templates.push(t);db.collections.push({id,name,base:'/'+id,defaultTemplate:t.id,fields:[F('title','Title'),F('slug','Slug'),F('status','Status','select','Draft,Published'),F('summary','Summary','textarea'),F('body','Body','textarea')],records:[]});closeModal();persist();choose('collection',id)}else if(kind==='component'){let x={id:uid('cmp'),name,description:'Reusable content component',blocks:[card([tb('New component','heading')],'stack','clear','none')]};db.components.push(x);closeModal();persist();choose('component',x.id)}else if(kind==='template'){let x={id:uid('tpl'),name,collection:$('#modalCollection').value,description:'Custom generated page template',blocks:[card([tb('{{title}}','display'),tb('{{summary}}','body'),{id:uid('b'),type:'rich',source:'{{body}}'}],'stack','clear','none')]};db.templates.push(x);closeModal();persist();choose('template',x.id)}else if(kind==='field'){let c=coll(),key=slug(name).replaceAll('-','_');if(c.fields.some(f=>f.key===key)){alert('A property with this key already exists');return}c.fields.push(F(key,name,$('#modalType').value,$('#modalOptions').value));c.records.forEach(r=>r[key]=$('#modalType').value==='boolean'?false:$('#modalType').value==='tags'?[]:'');closeModal();persist();renderAll()}break}
  case'modal-close':closeModal();break;
  case'open-record':openRecord(id,ui.collection);break;
  case'edit-template':if(id)choose('template',id);break;
  case'edit-component':if(id)choose('component',id);break;
- case'duplicate-record':{let c=coll(),r=clone(rec());r.id=uid('r');r.title+=' (copy)';r.slug+='-copy';c.records.unshift(r);persist();openRecord(r.id,c.id);break}
+ case'duplicate-record':{
+   const c=coll(),r=clone(rec());r.id=uid('r');r.title+=' (copy)';
+   let stem=r.slug+'-copy',slug=stem,i=2;
+   while(c.records.some(x=>x.slug===slug))slug=stem+'-'+i++;
+   r.slug=slug;
+   if(r.composition)regenIds(r.composition);
+   const candidate=clone(db);candidate.collections.find(x=>x.id===c.id).records.unshift(r);
+   try{validateSiteData(candidate)}catch(error){alert(error.message);break}
+   db=candidate;persist();openRecord(r.id,c.id);break;
+ }
  case'delete-record':if(confirm('Delete this record and its generated page?')){let c=coll();c.records=c.records.filter(r=>r.id!==ui.record);persist();choose('collection',c.id)}break;
  case'new-asset':{let a={id:uid('asset'),name:'New image',src:'',alt:'',caption:'',credit:'',tags:[],properties:{}};db.assets.unshift(a);ui.asset=a.id;persist();choose('assets',a.id);showInspector();break}
  case'asset-select':ui.asset=id;renderWork();renderInspector();showInspector();break;
@@ -1159,6 +1196,13 @@ document.addEventListener('dragend',()=>{draggingId=null;clearTreeDrag()});
 
 document.addEventListener('click',event=>{let target=event.target.closest('[data-act]');if(target){handleAction(target);return}let n=event.target.closest('[data-node-id]');if(n&&ui.mode==='design'){event.preventDefault();selectStudioNode(n.dataset.nodeId);return}let g=event.target.closest('[data-open-generated]');if(g&&ui.mode!=='design'){event.preventDefault();openRecord(g.dataset.openGenerated,g.dataset.forCollection);return}let nav=event.target.closest('[data-site-route]');if(nav){event.preventDefault();let p=db.pages.find(p=>p.slug===nav.dataset.siteRoute);if(p)choose('page',p.id);return}if(event.target.id==='modalBack')closeModal()});
 document.addEventListener('change',event=>{let el=event.target;
+ if(el.dataset.recordTemplate){
+   const candidate=clone(db),c=candidate.collections.find(x=>x.id===ui.collection),r=c?.records.find(x=>x.id===ui.record);
+   if(!r?.composition)return;
+   r.template=el.value;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
+   db=candidate;persist();renderAll();return;
+ }
  if(el.dataset.nodeStyleRef!==undefined){
    const requested=el.value;
    editSelectedAppearance(n=>{
