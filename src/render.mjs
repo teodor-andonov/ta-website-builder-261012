@@ -281,9 +281,9 @@ export function renderSiteFrame(content,data,{design=false,route='/',isolated=fa
   // Master spacing is expressed in page-width units; no per-Card pixel overrides.
   const unit=value=>Number.isFinite(value)&&value>0&&value<=4?value:1;
   const spacingStyle=` style="--ta-pad:${unit(data.site?.design?.pad)}cqw;--ta-gap:${unit(data.site?.design?.gap)}cqw"`;
-  const header=renderChromeComponent(data,'navigation',{design,route,componentId:chrome?.navigation}) ||
+  const header=renderChromeComponent(data,'navigation',{route,componentId:chrome?.navigation}) ||
     '<nav class="card card-nav web-nav grid-card semantic-header bg-transparent"'+frameHeight('header')+' aria-label="Main navigation">'+logo+links+'</nav>';
-  const footer=renderChromeComponent(data,'footer',{design,route,componentId:chrome?.footer}) ||
+  const footer=renderChromeComponent(data,'footer',{route,componentId:chrome?.footer}) ||
     '<footer class="card card-footer web-footer grid-card semantic-footer bg-transparent"'+frameHeight('footer')+'>'+
     '<span class="item item-footer">'+escapeHtml(data.site.name)+'</span>'+
     '<span class="item item-footer">© '+new Date().getUTCFullYear()+'</span></footer>';
