@@ -79,7 +79,7 @@ export function siteTokenStyle(data){
     '--ta-gap:'+Number(design.gap||1)+'cqw',
     '--ta-radius:'+Number(tokens.radius??1.15)+'cqw',
     '--ta-outline-opacity:'+Math.round(Number(tokens.outlineOpacity??.2)*100)+'%',
-    '--ta-mono:'+(tokens.fontFamily==='system'?'Arial,Helvetica,sans-serif':'"Geist Mono","PT Mono",Consolas,monospace')
+    '--ta-mono:'+(tokens.fontFamily==='system'?'Arial,Helvetica,sans-serif':"'Geist Mono','PT Mono',Consolas,monospace")
   ];
   for(const [key,val] of Object.entries(colors))declarations.push('--ta-'+key+':'+val);
   return declarations.join(';');
