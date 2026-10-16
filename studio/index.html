@@ -282,24 +282,25 @@ window.addEventListener('beforeunload',event=>{
  if(saveBlocked){event.preventDefault();event.returnValue='';}
 });
 function choose(section,id){ui.section=section;ui.node=null;ui.structureCollapsed.clear();ui.areaDraft=null;ui.search='';ui.format='all';ui.jsonMessage='';if(section==='collection'){ui.collection=id||ui.collection;ui.record=coll()?.records[0]?.id;ui.mode='table'}else if(section==='record'){ui.collection=id?.collection||ui.collection;ui.record=id?.record||ui.record;ui.mode='preview'}else if(section==='page'){ui.page=id||ui.page;ui.mode='design'}else if(section==='template'){ui.template=id||ui.template;ui.mode='design';ui.sample=db.collections.find(c=>c.id===tpl()?.collection)?.records[0]?.id||''}else if(section==='component'){ui.component=id||ui.component;ui.mode='design'}else if(section==='assets'){ui.mode='grid';if(id)ui.asset=id}else if(section==='dashboard'){ui.mode='overview'}else if(section==='styles'){ui.mode='library';ui.styleId=id||ui.styleId||db.site.design.styles?.[0]?.id};$('#sidebar').classList.remove('show');renderAll()}
-function visibleModes(){if(ui.section==='collection')return ['table','settings','json'];if(ui.section==='record')return ['preview','fields','json'];if(['page','template','component'].includes(ui.section))return ['design','preview','json'];if(ui.section==='assets')return ['grid','table','json'];return []}
-function currentScope(){if(ui.section==='page')return page();if(ui.section==='template')return tpl();if(ui.section==='component')return component();return null}
+function visibleModes(){if(ui.section==='collection')return ['table','settings','json'];if(ui.section==='record')return rec()?.composition?['design','preview','fields','json']:['preview','fields','json'];if(['page','template','component'].includes(ui.section))return ['design','preview','json'];if(ui.section==='assets')return ['grid','table','json'];return []}
+function compositionRecord(){return ui.section==='record'&&Boolean(rec()?.composition)}
+function currentScope(){if(compositionRecord())return rec();if(ui.section==='page')return page();if(ui.section==='template')return tpl();if(ui.section==='component')return component();return null}
 // A templated Page owns exactly one editable composition root, not the template tree.
 function compositionPage(){return ui.section==='page'&&Boolean(page()?.template)}
-function currentBlocks(){const scope=currentScope();return compositionPage()?[scope.composition]:scope?.blocks||[]}
+function currentBlocks(){const scope=currentScope();return compositionPage()||compositionRecord()?[scope.composition]:scope?.blocks||[]}
 function assignScopeBlocks(blocks){
  const scope=currentScope();if(!scope)return false;
- if(compositionPage()){
+ if(compositionPage()||compositionRecord()){
    if(blocks.length!==1||blocks[0]?.type!=='card'||blocks[0].area!==undefined||blocks[0].slot!==undefined)return false;
    scope.composition=blocks[0];
  }else scope.blocks=blocks;
  return true;
 }
-function compositionRoot(){return compositionPage()?page().composition:null}
+function compositionRoot(){return compositionPage()?page().composition:compositionRecord()?rec().composition:null}
 function frameComponent(){return ui.section==='component'&&Boolean(component()?.frameRole)}
 function protectedNode(id){
  const frame=frameComponent(),found=id?findNode(id):null;
- return Boolean(compositionPage()&&id===compositionRoot()?.id)||
+ return Boolean((compositionPage()||compositionRecord())&&id===compositionRoot()?.id)||
    Boolean(ui.section==='template'&&tpl()?.layoutMode==='slot'&&(currentBlocks()[0]?.id===id||found?.node?.slot==='main'))||
    Boolean(frame&&(currentBlocks()[0]?.id===id||found?.node?.variant==='site-logo'));
 }
@@ -312,7 +313,7 @@ function snapshotScope(){return clone(currentBlocks())}
 function saveScopeEdit(before,selectedBefore){
  const key=historyScope();
  // Reject invalid structural edits while preserving the last valid authoring tree.
- if(frameComponent()||compositionPage()||(ui.section==='template'&&tpl()?.layoutMode==='slot')){
+ if(frameComponent()||compositionPage()||compositionRecord()||(ui.section==='template'&&tpl()?.layoutMode==='slot')){
    try{validateSiteData(db)}
    catch(error){
      assignScopeBlocks(before);ui.node=selectedBefore;ui.areaDraft=null;
@@ -389,7 +390,7 @@ function fieldCell(c,r,f){let v=r[f.key],id=e(r.id),k=e(f.key);if(f.type==='bool
 function collectionView(){let c=coll();if(!c)return '<div class="empty">No collection selected</div>';if(ui.mode==='json')return jsonView(c,'collection');if(ui.mode==='settings')return collectionSettings(c);let filt=c.records.filter(r=>(ui.format==='all'||String(r.format||r.status)===ui.format)&&(!ui.search||Object.values(r).some(x=>valText(x).toLowerCase().includes(ui.search.toLowerCase()))));let fmt=c.formatField?[...new Set(c.records.map(r=>r[c.formatField]).filter(Boolean))]:[];let top=titleBar('COLLECTION / '+c.base,c.name,'Edit records like a spreadsheet. Each row becomes a generated page.',`<button class="btn" data-act="new-field">${ic('add')} Property</button><button class="btn dark" data-act="new-record">${ic('add')} New record</button>`);return `<div class="content-wrap">${top}<div class="table-toolbar"><div class="toolbar-left"><input class="search" id="recordSearch" placeholder="Search records…" value="${e(ui.search)}"><select class="control" id="formatFilter" style="width:auto;min-height:32px;font-size:11px"><option value="all">All ${e(c.name.toLowerCase())}</option>${fmt.map(f=>`<option value="${e(f)}" ${ui.format===f?'selected':''}>${e(f)}s</option>`).join('')}</select></div><div class="toolbar-right"><span class="upper">${filt.length} RECORDS</span></div></div><div class="table-wrap"><table><thead><tr><th style="min-width:190px">NAME / OPEN</th>${c.fields.filter(f=>f.key!=='title'&&f.key!=='body').map(f=>`<th>${e(f.label)}${f.key==='slug'?' ↗':''}</th>`).join('')}<th></th></tr></thead><tbody>${filt.map(r=>`<tr class="${ui.record===r.id?'selected':''}"><td><div class="record-name">${getAsset(r.cover)?`<img class="small-thumb" src="${e(src(getAsset(r.cover)))}" alt="">`:`<span class="record-icon">${ic('page')}</span>`}<input class="cell long" style="font-weight:590;min-width:155px;padding:6px 2px" data-cell="1" data-id="${e(r.id)}" data-key="title" value="${e(r.title||'Untitled')}" aria-label="Title"><button class="btn ghost sm" data-act="open-record" data-id="${e(r.id)}" title="Open page">${ic('external')}</button></div></td>${c.fields.filter(f=>f.key!=='title'&&f.key!=='body').map(f=>`<td>${fieldCell(c,r,f)}</td>`).join('')}<td><button class="btn ghost sm" data-act="open-record" data-id="${e(r.id)}" title="Open generated page">${ic('external')}</button></td></tr>`).join('')}</tbody></table></div><div class="table-foot"><span>${filt.length} rows · changes saved locally</span><button class="btn sm" data-act="new-record">${ic('add')} Add row</button></div></div>`}
 function collectionSettings(c){return `<div class="content-wrap">${titleBar('SCHEMA / CONFIGURATION',c.name+' · Settings','Define reusable properties and automatic page routes.',`<button class="btn" data-act="navigate" data-section="collection" data-id="${e(c.id)}">← Table</button>`)}<div class="detail-grid"><div class="detail-card"><h3>Collection settings</h3>${inputField('Collection name',c.name,'collection','name')}${inputField('URL prefix',c.base,'collection','base')}<div class="field"><label>Default template</label><select class="control" data-edit="collection" data-key="defaultTemplate">${db.templates.map(t=>`<option value="${e(t.id)}" ${t.id===c.defaultTemplate?'selected':''}>${e(t.name)}</option>`).join('')}</select></div><div class="field"><label>Format discriminator (optional)</label><select class="control" data-edit="collection" data-key="formatField"><option value="">None</option>${c.fields.map(f=>`<option value="${e(f.key)}" ${f.key===c.formatField?'selected':''}>${e(f.label)}</option>`).join('')}</select></div>${c.formatField?`<div class="upper" style="margin:20px 0 10px">Format → template</div>${(c.fields.find(f=>f.key===c.formatField)?.options||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>`<div class="field"><label>${e(x)}</label><select class="control" data-format-template="${e(x)}"><option value="">Default</option>${db.templates.map(t=>`<option value="${e(t.id)}" ${t.id===c.formatTemplates?.[x]?'selected':''}>${e(t.name)}</option>`).join('')}</select></div>`).join('')}`:''}</div><div class="detail-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="margin:0">Properties · ${c.fields.length}</h3><button class="btn sm" data-act="new-field">${ic('add')} Property</button></div>${c.fields.map(f=>`<div style="display:flex;align-items:center;gap:7px;padding:9px 0;border-bottom:1px solid var(--line)"><span style="flex:1"><strong style="font-size:11px;font-weight:570">${e(f.label)}</strong><br><span class="upper">${e(f.key)} · ${e(f.type)}</span></span>${!['title','slug'].includes(f.key)?`<button class="btn ghost sm" data-act="remove-field" data-key="${e(f.key)}">${ic('trash')}</button>`:''}</div>`).join('')}</div></div><div style="margin-top:17px"><button class="btn" data-act="new-template" data-collection="${e(c.id)}">${ic('add')} New template for this collection</button></div></div>`}
 function recordView(){let c=coll(),r=rec();if(!r)return `<div class="content-wrap"><div class="empty">Record not found.</div></div>`;if(ui.mode==='json')return jsonView(r,'record');if(ui.mode==='fields')return `<div class="content-wrap">${titleBar('RECORD / PROPERTIES',r.title,'Edit every field without opening the template.',`<button class="btn" data-act="mode" data-mode="preview">Preview page →</button>`)}<div class="detail-grid"><div class="detail-card">${c.fields.filter(f=>f.key!=='body').map(f=>recordFieldHtml(f,r)).join('')}</div><div class="detail-card"><h3>Body / content</h3>${recordFieldHtml(c.fields.find(f=>f.key==='body')||F('body','Body','textarea'),r)}<p class="help">Markdown headings, paragraphs and lists are supported in the preview. The template controls where the body appears.</p></div></div></div>`;let t=templateFor(c,r);return `<div class="editor-shell"><div class="editor-meta"><div><h1>${e(r.title)}</h1><small>${e(c.base+'/'+r.slug)} · ${e(t?.name||'No template')}</small></div><div class="editor-tools"><button class="btn sm" data-act="mode" data-mode="fields">Edit record</button><button class="btn sm" data-act="edit-template" data-id="${e(t?.id||'')}">Edit template ↗</button></div></div>${siteFrame(renderBlocks(t?.blocks||[],r,false))}<div class="add-area"><button class="btn" data-act="mode" data-mode="fields">${ic('settings')} Edit content and properties</button></div></div>`}
-function templateFor(c,r){let id=c?.formatTemplates?.[r?.[c.formatField]]||c?.defaultTemplate;return db.templates.find(t=>t.id===id)||db.templates[0]}
+function templateFor(c,r){let id=r?.template||c?.formatTemplates?.[r?.[c.formatField]]||c?.defaultTemplate;return db.templates.find(t=>t.id===id)||db.templates[0]}
 // Shared rendering contract: the preview and the published build import the same module.
 function renderBlocks(blocks,ctx=null,design=false){return renderSharedBlocks(blocks,ctx,db,{design,selectedId:ui.node,topLevel:true})}
 function siteFrame(content,design=false){let route='/';if(ui.section==='record'){const c=coll(),r=rec();if(c&&r)route=c.base+'/'+r.slug+'/'}else if(ui.section==='page')route=page()?.slug||'/';else if(ui.section==='template'){const c=db.collections.find(c=>c.id===tpl()?.collection),r=c?.records.find(r=>r.id===ui.sample);if(c&&r)route=c.base+'/'+r.slug+'/'}const chrome=ui.section==='record'?templateFor(coll(),rec())?.chrome:ui.section==='template'?tpl()?.chrome:null;return renderSiteFrame(content,db,{design,route,chrome})}
@@ -446,7 +447,9 @@ function assetView(){if(ui.mode==='json')return jsonView(db.assets,'assets');let
 function jsonView(data,scope){return `<div class="content-wrap">${titleBar('SOURCE / STRUCTURED DATA',scope==='all'?'Site JSON':'JSON · '+scope,'Direct source editing. Apply validated JSON to update the visual views.',`<button class="btn" data-act="export">${ic('external')} Export all</button>`)}<textarea class="file-json" spellcheck="false" id="jsonEditor">${e(JSON.stringify(data,null,2))}</textarea><div class="json-controls"><button class="btn dark" data-act="apply-json" data-scope="${e(scope)}">Apply JSON</button><button class="btn" data-act="copy-json">Copy</button><span class="notice ${ui.jsonMessage.startsWith('Error')?'error':'ok'}" id="jsonNotice">${e(ui.jsonMessage)}</span></div></div>`}
 function treeRows(blocks=currentBlocks(),depth=0){return (blocks||[]).map(n=>`<button class="tree-row ${ui.node===n.id?'active':''}" data-act="select-node" data-id="${e(n.id)}" style="padding-left:${7+depth*13}px">${ic(n.type==='card'?(n.source?'table':n.reference?'blocks':'template'):'text')}<span>${e(n.type==='text'?n.text.slice(0,34):n.type==='card'&&n.source?'Collection: '+n.source.collection:n.type==='card'&&n.reference?'Component: '+n.reference:n.type)}</span></button>${n.children?treeRows(n.children,depth+1):''}`).join('')}
 
-const structureMode=()=>['page','template','component'].includes(ui.section)&&ui.mode==='design';
+const structureMode=()=>['page','template','component'].includes(ui.section)||false;
+const recordStructureMode=()=>ui.section==='record'&&compositionRecord();
+function isStructureEditing(){return (isStructureEditing()||recordStructureMode())&&ui.mode==='design'};
 function structureLabel(n){
  if(n.label)return String(n.label).slice(0,70);
  if(n.type==='card')return n.source?'Collection · '+n.source.collection:n.reference?'Component · '+n.reference:n.variant?'Card · '+n.variant:'Card';
@@ -465,7 +468,7 @@ function structureRows(nodes=currentBlocks(),depth=0){
  }).join('');
 }
 function renderStructure(){
- const active=structureMode(),visible=active&&ui.structureVisible;
+ const active=isStructureEditing(),visible=active&&ui.structureVisible;
  $('#studioApp').classList.toggle('structure-open',visible);
  $('#structurePane').setAttribute('aria-hidden',String(!visible));
  const scope=currentScope();
@@ -490,7 +493,7 @@ function findNodePath(id,nodes=currentBlocks(),trail=[]){
  return null;
 }
 function applyTreeMove(intent){
- if(!structureMode()||!ui.node||protectedNode(ui.node))return false;
+ if(!isStructureEditing()||!ui.node||protectedNode(ui.node))return false;
  const result=moveTreeByIntent(currentBlocks(),ui.node,intent);
  if(!result.ok)return false;
  const scope=currentScope(),before=snapshotScope(),selectedBefore=ui.node;
@@ -679,7 +682,7 @@ function insertNode(type){
  const before=snapshotScope(),selectedBefore=ui.node;
  let n=makeBlock(type),parent=ui.draftSection&&findNode(ui.node)?.node;
  if(!parent&&frameComponent())parent=currentBlocks()[0];
- if(!parent&&compositionPage())parent=compositionRoot();
+ if(!parent&&(compositionPage()||compositionRecord()))parent=compositionRoot();
  if(!parent&&ui.section==='template'&&tpl()?.layoutMode==='slot')parent=currentBlocks()[0];
  if(parent?.slot==='main')return;
  if(parent?.type==='card'){
@@ -1087,7 +1090,7 @@ function clearTreeDrag(){
 }
 document.addEventListener('dragstart',event=>{
  const handle=event.target.closest('.structure-handle');
- if(!handle||!structureMode()||protectedNode(handle.dataset.dragId))return;
+ if(!handle||!isStructureEditing()||protectedNode(handle.dataset.dragId))return;
  draggingId=handle.dataset.dragId;
  event.dataTransfer?.setData('text/plain',draggingId);
  if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
@@ -1285,7 +1288,7 @@ document.addEventListener('input',event=>{
 });
 
 document.addEventListener('keydown',event=>{
- if(!structureMode()||!(event.ctrlKey||event.metaKey)||event.altKey)return;
+ if(!isStructureEditing()||!(event.ctrlKey||event.metaKey)||event.altKey)return;
  const target=event.target;
  if(target.closest('input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
  const key=event.key.toLowerCase();
@@ -1299,7 +1302,7 @@ document.addEventListener('keydown',event=>{
 });
 document.addEventListener('keydown',event=>{
  const focus=event.target.closest('.structure-select');
- if(!focus||!structureMode())return;
+ if(!focus||!isStructureEditing())return;
  if(event.altKey&&!event.ctrlKey&&!event.metaKey&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)){
    event.preventDefault();
    applyTreeMove(({ArrowUp:'up',ArrowDown:'down',ArrowRight:'indent',ArrowLeft:'outdent'})[event.key]);
