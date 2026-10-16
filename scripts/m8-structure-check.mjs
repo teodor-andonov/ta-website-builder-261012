@@ -81,6 +81,22 @@ try{
   await sleep(100);
  }
  if(!loaded)throw Error('Studio did not load');
+ // Publishing mode is edited in the same local JSON as all other site settings.
+ const indexing=await evaluate(`(()=>{
+   window.__TA_STUDIO__.navigate('dashboard');
+   const selector=document.querySelector('[data-site-indexing]');
+   if(!selector)return {error:'Site indexing selector missing'};
+   const original=window.__TA_STUDIO__.getData().site.publishing.indexing;
+   selector.value='true';selector.dispatchEvent(new Event('change',{bubbles:true}));
+   const enabled=window.__TA_STUDIO__.getData().site.publishing.indexing;
+   const reset=document.querySelector('[data-site-indexing]');
+   reset.value='false';reset.dispatchEvent(new Event('change',{bubbles:true}));
+   const disabled=window.__TA_STUDIO__.getData().site.publishing.indexing;
+   return {original,enabled,disabled,selected:document.querySelector('[data-site-indexing]').value};
+ })()`);
+ if(indexing.original!==false||indexing.enabled!==true||indexing.disabled!==false||indexing.selected!=='false')
+   throw Error('Studio search indexing switch failed: '+JSON.stringify(indexing));
+ console.log('SITE_INDEXING_OK local Studio supports reversible site-wide publishing mode');
  // M9: verify the actual site-wide contact editor, typed URL guard, and CTA.
  const configured=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('dashboard');
