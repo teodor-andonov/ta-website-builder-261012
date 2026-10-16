@@ -80,10 +80,23 @@ A Card can now generate an **image gallery from asset metadata**, without mainta
 - **Filter:** The Card inspector edits a list of **AND predicates**. Available fields are `projectCode` (equals), `tags` (contains an exact tag, ignoring case), and `name` (equals or contains text). Values can be literal or a safe record binding such as `{{projectCode}}`. Querying outside a record or with an empty project code returns no assets—not the whole library.
 - **Present:** Choose 1/2/3-column arrangement, original/name order, a maximum image count and captions. The renderer creates ordinary nested Card/Image Items with existing asset URLs, alt text and optional captions. The original image files are never copied.
 - **Maintain:** Asset Library metadata (`properties.projectCode`, `tags`, name, caption) remains the single source of truth. Update an asset tag/project code once and every matching gallery refreshes.
-- **Demo:** **Balkan House** is converted to its own M14 root composition with a highlighted-assets query: `projectCode = {{projectCode}}` **AND** `tags contains Architecture`. Demo project code `4424` matches the Housing placeholder image. Responsive Envelope has demo code `4430`; other legacy Project/Post pages can likewise be converted since all current content is demo material.
+- **Demo:** **Balkan House** is converted to its own M14 root composition with a highlighted-assets query: `projectCode = {{projectCode}}` **AND** `tags contains Architecture`. Demo project code `4424` matches the Housing placeholder image. Responsive Envelope has demo code `4430`; M16 subsequently migrated the remaining demo Project/Post pages to the same unique-composition system.
 - **Safety:** The query schema only permits allowlisted fields/operators, a bounded result count and simple field bindings—no arbitrary JavaScript, CSS, URL expressions or relationship engine. Validation and regression coverage include missing context, AND behaviour, ordering, tag matching, malformed queries and assembled preview/public parity.
 
 As agreed, converting demo legacy layouts is now allowed during V2 development; keeping them byte-identical is **not** a product requirement. Keep routes and authored data consistent, and complete the final visual/browser review before merging.
+
+## M16 — unified authoring, demo migrations and safer edits
+
+**All existing demo content now uses the composition architecture:** Home, Work, Journal and Studio Pages each have a unique root Card and shared Page slot template; all eight Project/Post records have independent root Cards under their collection's slot template. Published routes and metadata stay consistent, while exact legacy placeholder geometry is not a constraint.
+
+- **Contextual Add object:** A quick button in the workspace toolbar and the existing Add picker insert inside the selected ordinary Card, or beside the selected Item in its parent Card. The modal identifies the intended destination. Generated/reference/slot Cards remain non-editable containers.
+- **Safe duplication:** Duplicate a Page or Record without changing the original. Copies receive a unique ID, route slug and regenerated Card/Item IDs, and always start as **Draft** with publication approval off.
+- **Truthful Overview:** The generated-page count now derives from the actual shared static route collector, not the number of records.
+- **Asset dependency protection:** The Image library shows which Pages, Components, Record fields, direct Image Items and contextual galleries refer to an asset. Referenced asset metadata cannot be deleted accidentally. A pure `src/asset-usage.mjs` dependency scanner powers the controls; deleting unused metadata does not delete image files.
+- **Rendering fix:** The font-family token now uses safe quoting inside the site frame's HTML `style` attribute.
+- **Legacy compatibility:** Old record-detail templates remain available as import/seed/fallback definitions and for creating initial content, but all current demo Pages/Records use unique compositions. Do not maintain separate renderer or duplicate authored layout content for legacy paths.
+
+Regression updates cover the migrated model, DOM and preview paths; M16 includes focused migration/asset tests and a disposable local Chromium interaction scenario. Full Node/browser/build/ZIP/visual acceptance is **still due at the end of V2**, before any merge.
 
 ## Project structure
 
@@ -97,6 +110,7 @@ As agreed, converting demo legacy layouts is now allowed during V2 development; 
 | `src/page-assembly.mjs` | Pure one-main-slot template + unique composition assembler |
 | `src/style-system.mjs` | M13 named style resolution, site token variables and validated style definitions |
 | `src/asset-query.mjs` | M15 typed AND filters, record-context binding and deterministic asset selection |
+| `src/asset-usage.mjs` | M16 safety scanner for direct and contextual asset dependencies |
 | `src/build.mjs` | Public static build: `dist/` |
 | `src/server.mjs` | Local-only authoring API |
 | `scripts/` | Local testing, backup and optional ZIP utilities |
