@@ -622,6 +622,10 @@ else if(ui.section==='record'&&!(compositionRecord()&&ui.mode==='design')){
   h=inspectorEmpty(r.title,c.base+'/'+r.slug)+
    '<div class="upper">RECORD DETAIL PAGE</div><div style="margin:10px 0 19px"><span class="badge purple">'+e(r.format||r.category||'Record')+'</span> <span class="badge">'+e(r.status||'Draft')+'</span></div>'+
    '<div class="field"><label>Effective template</label><div class="control">'+e(template?.name||'Missing template')+'</div></div>'+
+   (r.composition?'':'<div class="field"><label>Legacy template override</label><select class="control" data-record-legacy-template="1">'+
+       '<option value=""'+(r.template?'':' selected')+'>Collection / format default</option>'+
+       db.templates.filter(t=>t.collection===c.id&&t.layoutMode!=='slot').map(t=>'<option value="'+e(t.id)+'"'+(r.template===t.id?' selected':'')+'>'+e(t.name)+'</option>').join('')+
+       '</select></div>')+
    (r.composition?'<button class="btn sm" data-act="mode" data-mode="design">Edit unique composition ↗</button>':'<p class="help">This record currently uses its shared legacy detail template.</p>'+
       (slotTemplates.length?'<button class="btn sm" data-act="enable-record-composition">Create unique composition</button>':''))+
    (r.composition?'<p class="help">Its unique Card root is separate from record fields, and is assembled into its selected template.</p>':'')+
@@ -1214,6 +1218,13 @@ document.addEventListener('change',event=>{let el=event.target;
    if(!c)return;
    if(el.value)c.compositionTemplate=el.value;else delete c.compositionTemplate;
    try{validateSiteData(candidate)}catch(error){alert(error.message);renderAll();return}
+   db=candidate;persist();renderAll();return;
+ }
+ if(el.dataset.recordLegacyTemplate!==undefined){
+   const candidate=clone(db),c=candidate.collections.find(x=>x.id===ui.collection),r=c?.records.find(x=>x.id===ui.record);
+   if(!r||r.composition)return;
+   if(el.value)r.template=el.value;else delete r.template;
+   try{validateSiteData(candidate)}catch(error){alert(error.message);renderInspector();return}
    db=candidate;persist();renderAll();return;
  }
  if(el.dataset.recordTemplate){
