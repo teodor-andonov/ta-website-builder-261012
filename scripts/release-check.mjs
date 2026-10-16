@@ -77,6 +77,24 @@ export async function checkOutput(dir,data,{base='/',indexing=false,origin=null}
  return {pages:required.size,robots:indexing?'index, follow':'noindex, nofollow',
    base,origin,sitemap,verifiedLinks:true};
 }
+/** Complete editable-source fingerprint, including unreferenced media. */
+export async function fingerprintAuthoring(dataRoot){
+ const files=[{path:'content/site.json',
+  sha256:sha(await readFile(path.join(dataRoot,'content','site.json')))}];
+ const walk=async(dir,relative='')=>{
+  for(const entry of await readdir(dir,{withFileTypes:true})){
+   const name=relative?relative+'/'+entry.name:entry.name;
+   const absolute=path.join(dir,entry.name);
+   if(entry.isSymbolicLink()||(!entry.isDirectory()&&!entry.isFile()))
+     throw Error('Source backup rejects symlink or special file: '+name);
+   if(entry.isDirectory())await walk(absolute,name);
+   else files.push({path:'assets/'+name,sha256:sha(await readFile(absolute))});
+  }
+ };
+ await walk(path.join(dataRoot,'assets'));
+ files.sort((a,b)=>a.path.localeCompare(b.path,'en'));
+ return {files:files.length,sha256:sha(Buffer.from(JSON.stringify(files)))};
+}
 function contentSnapshot(data){
  return {pages:data.pages.length,records:data.collections.reduce((n,c)=>n+c.records.length,0),
   assets:data.assets.length,routes:collectPages(data).length};
@@ -96,6 +114,7 @@ export async function runReleaseCheck({browser=true,outputRoot=path.join(root,'r
    const value=validate(JSON.parse(json));
    return {sha256:sha(Buffer.from(json)),...contentSnapshot(value)};
   });
+  const sourceFingerprint=await record('baseline JSON and all asset files',async()=>fingerprintAuthoring(root));
   await record('real Node regression suite',async()=>{
    const files=(await readdir(path.join(root,'test'))).filter(x=>x.endsWith('.test.mjs')).sort()
      .map(name=>path.join('test',name));
@@ -107,6 +126,8 @@ export async function runReleaseCheck({browser=true,outputRoot=path.join(root,'r
   else steps.push({name:'real local Chromium authoring/DOM suite',status:'SKIPPED',
     reason:'Explicit --no-browser; release cannot be fully accepted'});
   const recovered=await record('snapshot + checksum verification + isolated restore',async()=>{
+   ensure((await fingerprintAuthoring(root)).sha256===sourceFingerprint.sha256,
+     'Tests modified live content or media files; refusing to package a changed source');
    const source=(await readFile(path.join(root,'content','site.json')));
    const snapshot=await createSnapshot(root,path.join(work,'backups'));
    await verifySnapshot(snapshot.path);
@@ -162,8 +183,11 @@ export async function runReleaseCheck({browser=true,outputRoot=path.join(root,'r
   await record('snapshot/source immutability',async()=>{
    ensure(sha(await readFile(path.join(root,'content','site.json')) )===data.sha256,
      'Live JSON changed during release validation');
+   const current=await fingerprintAuthoring(root);
+   ensure(current.sha256===sourceFingerprint.sha256,
+     'Live image/asset files changed during release validation');
    await verifySnapshot(recovered.snapshot.path);
-   return {liveContentUnchanged:true,sourceSnapshotStillValid:true};
+   return {liveContentUnchanged:true,liveMediaUnchanged:true,sourceSnapshotStillValid:true};
   });
   report.status=browser?'AUTOMATED_CHECKS_PASSED_VISUAL_SIGNOFF_PENDING':'PARTIAL_BROWSER_SKIPPED';
  }catch(error){problem=error;report.status='FAILED';report.error=String(error.message||error)}
