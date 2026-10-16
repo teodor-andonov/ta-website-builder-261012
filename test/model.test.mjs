@@ -28,7 +28,7 @@ test('M8 rejects duplicate node IDs in a component independently of pages',()=>{
 });
 test('M8 allows node IDs reused in independent page scopes',()=>{
   const d=copy();
-  d.pages[1].blocks[0].id=d.pages[0].blocks[0].id;
+  d.pages[1].composition.id=d.pages[0].blocks[0].id;
   assert.doesNotThrow(()=>validate(d));
 });
 test('M8 rejects direct self-reference in reusable components',()=>{
