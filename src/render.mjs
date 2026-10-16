@@ -31,6 +31,7 @@ export function bind(value, context, data) {
   return String(value ?? '').replace(/\{\{\s*([^{}]+)\s*\}\}/g, (_, raw) => {
     const name = raw.trim();
     if (name === 'site.name') return data.site.name;
+    if (name === 'site.year') return String(new Date().getUTCFullYear());
     if(name === 'site.contact.email'||name === 'site.contact.bookingUrl')return data.site.contact?.[name.slice('site.contact.'.length)] ?? '';
     if (name === 'collection.name') return data.collections.find(c=>c.records.includes(context))?.name ?? '';
     return String(displayValue(context?.[name]));
@@ -169,6 +170,10 @@ function renderBlock(node, context, data, options, depth) {
   }
   const type=node.type,overflow=node.overflow==='scroll'?' item-scroll':'';
   if(type==='text'){
+    if(node.variant==='site-footer'){
+      const attrs=nodeAttrs(node,options,['item','item-footer']);
+      return '<span'+attrs+'>'+escapeHtml(bind(node.text,context,data))+'</span>';
+    }
     const attrs=nodeAttrs(node,options,['item','item-text','b-text',safeToken(node.style||'body')]);
     // Preserve visual Cards while giving display/heading Items real semantic levels.
     const tag=node.style==='display'||node.headingLevel===1?'h1':node.style==='heading'?'h2':'div';
@@ -188,6 +193,14 @@ function renderBlock(node, context, data, options, depth) {
     return '<figure'+attrs+'>'+image+caption+'</figure>';
   }
   if(type==='button'){
+    if(node.variant==='site-logo'){
+      const label=escapeHtml(bind(node.text||'TA/',context,data));
+      const visualLabel=label.endsWith('/')?label.slice(0,-1)+'<span style="font-weight:300">/</span>':label;
+      const homeVisible=publishedRoutes(data).has('/');
+      const attrs=nodeAttrs(node,options,['item','item-logo','web-logo'], '',
+        homeVisible?' href="/" data-site-route="/" aria-label="TA — Home"':'');
+      return homeVisible?'<a'+attrs+'>'+visualLabel+'</a>':'<span'+attrs+'>'+visualLabel+'</span>';
+    }
     const rawHref=node.href||'#';
     const resolved=bind(rawHref,context,data);
     // Booking is opt-in. Never render a clickable dead link before setup.
