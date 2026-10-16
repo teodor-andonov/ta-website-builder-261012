@@ -1002,7 +1002,11 @@
             }
           ]
         }
-      ]
+      ],
+      "chrome": {
+        "navigation": "site-navbar",
+        "footer": "site-footer"
+      }
     }
   ],
   "components": [
