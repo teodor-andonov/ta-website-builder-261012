@@ -46,6 +46,9 @@
       "pad": 1,
       "gap": 1
     },
+    "publishing": {
+      "indexing": false
+    },
     "contact": {
       "email": "",
       "bookingUrl": ""
