@@ -1,6 +1,6 @@
 // Optional canonical origin for a future custom domain. Publishing is NOT
 // coupled to content approval, local tests, GitHub CI or a hosting provider.
-// GitHub Pages and local dist are ordinary public website builds by default.
+// An explicit site-wide JSON switch controls indexing for Pages, dist and ZIP.
 export function parsePublicOrigin(value){
   if(typeof value!=='string'||!value.trim())throw Error('TA_PUBLIC_ORIGIN must be an HTTPS domain URL');
   let origin;
@@ -14,7 +14,7 @@ export function parsePublicOrigin(value){
 }
 
 export function publicationSettings(_data,env={}){
-  return {indexing:true,origin:env.TA_PUBLIC_ORIGIN?parsePublicOrigin(env.TA_PUBLIC_ORIGIN):null};
+  return {indexing:_data.site?.publishing?.indexing!==false,origin:env.TA_PUBLIC_ORIGIN?parsePublicOrigin(env.TA_PUBLIC_ORIGIN):null};
 }
 
 export function absolutePageUrl(origin,route){
