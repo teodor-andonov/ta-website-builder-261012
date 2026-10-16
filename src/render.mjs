@@ -1,4 +1,5 @@
 import {assemblePage} from './page-assembly.mjs';
+import {resolveAppearance,siteTokenStyle} from './style-system.mjs';
 /**
  * Shared, DOM-independent HTML renderer for both the studio and the static website.
  * ES module served unchanged to the browser by the local Node dev server.
@@ -88,6 +89,12 @@ function nodeAttrs(node, options, baseClasses, layoutStyle='', moreAttrs='') {
   const variant=safeToken(node.variant);
   if(variant) cls.push((baseClasses[0]==='card'?'card-':'item-')+variant,'variant-'+variant);
   if(node.overflow==='scroll')cls.push('item-scroll');
+  if(node.styleRef)cls.push('named-style');
+  if(node.type!=='card'&&(node.styleRef||node.appearance)){
+    const appearance=resolveAppearance(node,options.styleData);
+    if(appearance.tone!=='inherit')cls.push('ta-tone-'+appearance.tone);
+    if(appearance.weight!=='inherit')cls.push('ta-weight-'+appearance.weight);
+  }
   if(options.design&&options.selectedId===node.id)cls.push('chosen');
   const parentCols=safePositiveInt(options.parentColumns,1),parentRows=safePositiveInt(options.parentRows,1);
   const style=safeArea(node.area,parentCols,parentRows)+layoutStyle;
@@ -108,7 +115,7 @@ const defaultCard=(id,children,area,columns=1,rows=1)=>({
 export function renderBlocks(blocks,context,data,options={},depth=0) {
   if(depth>32)throw new Error('Composition nesting exceeds 32 levels while rendering');
   if(!Array.isArray(blocks))return '';
-  return blocks.map(node=>renderBlock(node,context,data,options,depth)).join('');
+  return blocks.map(node=>renderBlock(node,context,data,{...options,styleData:data},depth)).join('');
 }
 function renderBlock(node, context, data, options, depth) {
   if(depth>32)throw new Error('Composition nesting exceeds 32 levels while rendering');
@@ -154,16 +161,17 @@ function renderBlock(node, context, data, options, depth) {
       if(card.slot==='main'&&options.design&&!inner)
         inner='<div class="item item-placeholder placeholder">MAIN CONTENT SLOT · the Page inserts its own composition here</div>';
     }
-    const background=backgrounds.has(card.background)?card.background:'transparent';
-    const padding=['x1','x2','x4'].includes(card.padding)?card.padding:'x1';
-    const gap=['x1','x2','x4'].includes(card.gap)?card.gap:'x1';
+    const appearance=resolveAppearance(card,data);
+    const background=backgrounds.has(appearance.background)?appearance.background:'transparent';
+    const padding=['x1','x2','x4'].includes(appearance.padding)?appearance.padding:'x1';
+    const gap=['x1','x2','x4'].includes(appearance.gap)?appearance.gap:'x1';
     const tag=options.linkHref?'a':options.topLevel?'section':'div';
     const classes=['card','grid-card','bg-'+background,'pad-'+padding,'gap-'+gap];
     if(options.topLevel)classes.push('card-section');
     if(card.source)classes.push('card-query');
     if(card.reference)classes.push('card-reference');
     if(options.linkHref)classes.push('card-record');
-    if(card.border)classes.push('has-border');
+    if(appearance.border)classes.push('has-border');
     const link=options.linkHref?' href="'+escapeHtml(safeHref(options.linkHref))+'"':'';
     const attrs=nodeAttrs(card,options,classes,cardGridStyle(card),link);
     return '<'+tag+attrs+'>'+inner+'</'+tag+'>';
@@ -174,9 +182,10 @@ function renderBlock(node, context, data, options, depth) {
       const attrs=nodeAttrs(node,options,['item','item-footer']);
       return '<span'+attrs+'>'+escapeHtml(bind(node.text,context,data))+'</span>';
     }
-    const attrs=nodeAttrs(node,options,['item','item-text','b-text',safeToken(node.style||'body')]);
+    const role=resolveAppearance(node,data).role;
+    const attrs=nodeAttrs(node,options,['item','item-text','b-text',safeToken(role)]);
     // Preserve visual Cards while giving display/heading Items real semantic levels.
-    const tag=node.style==='display'||node.headingLevel===1?'h1':node.style==='heading'?'h2':'div';
+    const tag=role==='display'||node.headingLevel===1?'h1':role==='heading'?'h2':'div';
     return '<'+tag+attrs+'>'+ (escapeHtml(bind(node.text,context,data))||'<span class="muted">Empty text</span>')+'</'+tag+'>';
   }
   if(type==='rich'){
@@ -254,12 +263,13 @@ export function renderChromeComponent(data,role,{design=false,selectedId=null,ro
   if(!component)throw Error('Missing site '+role+' component');
   const root=component.blocks?.[0];
   if(!root||root.type!=='card')throw Error('Invalid semantic frame Card: '+id);
-  const nav=role==='navigation',background=backgrounds.has(root.background)?root.background:'transparent';
-  const gap=['x1','x2','x4'].includes(root.gap)?root.gap:'x1';
-  const padding=['x1','x2','x4'].includes(root.padding)?root.padding:'x1';
+  const appearance=resolveAppearance(root,data);
+  const nav=role==='navigation',background=backgrounds.has(appearance.background)?appearance.background:'transparent';
+  const gap=['x1','x2','x4'].includes(appearance.gap)?appearance.gap:'x1';
+  const padding=['x1','x2','x4'].includes(appearance.padding)?appearance.padding:'x1';
   const classes=['card',nav?'card-nav':'card-footer',nav?'web-nav':'web-footer',
     'grid-card',nav?'semantic-header':'semantic-footer','bg-'+background,'gap-'+gap,'pad-'+padding];
-  if(root.border)classes.push('has-border');
+  if(appearance.border)classes.push('has-border');
   if(design&&selectedId===root.id)classes.push('chosen');
   const attrs=' class="'+classes.join(' ')+'"'+(design?' data-node-id="'+escapeHtml(root.id)+'" data-kind="card"':'')+
     ' style="'+cardGridStyle(root)+'"'+(nav?' aria-label="Main navigation"':'');
@@ -279,8 +289,7 @@ export function renderSiteFrame(content,data,{design=false,route='/',isolated=fa
       ? ` style="aspect-ratio:1 / ${settings.heightFactor};"` : '';
   };
   // Master spacing is expressed in page-width units; no per-Card pixel overrides.
-  const unit=value=>Number.isFinite(value)&&value>0&&value<=4?value:1;
-  const spacingStyle=` style="--ta-pad:${unit(data.site?.design?.pad)}cqw;--ta-gap:${unit(data.site?.design?.gap)}cqw"`;
+  const spacingStyle=' style="'+siteTokenStyle(data)+'"';
   const header=renderChromeComponent(data,'navigation',{route,componentId:chrome?.navigation}) ||
     '<nav class="card card-nav web-nav grid-card semantic-header bg-transparent"'+frameHeight('header')+' aria-label="Main navigation">'+logo+links+'</nav>';
   const footer=renderChromeComponent(data,'footer',{route,componentId:chrome?.footer}) ||
