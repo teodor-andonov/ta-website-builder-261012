@@ -224,6 +224,42 @@ try{
     !assetQueryEditing.empty||!assetQueryEditing.restored||assetQueryEditing.current!=='Architecture')
    throw Error('M15 contextual Asset Gallery editor failed: '+JSON.stringify(assetQueryEditing));
  console.log('M15_ASSET_QUERIES_OK record context, AND predicate editing and gallery refresh');
+
+ // M16: demo-wide compositions, context-aware insertion, safe drafts and media usage.
+ const authoringPolish=await evaluate(`(()=>{
+   const app=window.__TA_STUDIO__;
+   const data=app.getData();
+   const migrated=data.pages.every(p=>p.composition&&p.blocks.length===0)&&
+     data.collections.every(c=>c.records.every(r=>r.composition));
+   app.navigate('page','home');
+   const select=document.querySelector('[data-act="select-node"][data-id="m6-hero-image"]');
+   select?.click();
+   const add=document.querySelector('#quickAdd');
+   const quickAddVisible=!!add&&getComputedStyle(add).display!=='none';
+   add?.click();
+   const contextual=document.querySelector('#modalHost')?.textContent?.includes('Inside m6-hero');
+   document.querySelector('[data-act="modal-close"]')?.click();
+   app.navigate('page','home');
+   document.querySelector('[data-act="duplicate-page"]')?.click();
+   const page=app.getData().pages.at(-1),source=app.getData().pages.find(p=>p.id==='home');
+   const pageSafe=page?.status==='Draft'&&page?.id!==source?.id&&
+      page?.composition?.id!==source?.composition?.id&&page?.slug!==source?.slug;
+   app.navigate('record',{collection:'projects',record:'p-facade'});
+   document.querySelector('[data-act="duplicate-record"]')?.click();
+   const copies=app.getData().collections.find(c=>c.id==='projects').records;
+   const rec=copies[0],origin=copies.find(r=>r.id==='p-facade');
+   const recordSafe=rec?.status==='Draft'&&rec?.id!==origin?.id&&
+      rec?.composition?.id!==origin?.composition?.id&&rec?.slug!==origin?.slug;
+   app.navigate('assets','house');
+   const usedBy=!!document.querySelector('#inspectBody')?.textContent.includes('Balkan House');
+   const deletionBlocked=!!document.querySelector('[data-act="delete-asset"]')?.disabled;
+   app.navigate('dashboard');
+   const built=document.querySelectorAll('#workbody .stat')[1]?.querySelector('b')?.textContent;
+   return {migrated,quickAddVisible,contextual,pageSafe,recordSafe,usedBy,deletionBlocked,built};
+ })()`);
+ if(Object.entries(authoringPolish).some(([key,value])=>key==='built'?value!=='10':!value))
+   throw Error('M16 authoring polish failed: '+JSON.stringify(authoringPolish));
+ console.log('M16_AUTHORING_OK demo compositions, contextual add, safe drafts, asset dependencies and route count');
  // M9: verify the actual site-wide contact editor, typed URL guard, and CTA.
  const configured=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('dashboard');
