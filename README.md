@@ -98,6 +98,23 @@ As agreed, converting demo legacy layouts is now allowed during V2 development; 
 
 Regression updates cover the migrated model, DOM and preview paths; M16 includes focused migration/asset tests and a disposable local Chromium interaction scenario. Full Node/browser/build/ZIP/visual acceptance is **still due at the end of V2**, before any merge.
 
+## M17 — local release acceptance and independent hosting
+
+The V2 source now includes a **single local acceptance command**, with no GitHub Actions test or staging dependency:
+
+```sh
+npm run release:check     # full Node + Chromium, backup/restore, builds, both ZIP modes
+npm run release:visual    # 10 local screenshot captures for manual review
+npm run package:site      # publishable public-only release/website.zip
+npm run preview           # loopback preview of the public static output
+```
+
+The release audit verifies actual JSON/media snapshot restoration, all Node tests, local Chromium checks, a root-domain noindex build, the GitHub Pages subpath build, an indexable custom-domain build with canonical/sitemap, all internal link/asset references, no leaked Studio/source files and independently verified ZIP manifests. It generates a dated JSON report under `release/reports/`. It does **not** deploy, change publishing settings in the live source, merge Git branches or replace authored data. `--no-browser` is a **partial diagnostic** with nonzero exit status, not signoff.
+
+Visual capture creates `release/review/YYMMDD-HHmm_m17-visual/` with desktop and narrow Chromium PNGs, an SHA-256/dimensions manifest and explicit **pending human inspection** status. After local checks, manually review the Studio editor and the 10 public routes, both indexing modes and the extracted public ZIP. The root-hosted ZIP is portable to ordinary static hosting, but is not the editable content backup.
+
+**Current acceptance status:** Audit/capture automation and regression tests are committed. **The complete local Node/Chromium/build/ZIP run and human visual review still have to be executed and approved before V2 can merge.** See [M17 release acceptance guide](docs/M17_RELEASE_ACCEPTANCE.md) for exact commands, data/media recovery and signoff.
+
 ## Project structure
 
 | Location | Purpose |
