@@ -247,8 +247,8 @@ function navigationItems(data,route){
 /** The component's root Card is the actual semantic landmark, not a nested wrapper.
  * Its children are ordinary editable Items/Cards; link Items come from site.navigation.
  */
-export function renderChromeComponent(data,role,{design=false,selectedId=null,route='/'}={}){
-  const id=data.site?.chrome?.[role];
+export function renderChromeComponent(data,role,{design=false,selectedId=null,route='/',componentId=null}={}){
+  const id=componentId||data.site?.chrome?.[role];
   if(!id)return null; // Older JSON keeps the legacy hardcoded chrome exactly.
   const component=data.components.find(c=>c.id===id&&c.frameRole===role);
   if(!component)throw Error('Missing site '+role+' component');
@@ -260,6 +260,7 @@ export function renderChromeComponent(data,role,{design=false,selectedId=null,ro
   const classes=['card',nav?'card-nav':'card-footer',nav?'web-nav':'web-footer',
     'grid-card',nav?'semantic-header':'semantic-footer','bg-'+background,'gap-'+gap,'pad-'+padding];
   if(root.border)classes.push('has-border');
+  if(design&&selectedId===root.id)classes.push('chosen');
   const attrs=' class="'+classes.join(' ')+'"'+(design?' data-node-id="'+escapeHtml(root.id)+'" data-kind="card"':'')+
     ' style="'+cardGridStyle(root)+'"'+(nav?' aria-label="Main navigation"':'');
   const children=renderBlocks(root.children,null,data,{
@@ -270,7 +271,7 @@ export function renderChromeComponent(data,role,{design=false,selectedId=null,ro
   return '<'+tag+attrs+'>'+children+links+'</'+tag+'>';
 }
 /** Shared site shell. Navigation is authored in JSON; drafts are hidden. */
-export function renderSiteFrame(content,data,{design=false,route='/',isolated=false}={}) {
+export function renderSiteFrame(content,data,{design=false,route='/',isolated=false,chrome=null}={}) {
   const {logo,links}=navigationItems(data,route);
   const frameHeight = name => {
     const settings=data.site?.design?.frame?.[name];
@@ -280,9 +281,9 @@ export function renderSiteFrame(content,data,{design=false,route='/',isolated=fa
   // Master spacing is expressed in page-width units; no per-Card pixel overrides.
   const unit=value=>Number.isFinite(value)&&value>0&&value<=4?value:1;
   const spacingStyle=` style="--ta-pad:${unit(data.site?.design?.pad)}cqw;--ta-gap:${unit(data.site?.design?.gap)}cqw"`;
-  const header=renderChromeComponent(data,'navigation',{design,route}) ||
+  const header=renderChromeComponent(data,'navigation',{design,route,componentId:chrome?.navigation}) ||
     '<nav class="card card-nav web-nav grid-card semantic-header bg-transparent"'+frameHeight('header')+' aria-label="Main navigation">'+logo+links+'</nav>';
-  const footer=renderChromeComponent(data,'footer',{design,route}) ||
+  const footer=renderChromeComponent(data,'footer',{design,route,componentId:chrome?.footer}) ||
     '<footer class="card card-footer web-footer grid-card semantic-footer bg-transparent"'+frameHeight('footer')+'>'+
     '<span class="item item-footer">'+escapeHtml(data.site.name)+'</span>'+
     '<span class="item item-footer">© '+new Date().getUTCFullYear()+'</span></footer>';
@@ -298,12 +299,21 @@ export function renderPagePreview(data,blocks,context=null,options={}) {
   // Legacy V1 pages and record detail pages remain byte-identical.
   const page=options.pageId?data.pages.find(p=>p.id===options.pageId):null;
   if(options.pageId&&!page)throw Error('Unknown preview page: '+options.pageId);
-  let composed=blocks;
+  let composed=blocks,layout=null;
   if(page?.template){
-    const template=data.templates.find(t=>t.id===page.template);
-    composed=assemblePage(template,page.composition);
+    layout=data.templates.find(t=>t.id===page.template);
+    composed=assemblePage(layout,page.composition);
+  }else if(context){
+    for(const collection of data.collections){
+      if(collection.records.some(record=>record.id===context.id)){
+        layout=templateFor(data,collection,context);
+        break;
+      }
+    }
   }
-  return renderSiteFrame(renderBlocks(composed,context,data,{...options,topLevel:true}),data,{...options,route:options.route||resolvePreviewRoute(data,blocks,context)});
+  return renderSiteFrame(renderBlocks(composed,context,data,{...options,topLevel:true}),data,{
+    ...options,chrome:layout?.chrome||null,route:options.route||resolvePreviewRoute(data,blocks,context)
+  });
 }
 export function renderDocument(data,{title,blocks,context=null,route,collectionId=null,pageId=null,publication={indexing:data.site?.publishing?.indexing===true,origin:null}}) {
   const heading=escapeHtml(title||data.site.name),name=escapeHtml(data.site.name);
