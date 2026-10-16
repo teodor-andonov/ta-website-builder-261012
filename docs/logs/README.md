@@ -33,5 +33,6 @@ Short, dated records of **completed or active development cycles**. These comple
 | 2026-10-16 | [M12 editable semantic Navbar/Footer and template overrides](2026-10-16-m12-semantic-site-chrome.md) |
 | 2026-10-16 | [M13 named styles, site tokens and Studio override editing](2026-10-16-m13-design-styles.md) |
 | 2026-10-16 | [M14 Record compositions, collection defaults and optional detail routes](2026-10-16-m14-record-compositions.md) |
+| 2026-10-16 | [M15 Contextual asset galleries, typed queries and Balkan House conversion](2026-10-16-m15-asset-query-galleries.md) |
 
 Older `docs/M*_*.md` files are **technical references and milestone snapshots**, not competing plans.
