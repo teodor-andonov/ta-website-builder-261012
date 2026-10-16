@@ -1,6 +1,7 @@
 /**
  * M17 local visual review capture — no publishing, no external network.
- * Produces actual desktop/narrow-browser PNGs and a hash/dimension manifest.
+ * Produces desktop-only PNGs and a hash/dimension manifest.
+ * Narrow/mobile layouts are not a separate V2 visual acceptance target.
  * A human still needs to inspect the images; successful capture != approval.
  */
 import {spawn,spawnSync} from 'node:child_process';
@@ -16,11 +17,11 @@ const stamp=()=>{
  const d=new Date(),f=n=>String(n).padStart(2,'0');
  return String(d.getFullYear()).slice(-2)+f(d.getMonth()+1)+f(d.getDate())+'-'+f(d.getHours())+f(d.getMinutes());
 };
-const routes=[
+export const VISUAL_REVIEW_ROUTES=[
  ['home','/'],['work','/work/'],['journal','/posts/'],
  ['project','/work/balkan-house/'],['post','/posts/designing-with-code/']
 ];
-const viewports=[['desktop',1440,900],['narrow',430,900]];
+export const VISUAL_REVIEW_VIEWPORTS=[['desktop',1440,900]];
 function findBrowser(){
  const candidates=[process.env.CHROME,
   '/usr/bin/chromium','/usr/bin/google-chrome','chromium','google-chrome',
@@ -71,7 +72,7 @@ export async function captureVisualReview({
  await new Promise((ok,fail)=>{server.once('error',fail);server.listen(0,'127.0.0.1',ok)});
  try{
   const port=server.address().port;
-  for(const [label,route] of routes)for(const [viewport,width,height] of viewports){
+  for(const [label,route] of VISUAL_REVIEW_ROUTES)for(const [viewport,width,height] of VISUAL_REVIEW_VIEWPORTS){
    const filename=stamp()+'_m17-'+label+'-'+viewport+'.png',filepath=join(output,filename);
    await capture(browser,[
     '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
@@ -88,7 +89,9 @@ export async function captureVisualReview({
   }
  }finally{await new Promise(ok=>server.close(ok))}
  const manifest={kind:'M17 visual review captures',createdAt:new Date().toISOString(),
-  status:'PENDING HUMAN INSPECTION',source:'locally built static website',screenshots};
+  status:'PENDING HUMAN INSPECTION',visualScope:'desktop only',
+  smallerScreens:'Same proportional composition; separate narrow/mobile visual review deferred',
+  source:'locally built static website',screenshots};
  await writeFile(join(output,'review-manifest.json'),JSON.stringify(manifest,null,2)+'\n');
  return {output,captures:screenshots.length,status:manifest.status};
 }
