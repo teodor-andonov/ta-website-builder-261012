@@ -1,5 +1,6 @@
 import {assemblePage} from './page-assembly.mjs';
 import {resolveAppearance,siteTokenStyle} from './style-system.mjs';
+import {queryAssets} from './asset-query.mjs';
 /**
  * Shared, DOM-independent HTML renderer for both the studio and the static website.
  * ES module served unchanged to the browser by the local Node dev server.
@@ -133,7 +134,19 @@ function renderBlock(node, context, data, options, depth) {
   }
   if(node.type==='card'){
     let card=node,inner='',settings=gridOptions(card,options);
-    if(card.source){
+    if(card.source?.kind==='assets'){
+      const source=card.source,assets=queryAssets(source,data.assets,context);
+      const cols=safePositiveInt(card.columns,1);
+      card={...card,rows:Math.max(1,Math.ceil(assets.length/cols))};
+      settings=gridOptions(card,options);
+      inner=assets.map((asset,i)=>{
+        const area={x1:i%cols+1,y1:Math.floor(i/cols)+1,x2:i%cols+2,y2:Math.floor(i/cols)+2};
+        const tile=defaultCard(node.id+'_'+asset.id,[
+          {id:node.id+'_'+asset.id+'_image',type:'image',source:asset.id,fit:'cover',caption:source.caption===true,loading:'lazy',area:{x1:1,y1:1,x2:2,y2:2}}
+        ],area);
+        return renderBlock(tile,null,data,{...settings,design:false},depth+1);
+      }).join('')||'<div class="item item-placeholder placeholder">No assets match this query</div>';
+    }else if(card.source){
       const source=card.source;
       const entries=queryEntries({...source},data);
       const cols=safePositiveInt(card.columns,1);
