@@ -699,7 +699,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  case'redo-structure':restoreScopeEdit('redo');break;
  case'add-nav':{
    const candidate=clone(db),links=candidate.site.navigation||(candidate.site.navigation=[]);
-   const next=candidate.pages.find(p=>p.status==='Published'&&!links.some(n=>n.href.replace(/\\/$/,'')===p.slug.replace(/\\/$/,'')));
+   const next=candidate.pages.find(p=>p.status==='Published'&&!links.some(n=>(n.href.endsWith('/')?n.href.slice(0,-1):n.href)===(p.slug.endsWith('/')?p.slug.slice(0,-1):p.slug)));
    if(!next){alert('Every published Page is already in navigation.');break}
    links.push({label:next.title,href:next.slug});
    try{validateSiteData(candidate)}catch(error){alert(error.message);break}
