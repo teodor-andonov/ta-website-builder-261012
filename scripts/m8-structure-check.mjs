@@ -144,6 +144,34 @@ try{
     !sharedChrome.footer||!sharedChrome.templateControls||sharedChrome.restored!=='Work')
    throw Error('M12 shared chrome Studio controls failed: '+JSON.stringify(sharedChrome));
  console.log('M12_CHROME_OK editable site nav, semantic Navbar/Footer and template selectors');
+ // M13: styles resolve from the shared JSON and local overrides reset to inheritance.
+ const styleEditing=await evaluate(`(()=>{
+   const get=()=>window.__TA_STUDIO__.getData();
+   window.__TA_STUDIO__.navigate('styles','index-root');
+   const prop=document.querySelector('[data-style-prop="background"]');
+   if(!prop)return {error:'M13 Styles editor missing'};
+   prop.value='grey-100';prop.dispatchEvent(new Event('change',{bubbles:true}));
+   const changed=get().site.design.styles.find(s=>s.id==='index-root').properties.background;
+   const reset=document.querySelector('[data-style-prop="background"]');
+   reset.value='transparent';reset.dispatchEvent(new Event('change',{bubbles:true}));
+   window.__TA_STUDIO__.navigate('page','work');
+   document.querySelector('[data-act="select-node"][data-id="work-index-section"]')?.click();
+   const reference=document.querySelector('[data-node-style-ref]')?.value||'';
+   const field=document.querySelector('[data-node-appearance="background"]');
+   if(!field)return {error:'M13 local override selector missing',reference};
+   field.value='black';field.dispatchEvent(new Event('change',{bubbles:true}));
+   const override=get().pages.find(p=>p.id==='work').composition.appearance?.background;
+   const inherit=document.querySelector('[data-node-appearance="background"]');
+   inherit.value='__inherit__';inherit.dispatchEvent(new Event('change',{bubbles:true}));
+   const final=get().pages.find(p=>p.id==='work').composition;
+   window.__TA_STUDIO__.navigate('styles','index-root');
+   return {changed,reference,override,reset:final.appearance?.background,
+     inherited:document.querySelector('[data-style-prop="background"]')?.value};
+ })()`);
+ if(styleEditing.error||styleEditing.changed!=='grey-100'||styleEditing.reference!=='index-root'||
+    styleEditing.override!=='black'||styleEditing.reset!==undefined||styleEditing.inherited!=='transparent')
+   throw Error('M13 Studio inheritance / local override reset failed: '+JSON.stringify(styleEditing));
+ console.log('M13_STYLES_OK shared Card styles, local overrides and inherited reset in Studio');
  // M9: verify the actual site-wide contact editor, typed URL guard, and CTA.
  const configured=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('dashboard');
