@@ -2,7 +2,7 @@
 // Requires Chrome or Chromium installed. Set CHROME to the executable path if needed.
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:http';
-import {readFile,rm,stat} from 'node:fs/promises';
+import {readFile,writeFile,rm,stat} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import {resolve,dirname,extname,sep,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -63,8 +63,10 @@ try{
   '--virtual-time-budget=3500','--window-size=1400,850','--dump-dom',
   'http://127.0.0.1:'+port+'/__layoutcheck.html'
  ],process.env,30000);
- if(!html.includes('<pre id="ta-dom-result">TA_DOM_OK'))
-  throw Error('Public page DOM checks failed: '+(html.match(/TA_DOM_(?:FAIL|OK)[^<]*/)?.[0]||'No result'));
+ if(!html.includes('<pre id="ta-dom-result">TA_DOM_OK')){
+  await writeFile('browser-dom-failure-local.log',html);
+  throw Error('Public page DOM checks failed: '+(html.match(/<pre id="ta-dom-result">([^<]*)/)?.[1]||'No result; see browser-dom-failure-local.log'));
+ }
  console.log('TA_DOM_OK local browser');
  await run(process.execPath,['scripts/real-wheel-check.mjs'],{...process.env,CHROME:chrome});
  console.log('TA_WHEEL_OK local browser');

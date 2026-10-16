@@ -9,7 +9,7 @@ import {collectPages, renderPagePreview} from '../src/render.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const data=validate(JSON.parse(await readFile(path.join(root,'content/site.json'),'utf8')));
 const home=data.pages.find(p=>p.id==='home');
-const html=renderPagePreview(data,home.blocks,null,{route:'/'});
+const html=renderPagePreview(data,home.blocks,null,{route:'/',pageId:home.id});
 
 test('M6 homepage expresses integrated identity using the existing JSON blocks',()=>{
  assert.ok(home);
@@ -22,7 +22,7 @@ test('M6 homepage expresses integrated identity using the existing JSON blocks',
   assert.ok(['text','card','image','button','divider','rich'].includes(b.type));
   if(b.type==='card')visit(b.children||[]);
  }}
- visit(home.blocks);
+ visit([home.composition]);
  for(const x of ['variant-hero','variant-intro','variant-work-section','variant-methods-section','variant-approach','variant-journal-list','variant-closer'])assert.ok(html.includes(x),x);
  assert.ok(html.includes('Architecture,'));
  assert.ok(html.includes('COMPUTATION'));
@@ -40,7 +40,7 @@ test('M6 work and journal are driven by the original collections and valid links
  assert.ok(!html.includes('/posts/soft-modules/'));
 });
 test('M6 designer and public output use the same semantic variants',()=>{
- const design=renderPagePreview(data,home.blocks,null,{route:'/',design:true,selectedId:'m6-hero'});
+ const design=renderPagePreview(data,[home.composition],null,{route:'/',design:true,isolated:true,selectedId:'m6-hero'});
  assert.ok(design.includes('variant-hero chosen'));
  assert.ok(design.includes('data-node-id="m6-hero"'));
  assert.ok(!html.includes('data-node-id="m6-hero"'));

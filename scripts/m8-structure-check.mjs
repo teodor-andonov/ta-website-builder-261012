@@ -29,7 +29,12 @@ const stressRoot=makeCard('stress-root',groups,null,8,1);
 let deepest={id:'stress-leaf',type:'text',text:'Deep nested authoring selection',area:{...cell}};
 for(let depth=12;depth>=0;depth--)deepest=makeCard('stress-level-'+depth,[deepest],{...cell});
 delete deepest.area;
-fixture.pages.find(p=>p.id==='studio').blocks.push(stressRoot,deepest);
+const stressPage=fixture.pages.find(p=>p.id==='studio');
+for(const [index,card] of [stressRoot,deepest].entries()){
+ card.area={x1:1,y1:stressPage.composition.rows+index+1,x2:2,y2:stressPage.composition.rows+index+2};
+ stressPage.composition.children.push(card);
+}
+stressPage.composition.rows+=2;
 await writeFile(fixtureFile,JSON.stringify(fixture));
 const port=5274;
 const server=spawn(process.execPath,['src/server.mjs'],{cwd:root,env:{...process.env,PORT:String(port),TA_DATA_ROOT:contentRoot},stdio:'ignore'});
@@ -81,6 +86,7 @@ try{
   await sleep(100);
  }
  if(!loaded)throw Error('Studio did not load');
+ await evaluate("window.__qaAlerts=[];window.alert=value=>window.__qaAlerts.push(String(value));true");
  // Publishing mode is edited in the same local JSON as all other site settings.
  const indexing=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('dashboard');
@@ -249,7 +255,7 @@ try{
    const copies=app.getData().collections.find(c=>c.id==='projects').records;
    const rec=copies[0],origin=copies.find(r=>r.id==='p-facade');
    const recordSafe=rec?.status==='Draft'&&rec?.id!==origin?.id&&
-      rec?.composition?.id!==origin?.composition?.id&&rec?.slug!==origin?.slug;
+      rec?.composition?.id!==origin?.composition?.id&&rec?.slug!==origin?.slug&&rec?.projectCode==='';
    app.navigate('assets','house');
    const usedBy=!!document.querySelector('#inspectBody')?.textContent.includes('Balkan House');
    const deletionBlocked=!!document.querySelector('[data-act="delete-asset"]')?.disabled;
@@ -318,11 +324,12 @@ try{
    document.querySelector('[data-act="mode"][data-mode="fields"]')?.click();
    window.__M9CodeError='';window.alert=value=>window.__M9CodeError=String(value);
    const code=document.querySelector('[data-record-field="projectCode"]');
+   const original=code.value;
    code.value='4424';code.dispatchEvent(new Event('change',{bubbles:true}));
-   return {message:window.__M9CodeError,
+   return {message:window.__M9CodeError,original,
      value:window.__TA_STUDIO__.getData().collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-facade').projectCode};
  })()`);
- if(!duplicateCode.message?.includes('Duplicate projectCode')||duplicateCode.value!=='')
+ if(!duplicateCode.message?.includes('Duplicate projectCode')||duplicateCode.value!==duplicateCode.original)
    throw Error('Duplicate project code bypassed validation: '+JSON.stringify(duplicateCode));
  console.log('M9_PROJECT_CODE_OK typed asset/record matching and duplicate-code rejection');
  // Upload a REAL PNG as an in-place replacement; covers still reference 'house'.
@@ -391,7 +398,7 @@ try{
  const formChange=await evaluate('(()=>{for(const [key,value] of Object.entries({x1:1,y1:3,x2:2,y2:5}))document.querySelector("[data-area-value="+key+"]").value=String(value);document.querySelector("[data-act=apply-area]").click();return true})()');
  if(!formChange)throw Error('Area numeric form unavailable');
  await sleep(700);
- const titleIn=data=>data.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.find(b=>b.id==='m6-hero-copy').children.find(b=>b.id==='m6-hero-title');
+ const titleIn=data=>data.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero').children.find(b=>b.id==='m6-hero-copy').children.find(b=>b.id==='m6-hero-title');
  const changed=titleIn(JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8')));
  if(changed.area.y1!==3||changed.area.y2!==5)throw Error('Atomic area Apply did not persist full rectangle');
  await evaluate('(()=>{for(const [key,value] of Object.entries({x1:1,y1:2,x2:2,y2:6}))document.querySelector("[data-area-value="+key+"]").value=String(value);document.querySelector("[data-act=apply-area]").click();return true})()');
@@ -414,13 +421,13 @@ try{
  if(!reparented)throw Error('Tree drag-and-drop controls missing');
  await sleep(750);
  const dnd=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- const hero=dnd.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero');
+ const hero=dnd.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero');
  if(!hero.children.find(x=>x.id==='m6-hero-graphic').children.some(x=>x.id==='m6-hero-title'))throw Error('Tree drop did not reparent authored Item');
  const undo=await evaluate('(()=>{const el=document.querySelector("[data-act=undo-structure]");if(!el||el.disabled)return false;el.click();return true})()');
  if(!undo)throw Error('Structure Undo unavailable');
  await sleep(650);
  const restored=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- if(!restored.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.find(x=>x.id==='m6-hero-copy').children.some(x=>x.id==='m6-hero-title'))throw Error('Structure Undo failed to restore source parent');
+ if(!restored.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero').children.find(x=>x.id==='m6-hero-copy').children.some(x=>x.id==='m6-hero-title'))throw Error('Structure Undo failed to restore source parent');
  console.log('M8_TREE_AREA_OK atomic four-value Apply, validation, reparent and Undo');
  // Traverse earlier rectangle edits: reparent undo restored the previous document.
  // Allow an actual atomic file write to finish: fixed sleeps race on large trees.
@@ -452,7 +459,7 @@ try{
  if(!pendingRedo)throw Error('The undone tree move should still be available to Redo');
  await invoke('redo-structure');
  const redoMove=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- if(!redoMove.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ if(!redoMove.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero')
    .children.find(x=>x.id==='m6-hero-graphic').children.some(x=>x.id==='m6-hero-title'))
    throw Error('Redo of the earlier tree move failed');
  await invoke('undo-structure');
@@ -466,13 +473,13 @@ try{
  console.log('M8_HISTORY_OK multi-step area Undo/Redo, tree Redo, new-edit branch invalidation');
  // Duplicate and delete must each be a single undoable transaction, without
  // overlapping the original Card area or creating a different canonical ID.
- const originalCount=restored.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ const originalCount=restored.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero')
    .children.find(b=>b.id==='m6-hero-copy').children.length;
  const duplicated=await evaluate('(()=>{const b=document.querySelector("[data-act=duplicate-node]");if(!b)return false;b.click();return true})()');
  if(!duplicated)throw Error('Duplicate action missing');
  await sleep(500);
  const afterDuplicate=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- const copyChildren=afterDuplicate.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ const copyChildren=afterDuplicate.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero')
    .children.find(b=>b.id==='m6-hero-copy').children;
  if(copyChildren.length!==originalCount+1)throw Error('Duplicate did not create a new child');
  const copies=copyChildren.filter(x=>x.type==='text'&&x.text===copyChildren.find(n=>n.id==='m6-hero-title').text);
@@ -482,7 +489,7 @@ try{
    throw Error('Duplicated child overlaps its source cell area');
  await invoke('undo-structure');
  const afterUndoDuplicate=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- if(afterUndoDuplicate.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ if(afterUndoDuplicate.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero')
  .children.find(b=>b.id==='m6-hero-copy').children.length!==originalCount)throw Error('Duplicate Undo did not remove copied child');
  await invoke('redo-structure');
  await evaluate('window.confirm=()=>true');
@@ -490,7 +497,7 @@ try{
  if(!deleted)throw Error('Delete action missing');
  await sleep(450);
  const afterDelete=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- if(afterDelete.pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero')
+ if(afterDelete.pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero')
  .children.find(b=>b.id==='m6-hero-copy').children.length!==originalCount)throw Error('Delete did not remove copied child');
  await invoke('undo-structure');
  await invoke('undo-structure'); // back to one original Title
@@ -509,24 +516,24 @@ try{
  };
  await keyboardMove('ArrowUp','ArrowUp',38);
  const movedUp=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
-   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.map(b=>b.id);
+   .pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero').children.map(b=>b.id);
  if(movedUp[0]!=='m6-hero-graphic')throw Error('Alt+ArrowUp did not reorder Card');
  const focusAfter=await evaluate('document.activeElement?.dataset.id');
  if(focusAfter!=='m6-hero-graphic')throw Error('Keyboard move lost focus');
  await invoke('undo-structure');
  const previous=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
-   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.map(b=>b.id);
+   .pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero').children.map(b=>b.id);
  if(previous[1]!=='m6-hero-graphic')throw Error('Keyboard reorder Undo failed');
  const toolbar=await evaluate('(()=>{document.querySelector("#structureTree .structure-select[data-id=m6-hero-graphic]")?.click();const n=document.querySelector(\'#structurePane [data-act="tree-move"][data-move="indent"]\');if(!n||n.disabled)return false;n.click();return true})()');
  if(!toolbar)throw Error('Tree Move toolbar cannot indent into preceding Card');
  await sleep(480);
  const afterIndent=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
-   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero');
+   .pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero');
  if(!afterIndent.children.find(b=>b.id==='m6-hero-copy').children.some(b=>b.id==='m6-hero-graphic'))
    throw Error('Toolbar indent did not nest Card into previous sibling');
  await invoke('undo-structure');
  const undoIndent=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'))
-   .pages.find(p=>p.id==='home').blocks.find(b=>b.id==='m6-hero').children.map(b=>b.id);
+   .pages.find(p=>p.id==='home').composition.children.find(b=>b.id==='m6-hero').children.map(b=>b.id);
  if(undoIndent[1]!=='m6-hero-graphic')throw Error('Toolbar indent was not undoable');
  console.log('M8_KEYBOARD_MOVE_OK Alt+ArrowUp, retained focus, toolbar indent and history Undo');
  const fold=await evaluate("(()=>{const el=document.querySelector('#structurePane [data-act=\"structure-fold\"][data-id=\"m6-hero\"]');if(!el)return false;el.click();return !document.querySelector('#structurePane [data-id=\"m6-hero-title\"]');})()");
@@ -585,7 +592,7 @@ try{
    const source=window.__TA_STUDIO__.getData();
    const before=JSON.stringify(source);
    const textarea=document.querySelector('#jsonEditor'),editing=JSON.parse(textarea.value);
-   editing.blocks[1].id=editing.blocks[0].id;
+   editing.composition.children[1].id=editing.composition.children[0].id;
    textarea.value=JSON.stringify(editing);
    document.querySelector('[data-act="apply-json"]').click();
    return {message:document.querySelector('#jsonNotice')?.textContent,
@@ -595,7 +602,7 @@ try{
    throw Error('Invalid scoped JSON poisoned editor state: '+JSON.stringify(rejectedJSON));
  await sleep(250);
  const rejectedDisk=JSON.parse(await readFile(join(contentRoot,'content','site.json'),'utf8'));
- if(rejectedDisk.pages.find(p=>p.id==='home').blocks[1].id===rejectedDisk.pages.find(p=>p.id==='home').blocks[0].id)
+ if(rejectedDisk.pages.find(p=>p.id==='home').composition.children[1].id===rejectedDisk.pages.find(p=>p.id==='home').composition.children[0].id)
    throw Error('Invalid scoped JSON was written to disk');
  console.log('M8_JSON_TRANSACTION_OK invalid scoped JSON retains editor state and on-disk tree');
  // Full JSON imports must use the same validated transaction boundary as scoped edits.
@@ -711,7 +718,7 @@ try{
  const conflictUi=await evaluate(`(()=>({
   message:document.querySelector('#saved')?.textContent,
   exportAvailable:!!document.querySelector('#exportBtn'),
-  inMemory:window.__TA_STUDIO__.getData().pages.find(p=>p.id==='home').blocks
+  inMemory:window.__TA_STUDIO__.getData().pages.find(p=>p.id==='home').composition.children
     .find(b=>b.id==='m6-hero').children.find(b=>b.id==='m6-hero-copy').children
     .find(b=>b.id==='m6-hero-title').label
  }))()`);
@@ -760,7 +767,7 @@ try{
      error:document.querySelector('#saveDetails')?.textContent,
      visible:!document.querySelector('#saveDetails')?.hidden,
      exported:!!document.querySelector('#exportBtn'),
-     label:window.__TA_STUDIO__.getData().pages.find(p=>p.id==='home').blocks
+     label:window.__TA_STUDIO__.getData().pages.find(p=>p.id==='home').composition.children
        .find(b=>b.id==='m6-hero').children.find(b=>b.id==='m6-hero-copy').children
        .find(b=>b.id==='m6-hero-title').label
    }))()`);

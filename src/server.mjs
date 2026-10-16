@@ -85,6 +85,8 @@ const server = http.createServer(async (req,res)=>{
       return respond(res,200,await readFile(path.join(root,'src','model.mjs')),'text/javascript; charset=utf-8');
     if(req.method==='GET' && pathname==='/src/page-assembly.mjs')
       return respond(res,200,await readFile(path.join(root,'src','page-assembly.mjs')),'text/javascript; charset=utf-8');
+    if(req.method==='GET' && ['/src/style-system.mjs','/src/asset-query.mjs','/src/asset-usage.mjs'].includes(pathname))
+      return respond(res,200,await readFile(path.join(root,'src',path.posix.basename(pathname))),'text/javascript; charset=utf-8');
     // Allow the editor to import the *same* ESM renderer that the static build uses.
     if(req.method==='GET' && pathname==='/src/render.mjs')
       return respond(res,200,await readFile(path.join(root,'src','render.mjs')),'text/javascript; charset=utf-8');

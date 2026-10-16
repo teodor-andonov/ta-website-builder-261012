@@ -21,7 +21,7 @@ const safeArea = (area, columns, rows) => {
 const backgrounds=new Set(['transparent','white','grey-100','grey-200','grey-300','grey-600','black']);
 export function cardGridStyle(block){
   const columns=safePositiveInt(block.columns,1),rows=safePositiveInt(block.rows,Math.max(1,Math.ceil((block.children||[]).length/columns)));
-  return `grid-template-columns:repeat(${columns},minmax(0,1fr));grid-template-rows:repeat(${rows},${block.constrainHeight?'minmax(0,1fr)':'minmax(min-content,1fr)'});${block.constrainHeight?`aspect-ratio:1 / ${safeFactor(block.heightFactor)};`:''}`;
+  return `grid-template-columns:repeat(${columns},minmax(0,1fr));grid-template-rows:repeat(${rows},${block.constrainHeight?'minmax(0,1fr)':'max-content'});${block.constrainHeight?`aspect-ratio:1 / ${safeFactor(block.heightFactor)};`:''}`;
 }
 
 export const recordPath = (collection, record) => `${collection.base}/${record.slug}/`;

@@ -71,7 +71,7 @@ test('Template overrides one Footer while reusing global Navbar across pages',()
   assert.match(html,/ALTERNATE FOOTER/,route);
   assert.match(html,/TA<span style="font-weight:300">\/<\/span>/,route);
  }
- assert.doesNotMatch(htmlAt(data,'/'),/ALTERNATE FOOTER/,'unrelated Home keeps default Footer');
+ assert.match(htmlAt(data,'/'),/ALTERNATE FOOTER/,'Home now shares the General template');
  assert.doesNotMatch(htmlAt(data,'/work/balkan-house/'),/ALTERNATE FOOTER/,'record template inherits default');
  assert.match(renderPagePreview(data,data.pages.find(p=>p.id==='journal').blocks,null,{pageId:'journal',route:'/posts/'}),/ALTERNATE FOOTER/);
  assert.match(renderChromeComponent(data,'footer',{componentId:second.id}),/ALTERNATE FOOTER/);

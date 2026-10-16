@@ -37,4 +37,6 @@ Short, dated records of **completed or active development cycles**. These comple
 | 2026-10-16 | [M16 Unified demo authoring, migrated compositions and safe media workflow](2026-10-16-m16-unified-authoring.md) |
 | 2026-10-16 | [M17 Local release acceptance audit, static ZIP and visual review workflow](2026-10-16-m17-release-readiness.md) |
 
+| 2026-10-16 | [M17 Real Windows/Chrome acceptance, release fixes and desktop review](2026-10-16-m17-local-acceptance.md) |
+
 Older `docs/M*_*.md` files are **technical references and milestone snapshots**, not competing plans.

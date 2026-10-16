@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 
 // The browser imports the same ESM renderer that Node uses; exercise the real
 // local server's strict static module / SVG path allowlist without mutating JSON.
 test('development server serves shared ESM and demo assets but no arbitrary files', {timeout:12000}, async()=>{
   const port=41000+(process.pid%19000);
   const server=spawn(process.execPath,['src/server.mjs'],{
-    cwd:new URL('..',import.meta.url).pathname,env:{...process.env,PORT:String(port)},stdio:'ignore'
+    cwd:fileURLToPath(new URL('..',import.meta.url)),env:{...process.env,PORT:String(port)},stdio:'ignore'
   });
   const url=`http://127.0.0.1:${port}`;
   try {
@@ -30,6 +31,13 @@ test('development server serves shared ESM and demo assets but no arbitrary file
     assert.equal(module.status,200);
     assert.match(module.headers.get('content-type'),/text\/javascript/);
     assert.match(await module.text(),/export function renderBlocks/);
+    for(const name of ['model','tree-editor','editor-history','page-assembly','style-system','asset-query','asset-usage']){
+      const helper=await fetch(`${url}/src/${name}.mjs`);
+      assert.equal(helper.status,200,name+' is a required Studio module');
+      assert.match(helper.headers.get('content-type'),/text\/javascript/);
+      assert.match(await helper.text(),/export /);
+    }
+    assert.equal((await fetch(`${url}/src/server.mjs`)).status,404,'server source remains outside the module allowlist');
     assert.equal(css.status,200);
     assert.match(css.headers.get('content-type'),/text\/css/);
     assert.match(await css.text(),/M7 \/ Print-native Card system/);

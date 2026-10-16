@@ -53,6 +53,15 @@ try{
   if(scrolled<50)throw Error('Wheel event failed to scroll document over '+selector);
  }
  console.log('TA_WHEEL_OK over hero text and image Items');
+ await cmd('Page.navigate',{url:'http://127.0.0.1:'+port+'/work/balkan-house/'});
+ let heading;
+ for(let tries=0;tries<50;tries++){
+  heading=await expr(`(()=>{const h=document.querySelector('main h1');return h?.textContent==='Balkan House'?{top:h.getBoundingClientRect().top,height:h.getBoundingClientRect().height}:null})()`);
+  if(heading)break;await sleep(100);
+ }
+ if(!heading||heading.top<0||heading.top>500||heading.height>150)
+  throw Error('Unconstrained project composition hides its title below oversized grid rows: '+JSON.stringify(heading));
+ console.log('TA_COMPOSITION_HEIGHT_OK project title remains above the fold');
 } finally {
  ws?.close();chrome.kill('SIGKILL');server.close();await sleep(150);await rm(dir,{recursive:true,force:true}).catch(()=>{});
 }

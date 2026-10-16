@@ -1,12 +1,12 @@
 // Browser-level structural and scroll regression check.
-// Injected into a temporary copy of the built Home page inside GitHub Actions.
+// Injected into a disposable built Home page for local Chromium checks.
 // It is NOT shipped in the production dist/ deployment.
 import {readFile,writeFile} from 'node:fs/promises';
 const root=new URL('../dist/',import.meta.url);
 const original=await readFile(new URL('index.html',root),'utf8');
 const test=String.raw`
 <script>
-window.addEventListener('load',()=>{
+window.addEventListener('DOMContentLoaded',()=>{
   setTimeout(()=>{
     const checks={};
     const page=document.querySelector('.card.card-page');
@@ -20,14 +20,15 @@ window.addEventListener('load',()=>{
     checks.focusableMain=main?.getAttribute('tabindex')==='-1'&&main.id==='main-content';
     checks.singleMainHeading=document.querySelectorAll('main h1').length===1;
     checks.navNamed=nav?.getAttribute('aria-label')==='Main navigation';
-    checks.directSections=(main?.querySelectorAll(':scope > .card.card-section').length||0)===8;
+    const composition=main?.querySelector(':scope > .card > .card > .card');
+    checks.composedSections=composition?.children.length===8;
     checks.roundedShell=[page,nav,main,footer].every(el=>el&&parseFloat(getComputedStyle(el).borderTopLeftRadius)>0);
     checks.directNavLinks=nav?.querySelectorAll(':scope > .item.item-link').length===3 && !nav.querySelector('.card-nav-links');
-    const sectionWork=main?.querySelector(':scope > .card-work-section');
-    const sectionMethods=main?.querySelector(':scope > .card-methods-section');
-    const sectionJournal=main?.querySelector(':scope > .card-journal-section');
-    const sectionApproach=main?.querySelector(':scope > .card-approach');
-    const sectionCloser=main?.querySelector(':scope > .card-closer');
+    const sectionWork=composition?.querySelector(':scope > .card-work-section');
+    const sectionMethods=composition?.querySelector(':scope > .card-methods-section');
+    const sectionJournal=composition?.querySelector(':scope > .card-journal-section');
+    const sectionApproach=composition?.querySelector(':scope > .card-approach');
+    const sectionCloser=composition?.querySelector(':scope > .card-closer');
     checks.integratedWork=sectionWork?.querySelectorAll(':scope > .item').length===3 && sectionWork.querySelectorAll(':scope > .card.card-query').length===1;
     checks.integratedMethods=sectionMethods?.querySelectorAll(':scope > .item').length===2 && sectionMethods.querySelectorAll(':scope > .card').length===3;
     checks.integratedJournal=sectionJournal?.querySelectorAll(':scope > .item').length===3 && sectionJournal.querySelectorAll(':scope > .card.card-query').length===1;
@@ -53,6 +54,7 @@ window.addEventListener('load',()=>{
     checks.documentScrolls=scrollY>100;
     const hero=document.querySelector('.card-hero');
     checks.heroHasTwoTracks=Boolean(hero&&getComputedStyle(hero).gridTemplateColumns.split(' ').filter(Boolean).length===2);
+    checks.heroHeightConstraint=Boolean(hero&&Math.abs(hero.getBoundingClientRect().height/hero.getBoundingClientRect().width-.48)<.02);
     const failures=Object.keys(checks).filter(k=>!checks[k]);
     const status=failures.length?'TA_DOM_FAIL '+JSON.stringify(checks):'TA_DOM_OK '+JSON.stringify(checks);
     const pre=document.createElement('pre');pre.id='ta-dom-result';pre.textContent=status;document.body.append(pre);

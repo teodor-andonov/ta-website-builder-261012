@@ -12,16 +12,16 @@ const home=data=>data.pages.find(p=>p.id==='home');
 test('M9 homepage keeps agreed services, three arrangements and one contact CTA',()=>{
   const d=copy();
   assert.doesNotThrow(()=>validate(d));
-  const html=renderBlocks(home(d).blocks,null,d);
+  const html=renderBlocks([home(d).composition],null,d);
   for(const label of ['FACADES &amp; RESEARCH','HOW WE WORK','FIXED PACKAGES','SUBSCRIPTION','CUSTOM PROJECT'])
     assert.ok(html.includes(label),label);
-  assert.equal(home(d).blocks.filter(b=>b.reference==='contact-cta').length,1);
+  assert.equal(home(d).composition.children.filter(b=>b.reference==='contact-cta').length,1);
 });
 
 test('M9 empty booking destination must never expose a misleading clickable contact link',()=>{
   const d=copy();
   assert.deepEqual(d.site.contact,{email:'',bookingUrl:''});
-  const html=renderBlocks(home(d).blocks,null,d);
+  const html=renderBlocks([home(d).composition],null,d);
   assert.match(html,/15-minute introduction · booking link pending/);
   assert.match(html,/aria-disabled="true"/);
   assert.doesNotMatch(html,/href="mailto:hello@example\.com"/);
@@ -34,7 +34,7 @@ test('M9 configured booking link is bound into contact component across template
   d.site.contact={email:'studio@example.org',bookingUrl:'https://calendar.example.org/teo/intro'};
   assert.doesNotThrow(()=>validate(d));
   assert.equal(bind('{{site.contact.bookingUrl}}',null,d),d.site.contact.bookingUrl);
-  const html=renderBlocks(home(d).blocks,null,d);
+  const html=renderBlocks([home(d).composition],null,d);
   assert.match(html,/href="https:\/\/calendar\.example\.org\/teo\/intro"/);
   assert.match(html,/target="_blank" rel="noopener noreferrer"/);
   assert.match(html,/Book a 15-minute introduction/);

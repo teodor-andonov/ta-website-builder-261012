@@ -7,6 +7,7 @@
 import {spawn,spawnSync} from 'node:child_process';
 import {createServer} from 'node:http';
 import {readFile,writeFile,mkdir,stat} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {resolve,join,dirname,sep,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -28,6 +29,7 @@ function findBrowser(){
   ...(process.platform==='win32'?[join(process.env.PROGRAMFILES||'C:\\Program Files','Google','Chrome','Application','chrome.exe')]:[])
  ].filter(Boolean);
  for(const binary of candidates){
+  if((binary.includes('/')||binary.includes('\\'))&&existsSync(binary))return binary;
   const version=spawnSync(binary,['--version'],{encoding:'utf8',timeout:5000});
   if(version.status===0)return binary;
  }

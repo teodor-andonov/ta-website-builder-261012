@@ -1027,6 +1027,7 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
  }
  case'duplicate-record':{
    const c=coll(),r=clone(rec());r.id=uid('r');r.title+=' (copy)';r.status='Draft';r.placeholder=true;r.approvedForPublication=false;
+   if(c.id==='projects')r.projectCode='';
    let stem=r.slug+'-copy',slug=stem,i=2;
    while(c.records.some(x=>x.slug===slug))slug=stem+'-'+i++;
    r.slug=slug;

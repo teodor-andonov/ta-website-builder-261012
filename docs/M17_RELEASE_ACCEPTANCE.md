@@ -1,6 +1,6 @@
 # M17 — local V2 release acceptance
 
-**Current state:** release-check automation is authored; the **full acceptance run and human visual signoff are still pending**. This guide does not itself certify a release. `main` continues to publish the existing V1 website. No merge or production upload is part of these commands.
+**Current state (2026-10-16):** the **full local automated acceptance run passed** (169/169 Node tests plus Chrome, restore/build/ZIP checks). Five desktop captures are ready; **human visual signoff and explicit merge approval remain pending**. See [the acceptance log](logs/2026-10-16-m17-local-acceptance.md). This guide does not itself certify a release. `main` continues to publish the existing V1 website. No merge or production upload is part of these commands.
 
 ## Why local?
 
@@ -49,13 +49,13 @@ Keep the snapshot **outside** the public ZIP. It contains editable `content/site
 
 | Check | Current status |
 |---|---|
-| V2 source architecture, 4 composed Pages, 8 composed Records, 10 rendered routes | Implemented; focused source checks previously passed |
-| Local Node unit/regression suite | **Pending actual local execution** |
-| Chromium DOM/Studio/wheel browser tests | **Pending actual local execution** |
-| Root / GitHub Pages / indexable static builds | **Pending actual local execution** |
-| Restored JSON + media snapshot and ZIP verification | **Pending actual local execution** |
-| Five desktop screenshots and human visual review | **Pending** |
-| Release ZIP handoff and independent hosting review | **Pending** |
+| V2 source architecture, 4 composed Pages, 8 composed Records, 10 rendered routes | Implemented; real local full audit passed |
+| Local Node unit/regression suite | **Passed locally, 2026-10-16** |
+| Chromium DOM/Studio/wheel browser tests | **Passed locally, 2026-10-16** |
+| Root / GitHub Pages / indexable static builds | **Passed locally, 2026-10-16** |
+| Restored JSON + media snapshot and ZIP verification | **Passed locally, 2026-10-16** |
+| Five desktop screenshots and human visual review | **Captured and agent-inspected; user review pending** |
+| Release ZIP handoff and independent hosting review | **ZIP verified, extracted and served locally; external hosting deferred** |
 | User approval to merge to `main` | **Not granted** |
 
 The integrated toolchain is committed so these can be run in a local checkout. Do not mark M17 accepted just because source checks or the release script's own syntax pass.
