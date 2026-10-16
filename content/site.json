@@ -52,6 +52,10 @@
     "contact": {
       "email": "",
       "bookingUrl": ""
+    },
+    "chrome": {
+      "navigation": "site-navbar",
+      "footer": "site-footer"
     }
   },
   "collections": [
@@ -1229,6 +1233,94 @@
                 "x1": 3,
                 "y1": 1,
                 "x2": 4,
+                "y2": 2
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "site-navbar",
+      "name": "Site Navbar",
+      "description": "Reusable semantic navigation Card. Nav links are generated only from site.navigation.",
+      "frameRole": "navigation",
+      "blocks": [
+        {
+          "id": "site-navbar-root",
+          "type": "card",
+          "label": "site navbar root",
+          "columns": 12,
+          "rows": 1,
+          "gap": "x1",
+          "padding": "x1",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": true,
+          "heightFactor": 0.06,
+          "children": [
+            {
+              "id": "site-navbar-logo",
+              "type": "button",
+              "variant": "site-logo",
+              "label": "Brand logo",
+              "text": "TA/",
+              "href": "/",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 4,
+                "y2": 2
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "site-footer",
+      "name": "Site Footer",
+      "description": "Reusable semantic footer Card. Text is editable and supports site.name and site.year bindings.",
+      "frameRole": "footer",
+      "blocks": [
+        {
+          "id": "site-footer-root",
+          "type": "card",
+          "label": "site footer root",
+          "columns": 12,
+          "rows": 1,
+          "gap": "x1",
+          "padding": "x1",
+          "background": "transparent",
+          "border": false,
+          "constrainHeight": true,
+          "heightFactor": 0.05,
+          "children": [
+            {
+              "id": "site-footer-name",
+              "type": "text",
+              "variant": "site-footer",
+              "label": "Practice name",
+              "text": "{{site.name}}",
+              "style": "caption",
+              "area": {
+                "x1": 1,
+                "y1": 1,
+                "x2": 7,
+                "y2": 2
+              }
+            },
+            {
+              "id": "site-footer-year",
+              "type": "text",
+              "variant": "site-footer",
+              "label": "Copyright year",
+              "text": "© {{site.year}}",
+              "style": "caption",
+              "area": {
+                "x1": 10,
+                "y1": 1,
+                "x2": 13,
                 "y2": 2
               }
             }
