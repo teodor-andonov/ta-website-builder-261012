@@ -147,6 +147,9 @@ test('M14 refuses unsupported record template/geometry/reference combinations',(
  d=>{record(d,'posts','post-four').composition.source={collection:'posts',template:'post-row'}},
  d=>{collection(d,'posts').compositionTemplate='project-detail'},
  d=>{collection(d,'posts').compositionTemplate='record-project-layout'},
+ d=>{collection(d,'posts').defaultTemplate='record-post-layout'},
+ d=>{collection(d,'posts').formatTemplates.Note='record-post-layout'},
+ d=>{collection(d,'posts').defaultTemplate='project-detail'},
  d=>{record(d,'posts','post-four').detailPage='no'},
  d=>{collection(d,'posts').detailPages='no'},
  d=>{d.templates.find(t=>t.id==='record-post-layout').blocks[0].children.push({id:'duplicate-slot',type:'card',slot:'main',columns:1,rows:1,background:'transparent',padding:'x1',gap:'x1',border:false,constrainHeight:false,heightFactor:.5,children:[],area:{x1:1,y1:1,x2:2,y2:2}})}
