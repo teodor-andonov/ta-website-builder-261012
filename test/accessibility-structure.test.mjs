@@ -20,7 +20,7 @@ test('M10 public pages expose one named main landmark, real headings and keyboar
      assert.match(img,/\balt="[^"]*"/,route+' image missing alt attribute');
      assert.match(img,/\bdecoding="async"/,route+' image must decode asynchronously');
    }
-   assert.ok(html.includes('meta name="robots" content="index, follow"'),route);
+   assert.ok(html.includes('meta name="robots" content="noindex, nofollow"'),route);
  }
 });
 test('M10 semantic heading level only applies to authored text Items',()=>{
