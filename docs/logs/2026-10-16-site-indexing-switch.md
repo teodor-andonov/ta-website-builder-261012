@@ -5,7 +5,7 @@
 
 ## Decision
 
-Add one simple two-state **Search indexing** setting in Content Studio → Overview (also visible from Data settings), stored in canonical `content/site.json` as `site.publishing.indexing`. Current TA placeholder site explicitly uses **false**. Older JSON lacking the field retains the previous indexable behaviour for compatibility.
+Add one simple two-state **Search indexing** setting in Content Studio → Overview (also visible from Data settings), stored in canonical `content/site.json` as `site.publishing.indexing`. Current TA placeholder site explicitly uses **false**. Older JSON lacking the field safely defaults to **Off**, avoiding accidental indexing.
 
 **Off:** every published HTML route emits `<meta name="robots" content="noindex, nofollow">`, including project/post detail pages; 404 remains noindex. Keep `robots.txt` crawlable (`Allow: /`) so crawlers can encounter the meta tag. Do not emit a sitemap. This does **not** make the URL private, guarantee immediate removal from search results, or prevent third parties from linking to it.
 
