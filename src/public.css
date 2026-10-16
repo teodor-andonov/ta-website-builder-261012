@@ -6,12 +6,12 @@
   --ta-grey-100:#f2f2f2;--ta-grey-200:#e3e3e3;
   --ta-grey-300:#bcbcbc;--ta-grey-600:#666666;--ta-black:#111111;
   --ta-mono:"Geist Mono","PT Mono",Consolas,monospace;
-  --ta-radius:1.15cqw;
+  --ta-radius:1.15cqw;--ta-outline-opacity:20%;
   --ta-site-max:1600px;
   /* Both master spacing values are measured in page-width units. */
   --ta-pad:1cqw;--ta-gap:1cqw;
 }
-body.published-site{margin:0;background:#ffffff;color:#141414}
+body.published-site{margin:0;background:var(--ta-paper);color:var(--ta-ink)}
 :is(.published-site,.editor-shell) .webpage{
   container-type:inline-size;width:100%;max-width:var(--ta-site-max);
   display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;
@@ -48,18 +48,18 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 :is(.published-site,.editor-shell) .card-page>.card-footer{width:100%;height:auto;min-width:0}
 :is(.published-site,.editor-shell) .card-section{grid-column:1;min-width:0}
 :is(.published-site,.editor-shell) .card.bg-transparent{background:transparent}
-:is(.published-site,.editor-shell) .card.bg-white{background:#ffffff}
+:is(.published-site,.editor-shell) .card.bg-white{background:var(--ta-paper)}
 :is(.published-site,.editor-shell) .card.bg-grey-100{background:var(--ta-grey-100)}
 :is(.published-site,.editor-shell) .card.bg-grey-200{background:var(--ta-grey-200)}
 :is(.published-site,.editor-shell) .card.bg-grey-300{background:var(--ta-grey-300)}
-:is(.published-site,.editor-shell) .card.bg-grey-600{background:var(--ta-grey-600);color:#fff}
-:is(.published-site,.editor-shell) .card.bg-black{background:var(--ta-black);color:#fff}
+:is(.published-site,.editor-shell) .card.bg-grey-600{background:var(--ta-grey-600);color:var(--ta-paper)}
+:is(.published-site,.editor-shell) .card.bg-black{background:var(--ta-black);color:var(--ta-paper)}
 /* Outline never enters the CSS box model. currentColor adapts to dark/light Cards.
    Drawing inward keeps the line visible on clipped nested Card edges. */
 :is(.published-site,.editor-shell) .card.has-border,
 :is(.published-site,.editor-shell) .show-card-borders .card,
 :is(.published-site,.editor-shell) .webpage.show-card-borders{
-  outline:1px solid color-mix(in srgb, currentColor 20%, transparent);
+  outline:1px solid color-mix(in srgb, currentColor var(--ta-outline-opacity), transparent);
   outline-offset:-1px;
 }
 
@@ -214,3 +214,12 @@ body.published-site{margin:0;background:#ffffff;color:#141414}
 }
 :is(.published-site,.editor-shell) .card-close-black>.item-button:hover{background:#222222}
 :is(.published-site,.editor-shell) .card-closer>.item-text.heading{font-size:2.65cqw}
+
+/* M13 named Item appearance: explicit tone and weight; no arbitrary CSS or selectors.
+   Only assigned named styles/local appearance overrides receive these classes. */
+:is(.published-site,.editor-shell) .item.ta-tone-ink{color:var(--ta-ink)}
+:is(.published-site,.editor-shell) .item.ta-tone-muted{color:var(--ta-grey-600)}
+:is(.published-site,.editor-shell) .item.ta-tone-inverse{color:var(--ta-paper)}
+:is(.published-site,.editor-shell) .item.ta-weight-regular{font-weight:450}
+:is(.published-site,.editor-shell) .item.ta-weight-medium{font-weight:550}
+:is(.published-site,.editor-shell) .item.ta-weight-bold{font-weight:700}
