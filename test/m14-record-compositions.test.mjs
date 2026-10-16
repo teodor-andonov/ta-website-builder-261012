@@ -109,6 +109,30 @@ test('M14 legacy Project/Post HTML stays unchanged with unrelated draft record m
  assert.deepEqual(collectPages(d),collectPages(old));
 });
 
+test('M14 individual detail-page switch preserves query cards without broken links',()=>{
+ const d=copy(),item=record(d,'projects','p-balkan');
+ item.detailPage=false;
+ validate(d);
+ const pages=collectPages(d);
+ assert.ok(!pages.some(p=>p.route==='/work/balkan-house/'));
+ assert.equal(pages.length,9);
+ const home=html(d,'/');
+ assert.ok(home.includes('Balkan')||home.includes(item.title));
+ assert.doesNotMatch(home,/href="\/work\/balkan-house\/"/);
+ assert.ok(pages.some(p=>p.route==='/work/'));
+ assert.ok(pages.some(p=>p.route==='/work/responsive-envelope/'));
+});
+test('M14 collection detail-page switch suppresses only that collection routes',()=>{
+ const d=copy();
+ collection(d,'projects').detailPages=false;
+ validate(d);
+ const pages=collectPages(d);
+ assert.ok(!pages.some(p=>p.route.startsWith('/work/')&&p.route!=='/work/'));
+ assert.ok(pages.some(p=>p.route==='/work/'));
+ assert.ok(pages.some(p=>p.route==='/posts/designing-with-code/'));
+ assert.doesNotMatch(html(d,'/'),/href="\/work\/balkan-house\/"/);
+});
+
 test('M14 refuses unsupported record template/geometry/reference combinations',()=>{
  const variants=[
  d=>{record(d,'posts','post-four').template='missing'},
@@ -123,6 +147,8 @@ test('M14 refuses unsupported record template/geometry/reference combinations',(
  d=>{record(d,'posts','post-four').composition.source={collection:'posts',template:'post-row'}},
  d=>{collection(d,'posts').compositionTemplate='project-detail'},
  d=>{collection(d,'posts').compositionTemplate='record-project-layout'},
+ d=>{record(d,'posts','post-four').detailPage='no'},
+ d=>{collection(d,'posts').detailPages='no'},
  d=>{d.templates.find(t=>t.id==='record-post-layout').blocks[0].children.push({id:'duplicate-slot',type:'card',slot:'main',columns:1,rows:1,background:'transparent',padding:'x1',gap:'x1',border:false,constrainHeight:false,heightFactor:.5,children:[],area:{x1:1,y1:1,x2:2,y2:2}})}
  ];
  for(const mutate of variants){
