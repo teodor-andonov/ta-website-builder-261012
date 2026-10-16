@@ -199,6 +199,31 @@ try{
     recordComposition.createdStatus!=='Draft'||!recordComposition.hasNewDesign)
    throw Error('M14 record composition Studio integration failed: '+JSON.stringify(recordComposition));
  console.log('M14_RECORDS_OK isolated draft record editor, assembled preview and independent new project root');
+ // M15: the converted Balkan House Record uses a contextual asset gallery.
+ const assetQueryEditing=await evaluate(\`(()=>{
+   const app=window.__TA_STUDIO__;
+   app.navigate('record',{collection:'projects',record:'p-balkan'});
+   document.querySelector('[data-act="mode"][data-mode="design"]')?.click();
+   const query=document.querySelector('#workbody [data-node-id="balkan-highlights-query"]');
+   const baselineImage=!!document.querySelector('#workbody img[src="/assets/placeholder/house.svg"]');
+   document.querySelector('[data-act="select-node"][data-id="balkan-highlights-query"]')?.click();
+   const field=document.querySelector('[data-asset-filter-index="1"][data-asset-filter-key="value"]');
+   const filterControls=!!field&&!!document.querySelector('[data-node-prop="source.sort"]');
+   if(!field)return {error:'M15 gallery predicate inspector missing',baselineImage,query:!!query};
+   field.value='Systems';field.dispatchEvent(new Event('change',{bubbles:true}));
+   const edited=app.getData().collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-balkan').composition.children.at(-1).source.where[1].value;
+   const empty=!!document.querySelector('#workbody .item-placeholder');
+   const restore=document.querySelector('[data-asset-filter-index="1"][data-asset-filter-key="value"]');
+   restore.value='Architecture';restore.dispatchEvent(new Event('change',{bubbles:true}));
+   const restored=!!document.querySelector('#workbody img[src="/assets/placeholder/house.svg"]');
+   const current=app.getData().collections.find(c=>c.id==='projects').records.find(r=>r.id==='p-balkan').composition.children.at(-1).source.where[1].value;
+   return {query:!!query,baselineImage,filterControls,edited,empty,restored,current};
+ })()\`);
+ if(assetQueryEditing.error||!assetQueryEditing.query||!assetQueryEditing.baselineImage||
+    !assetQueryEditing.filterControls||assetQueryEditing.edited!=='Systems'||
+    !assetQueryEditing.empty||!assetQueryEditing.restored||assetQueryEditing.current!=='Architecture')
+   throw Error('M15 contextual Asset Gallery editor failed: '+JSON.stringify(assetQueryEditing));
+ console.log('M15_ASSET_QUERIES_OK record context, AND predicate editing and gallery refresh');
  // M9: verify the actual site-wide contact editor, typed URL guard, and CTA.
  const configured=await evaluate(`(()=>{
    window.__TA_STUDIO__.navigate('dashboard');
