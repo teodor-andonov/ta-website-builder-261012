@@ -112,7 +112,7 @@
 </div>
 <div id="modalHost"></div>
 <script type="module">
-import { renderBlocks as renderSharedBlocks, renderSiteFrame, renderPagePreview, assetSrc } from "/src/render.mjs";
+import { renderBlocks as renderSharedBlocks, renderSiteFrame, renderPagePreview, renderChromeComponent, assetSrc } from "/src/render.mjs";
 import {moveTreeNode,moveTreeByIntent,findFreeArea,findAreaConflicts} from "/src/tree-editor.mjs";
 import {createEditorHistory} from "/src/editor-history.mjs";
 import {validate as validateSiteData} from "/src/model.mjs";
@@ -295,7 +295,13 @@ function assignScopeBlocks(blocks){
  return true;
 }
 function compositionRoot(){return compositionPage()?page().composition:null}
-function protectedNode(id){return Boolean(compositionPage()&&id===compositionRoot()?.id)||Boolean(ui.section==='template'&&tpl()?.layoutMode==='slot'&&(currentBlocks()[0]?.id===id||findNode(id)?.node?.slot==='main'))}
+function frameComponent(){return ui.section==='component'&&Boolean(component()?.frameRole)}
+function protectedNode(id){
+ const frame=frameComponent(),found=id?findNode(id):null;
+ return Boolean(compositionPage()&&id===compositionRoot()?.id)||
+   Boolean(ui.section==='template'&&tpl()?.layoutMode==='slot'&&(currentBlocks()[0]?.id===id||found?.node?.slot==='main'))||
+   Boolean(frame&&(currentBlocks()[0]?.id===id||found?.node?.variant==='site-logo'));
+}
 
 // M8 authoring history records only completed Card/Item mutations, never hover
 // state, selection changes, invalid numeric drafts or pending drag gestures.
@@ -350,7 +356,7 @@ function designView(){
    context=c?.records.find(r=>r.id===ui.sample)||c?.records[0];
  }
  const design=ui.mode==='design',pick=isT?db.templates:isC?db.components:db.pages;
- const modeText=isPageLayout?'PAGE TEMPLATE':isT?'RECORD TEMPLATE':isC?'COMPONENT':'PAGE';
+ const modeText=isPageLayout?'PAGE TEMPLATE':isT?'RECORD TEMPLATE':isC&&s.frameRole?'SITE '+s.frameRole.toUpperCase():isC?'COMPONENT':'PAGE';
  let canvas;
  if(isUniqueComposition){
    canvas=design
@@ -362,6 +368,9 @@ function designView(){
      ?renderSiteFrame(renderBlocks(s.blocks,null,true),db,{design:true,isolated:true,route:example?.slug||'/'})
      :example?renderPagePreview(db,example.blocks,null,{pageId:example.id,route:example.slug})
        :renderSiteFrame(renderBlocks(s.blocks,null,false),db,{route:'/'});
+ }else if(isC&&s.frameRole){
+   const chrome=renderChromeComponent(db,s.frameRole,{design,selectedId:ui.node,route:'/'});
+   canvas=renderSiteFrame(chrome,db,{design:true,isolated:true,route:'/'});
  }else canvas=siteFrame(renderBlocks(s.blocks,context,design),design);
  const label=isPageLayout?'One main content slot · used by '+db.pages.filter(p=>p.template===s.id).length+' pages'
    :isUniqueComposition?'Unique composition · shared template: '+(db.templates.find(t=>t.id===s.template)?.name||s.template)
@@ -377,6 +386,7 @@ function designView(){
    ?'Design edits only this Page’s root composition. Preview assembles it inside the selected template, including shared site chrome.'
    :isPageLayout?'Design edits the reusable Page template only. The marked main slot receives a Page composition in Preview.'
    :isT?'Bound values such as {{title}} resolve against the selected record. Edits affect every generated page using this template.'
+   :isC&&s.frameRole?'This semantic Card is used across every published page. Navigation links come only from Site settings; this component owns their layout, logo and appearance.'
    :isC?'This Component is reusable by reference; edits propagate to every instance.'
    :'Repeatable content comes from Collections; query Cards render matching records.';
  return `<div class="editor-shell"><div class="editor-meta"><div><div class="upper" style="margin-bottom:6px">${modeText} / ${design?'ISOLATED DESIGN':'ASSEMBLED PREVIEW'}</div><h1>${e(s.name||s.title)}</h1><small>${e(label)} · ${count} root Card${count===1?'':'s'}</small></div><div class="editor-tools">${tools}${scopeChooser}${secondary}</div></div>${canvas}${design?`<div class="add-area"><button class="btn" data-act="show-blocks" data-inside="no">${ic('add')} Add section / object</button></div>`:''}<p class="help" style="margin:17px 3px">${e(editMessage)}</p></div>`;
@@ -559,6 +569,7 @@ function regenIds(node){node.id=uid('b');(node.children||[]).forEach(regenIds);r
 function insertNode(type){
  const before=snapshotScope(),selectedBefore=ui.node;
  let n=makeBlock(type),parent=ui.draftSection&&findNode(ui.node)?.node;
+ if(!parent&&frameComponent())parent=currentBlocks()[0];
  if(!parent&&compositionPage())parent=compositionRoot();
  if(!parent&&ui.section==='template'&&tpl()?.layoutMode==='slot')parent=currentBlocks()[0];
  if(parent?.slot==='main')return;
@@ -583,6 +594,8 @@ function setNodeField(key,value){
  const before=snapshotScope(),selectedBefore=ui.node;
  const n=f.node;
  if(n.slot==='main'&&['columns','rows','reference','source.collection','source.template'].includes(key))return;
+ if(frameComponent()&&n.id===currentBlocks()[0]?.id&&['columns','rows'].includes(key))return;
+ if(frameComponent()&&n.variant==='site-logo'&&key==='href')return;
  if(key.startsWith('source.')){
    if(n.type!=='card'||!n.source)return;
    const field=key.slice(7);
@@ -725,7 +738,8 @@ function handleAction(btn){let a=btn.dataset.act,id=btn.dataset.id;switch(a){
    }
    break;
  }
- case'delete-scope':{let s=currentScope();if(!s||!confirm('Delete this '+ui.section+'?'))break;if(ui.section==='template'){if(db.pages.some(p=>p.template===s.id)||db.collections.some(c=>c.defaultTemplate===s.id||Object.values(c.formatTemplates||{}).includes(s.id))){alert('Template is in use. Reassign Pages or Collections before deleting it.');break}if(db.templates.length<=1){alert('Keep at least one template.');break}db.templates=db.templates.filter(x=>x.id!==s.id);choose('template',db.templates[0].id)}else if(ui.section==='component'){db.components=db.components.filter(x=>x.id!==s.id);choose('component',db.components[0]?.id)}persist();break}
+ case'delete-scope':{let s=currentScope();if(!s||!confirm('Delete this '+ui.section+'?'))break;
+  if(ui.section==='component'&&(Object.values(db.site.chrome||{}).includes(s.id)||s.frameRole)){alert('Site frame Components must be reassigned before deletion.');break;}if(ui.section==='template'){if(db.pages.some(p=>p.template===s.id)||db.collections.some(c=>c.defaultTemplate===s.id||Object.values(c.formatTemplates||{}).includes(s.id))){alert('Template is in use. Reassign Pages or Collections before deleting it.');break}if(db.templates.length<=1){alert('Keep at least one template.');break}db.templates=db.templates.filter(x=>x.id!==s.id);choose('template',db.templates[0].id)}else if(ui.section==='component'){db.components=db.components.filter(x=>x.id!==s.id);choose('component',db.components[0]?.id)}persist();break}
  case'apply-json':{let scope=btn.dataset.scope;try{let obj=JSON.parse($('#jsonEditor').value);applyValidatedJSON(scope,obj);ui.jsonMessage='JSON applied successfully.';renderAll()}catch(err){ui.jsonMessage='Error: '+err.message;let x=$('#jsonNotice');if(x){x.textContent=ui.jsonMessage;x.className='notice error'}}break}
  case'copy-json':navigator.clipboard?.writeText($('#jsonEditor').value).then(()=>{if($('#jsonNotice'))$('#jsonNotice').textContent='Copied to clipboard.'}).catch(()=>{});break;
  case'export':exportJSON();break;
