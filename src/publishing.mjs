@@ -14,7 +14,7 @@ export function parsePublicOrigin(value){
 }
 
 export function publicationSettings(_data,env={}){
-  return {indexing:_data.site?.publishing?.indexing!==false,origin:env.TA_PUBLIC_ORIGIN?parsePublicOrigin(env.TA_PUBLIC_ORIGIN):null};
+  return {indexing:_data.site?.publishing?.indexing===true,origin:env.TA_PUBLIC_ORIGIN?parsePublicOrigin(env.TA_PUBLIC_ORIGIN):null};
 }
 
 export function absolutePageUrl(origin,route){
