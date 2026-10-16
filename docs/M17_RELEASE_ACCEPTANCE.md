@@ -17,7 +17,7 @@ node scripts/verify-site-package.mjs release/website.zip
 npm run preview
 ```
 
-`npm run release:check` runs all repository Node regression tests, the existing local Chromium DOM/Studio/wheel suite, verified JSON+media backup and restore, a noindex root build, a GitHub Pages subpath build, an indexable custom-domain build with canonical URLs/sitemap, and separately verifies both static ZIP packages against their SHA-256 manifests. It uses **temporary restored data** to test indexing, never changes `content/site.json`, and never deploys or merges. A dated JSON audit report is written under `release/reports/YYMMDD-HHmm_m17-release-audit.json`.
+`npm run release:check` runs all repository Node regression tests, the existing local Chromium DOM/Studio/wheel suite, verified JSON+media backup and restore, a noindex root build, a GitHub Pages subpath build, an indexable custom-domain build with canonical URLs/sitemap, and separately verifies both static ZIP packages against their SHA-256 manifests. It fingerprints **all source assets and the live JSON before testing** and rejects unexpected modifications. It uses **temporary restored data** to test indexing, never deliberately changes live `content/site.json` or media, and never deploys or merges. A dated JSON audit report is written under `release/reports/YYMMDD-HHmm_m17-release-audit.json`.
 
 A browserless diagnostic is possible with `node scripts/release-check.mjs --no-browser`, but it exits with a nonzero status and reports **partial**, not release-ready. Node, browser and build failures also fail the release audit. Check its JSON report for the failing step and output.
 
